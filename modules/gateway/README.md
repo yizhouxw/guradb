@@ -1,6 +1,8 @@
 # Gateway
 
-状态：技术架构 v0.3 的职责基线，推荐方案待 POC，未实现。
+M0 当前实现见对应 `crates/guradb-gateway`，仅限[有界读取设计](../../docs/design/m0-parquet-http.md)与[实际验收映射](../../docs/design/m0-validation.md)，下述长期职责不等于已支持。
+
+状态：长期职责基线；M0 有界读取子集已实现，其余推荐能力待验证。
 
 用户已确定 SQL 与 HTTP 入口、PostgreSQL 语法方向，以及不承载高并发 OLTP 和实时延迟敏感事务。本轮推荐 HTTP 异步任务优先、PostgreSQL 18 SQL 子集；wire protocol 是后续独立验收项目。
 

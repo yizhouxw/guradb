@@ -1,0 +1,11 @@
+[package]
+name = "guradb-catalog"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+guradb-common.workspace = true
+guradb-storage.workspace = true
+serde_json.workspace = true

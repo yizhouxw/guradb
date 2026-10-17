@@ -1,6 +1,6 @@
 # 首次运行时接入清单
 
-当前没有 Rust workspace 或数据库进程，因此运行时 suites 为 planned。这是显式缺口，不是豁免。
+M0 已接入 Rust workspace、真实HTTP/Parquet/S3/PG18 driver，rust/functional/performance-smoke/stability-component 为 ready；完整performance/stability/soak仍planned。后续新增运行时沿用本清单，不复用旧结果冒充当前证据。
 
 ## 第一个 crate / 客户端代码
 

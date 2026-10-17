@@ -1,6 +1,6 @@
 # GuraDB 技术架构 v0.3
 
-状态：本轮推荐的技术基线，待 POC 验证；尚无数据库实现。日期：2026-10-17。
+状态：长期推荐技术基线；M0受限单进程实现见[详细设计](design/m0-parquet-http.md)，其它组件待验证。日期：2026-10-17。
 
 用户已确定采用对象存储湖架构，放弃高并发 OLTP，不支持实时延迟敏感事务，见 [ADR 0002](decisions/0002-object-store-lake-boundary.md)。本版依据[产品功能架构](product/functional-architecture.md)与[技术调研](research/README.md)，为后续详细设计选择默认路径；不再将所有技术选项并列悬置，也不把选型建议当作已经验证的功能。
 

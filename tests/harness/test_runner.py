@@ -57,7 +57,10 @@ class RunnerTests(unittest.TestCase):
             source = root / "modules/storage/src/lib.rs"
             source.parent.mkdir(parents=True)
             source.write_text("pub struct Store;\n")
-            report, path = check(root, "change", None, self.configuration())
+            configuration = self.configuration()
+            for name in ["rust", "functional", "performance-smoke", "stability-component"]:
+                configuration[0]["suites"][name].update(state="planned", reason="fixture missing runtime", commands=[])
+            report, path = check(root, "change", None, configuration)
             self.assertFalse(report["passed"])
             self.assertEqual({item["suite"] for item in report["results"] if item["status"] == "missing"},
                              {"rust", "functional", "performance-smoke", "stability-component"})

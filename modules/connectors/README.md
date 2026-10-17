@@ -1,6 +1,8 @@
 # Connectors
 
-状态：技术架构 v0.3 的职责基线，推荐方案待 POC，未实现。
+M0 当前实现见对应 `crates/guradb-connectors`，仅限[有界读取设计](../../docs/design/m0-parquet-http.md)与[实际验收映射](../../docs/design/m0-validation.md)，下述长期职责不等于已支持。
+
+状态：长期职责基线；M0 有界读取子集已实现，其余推荐能力待验证。
 
 分别适配湖表事务/快照、文件扫描、训练样本组织与外部 catalog。M0 先固定 Parquet manifest，M1 验证 Iceberg v2/Parquet 受限 Snapshot reader，M2 单表 writer 独立验收；REST Catalog 通过适配隔离具体服务。依赖与删除/schema 特性按当前切片白名单验证，不要求 writer 和全格式作为首个 reader 的前置。
 

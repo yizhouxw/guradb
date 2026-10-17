@@ -1,6 +1,6 @@
 # SQL、HTTP 与客户端接口
 
-状态：**提案**。本文件描述 GuraDB 的接口设计起点，尚无服务实现；路径、字段和示例可在详细设计中调整。用户已确定 PostgreSQL 语法兼容方向、SQL 与 HTTP 接口，以及便于扩展 CLI、MCP 和 AI Agent 的目标。
+状态：**M0查询子集已实现，其余为提案**。实际支持见[M0详细设计](../design/m0-parquet-http.md)和[运行说明](../design/m0-running.md)；全文/向量/Graph/CLI/MCP示例尚不可执行。用户已确定 PostgreSQL 语法兼容方向、SQL 与 HTTP 接口，以及便于扩展 CLI、MCP 和 AI Agent 的目标。
 
 本轮审查将实现入口收敛到只读查询：M0 验证固定 manifest/Parquet 上的精确扫描；M1 增加 Snapshot 发布、BM25、精确向量与 RRF；ANN、Graph、增量同步和分布式扩展按后续依赖推进。SQL 以 PG18 的明确子集为比较基线，HTTP 优先，wire protocol 后续独立验收。批量写入与同步使用另行设计的作业契约，不进入当前查询 API。具体阶段见[路线图](../roadmap.md)。
 

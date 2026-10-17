@@ -23,7 +23,7 @@ class DependencyTests(unittest.TestCase):
             self.assertEqual(locked.get(name), pinned)
 
     def test_executing_environment_matches_locked_tools(self):
-        for name, pinned in pins(ROOT / "requirements-dev.lock").items():
+        for name, pinned in {**pins(ROOT / "requirements-dev.lock"), **pins(ROOT / "requirements-m0.lock")}.items():
             with self.subTest(package=name):
                 self.assertEqual(version(name), pinned, "install requirements-dev.lock in the active venv")
 

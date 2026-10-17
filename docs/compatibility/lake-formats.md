@@ -2,7 +2,7 @@
 
 状态：设计草案，供后续 RFC 细化。官方资料核验日期：**2026-10-17**。
 
-**GuraDB 当前尚未实现本页中的任何格式连接器、读写能力或互操作保证。** 本页的矩阵是方向与验收范围，不是产品支持清单；优先级可随首批用户场景调整。
+**M0 仅实测了受限 Parquet manifest 的只读路径（PyArrow22生成、int8/text/bool、Snappy、SeaweedFS3.97固定对象/版本）。** 具体白名单和证据见[M0设计](../design/m0-parquet-http.md)与[验收映射](../design/m0-validation.md)，不推导通用Parquet或其它表格式兼容。 本页的矩阵是方向与验收范围，不是产品支持清单；优先级可随首批用户场景调整。
 
 v0.3 收敛：M0 固定 manifest/Parquet，M1 受限 Iceberg v2/Parquet Snapshot 只读；M2 单表托管 append 与内部 Lance ANN 分别过门禁。外部 Lance、WebDataset 和其余生态适配各自后续认证，不由内核使用某个库推导外部兼容。默认检索采用已发布 read view，具体提交/可见性见 [ADR 0004](../decisions/0004-snapshot-and-index-publication.md)。
 

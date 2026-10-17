@@ -188,7 +188,8 @@ def plan(root: Path, paths: list[str], policy: dict, architecture: dict,
                 if path.startswith(prefix):
                     gates.add(component if path.startswith(prefix + "component/") else full)
         dependency_change = (PurePosixPath(path).name in {
-            "Cargo.toml", "Cargo.lock", "rust-toolchain.toml"})
+            "Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "requirements-m0.lock"}
+            or path in {"scripts/cargo.py", "scripts/m0.py"} or path.startswith("scripts/m0lib/"))
         if dependency_change:
             runtime_changed = True
             gates.update({"rust", "functional", "performance-smoke", "stability-component"})

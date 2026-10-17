@@ -1,5 +1,7 @@
 # Catalog
 
+M0 当前实现见对应 `crates/guradb-catalog`，仅限[有界读取设计](../../docs/design/m0-parquet-http.md)与[实际验收映射](../../docs/design/m0-validation.md)，下述长期职责不等于已支持。
+
 状态：技术架构 v0.2 的职责基线，推荐方案待 POC，未实现。
 
 推荐 PostgreSQL 作为强一致的小型控制元数据库，保存资源/schema、权限、作业/租约、版本引用、发布指针与恢复状态；不存放业务逐行数据、所有候选或逐条图边。

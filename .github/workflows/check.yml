@@ -44,7 +44,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Install locked harness tools
-        run: python -m pip install -r requirements-dev.lock
+        run: python -m pip install -r requirements-dev.lock -r requirements-m0.lock
       - name: Verify installed dependencies
         run: python -m pip check
       - name: Run quality harness

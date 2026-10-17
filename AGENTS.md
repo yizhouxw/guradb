@@ -19,7 +19,7 @@
 ## 产品与架构边界
 
 - [ADR 0002](docs/decisions/0002-object-store-lake-boundary.md)：对象存储湖架构，不做高并发 OLTP/实时敏感业务事务。
-- [ADR 0003](docs/decisions/0003-storage-and-execution-baseline.md)：Rust/Arrow/DataFusion、Iceberg/Parquet、Lance/Tantivy/邻接和小型 PG 控制面为推荐 POC 基线，尚未验证实现。
+- [ADR 0003](docs/decisions/0003-storage-and-execution-baseline.md)：Rust/Arrow/DataFusion、Iceberg/Parquet、Lance/Tantivy/邻接和小型 PG 控制面为推荐 POC 基线，其中 M0 Rust/Arrow/DataFusion/Parquet 受限路径已落地，后续组件仍待验证，见 ADR 0010。
 - [ADR 0004](docs/decisions/0004-snapshot-and-index-publication.md)：事实数据有唯一权威来源，默认读已发布 read view；数据提交与索引就绪分离。
 - [ADR 0007](docs/decisions/0007-incremental-delivery-and-gates.md)：按路线图切片实施；身份/版本/保留遵循[数据合同](docs/product/data-contracts.md)，组件验证与完整产品发布分别验收。
 - 需求、推荐设计、已接受决定与已实测能力分别描述。不得把骨架/目录/契约或模拟测试写成已支持功能。
@@ -34,9 +34,9 @@
 5. 单独审查差异、复杂度、边界和证据；高风险变更需要独立审查轮次或人工复核。
 6. 报告改了什么、为什么、实际命令和报告、缺失证据及风险。仅 bootstrap 通过不得宣称数据库质量通过或可发布。
 
-开始前写用户可观察验收、范围与支持/拒绝白名单；完成标准、依赖/迁移纪律、两次无新证据失败后的根因定位及交接遵循开发流程。CI/CD 采用 [GitHub Actions 分层方案](harness/ci-cd.md)，当前远端未运行、CD 待服务/环境合同。
+开始前写用户可观察验收、范围与支持/拒绝白名单；完成标准、依赖/迁移纪律、两次无新证据失败后的根因定位及交接遵循开发流程。CI/CD 采用 [GitHub Actions 分层方案](harness/ci-cd.md)，此前 bootstrap CI 已通过；新运行时变更需推送后验证，CD 待发布/环境合同。
 
-Python 3.11+ 开发依赖安装与 make 替代入口见 [harness/README.md](harness/README.md)。当前无数据库运行实现；功能、组件性能/稳定性及完整性能/稳定性/soak 为 planned，运行时代码出现后相应 missing 门禁必须补齐。组件通过不等于完整发布通过。
+Python 3.11+ 开发依赖安装与 make 替代入口见 [harness/README.md](harness/README.md)。当前 M0 单进程有界读取已落地；rust/functional/performance-smoke/stability-component 为 ready，完整 performance/stability/soak 仍 planned。组件通过不等于完整发布通过。
 
 ## 全局质量不变量
 

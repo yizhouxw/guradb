@@ -4,11 +4,11 @@
 
 ## 立即使用
 
-需要 Python 3.11+ 和可用 Git。Python 只承载 harness 工具。
+需要 Python 3.11+、可用Git和Docker。Python承载harness与验收，Rust使用固定容器工具链，见[M0运行说明](../docs/design/m0-running.md)。
 
 ```sh
 python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements-dev.lock
+.venv/bin/python -m pip install -r requirements-dev.lock -r requirements-m0.lock
 .venv/bin/python scripts/harness.py install-git-hooks
 .venv/bin/python scripts/harness.py plan
 .venv/bin/python scripts/harness.py check
@@ -23,7 +23,7 @@ python3 -m venv .venv
 .venv/bin/python scripts/harness.py check --scope bootstrap
 # 对拟议路径做风险计划，不创建该文件，也不执行门禁
 .venv/bin/python scripts/harness.py plan --path modules/storage/src/cache.rs
-# 运行所有发布门禁；当前无内核，预期失败并列出缺失项
+# 运行所有发布门禁；当前完整performance/stability/soak缺失，预期失败
 .venv/bin/python scripts/harness.py check --scope release
 ```
 
@@ -61,7 +61,7 @@ python3 -m venv .venv
 
 当前可执行：仓库检查、OpenAPI 标准/语义契约、policy/架构检查、harness 自测、性能比较器和稳定性证据校验器。
 
-当前未实现：数据库功能测试、真实基准 driver、真实故障注入、长稳/升级。它们在 policy 中为 `planned`。涉及运行时的变更要求相应 suite；未接入时返回 `missing` 并失败，不跳过成绿。`release` 当前也必须失败。
+M0 已接入真实功能、组件基准和故障注入；完整性能、完整fault registry、长稳/升级在 policy 中仍为 `planned`。涉及运行时的变更要求相应 suite；未接入时返回 `missing` 并失败，不跳过成绿。`release` 当前也必须失败。
 
 普通服务端变更要求功能、适用语言检查、`performance-smoke` 与 `stability-component`，先验证当前可运行切片。完整 driver 变更仍要求对应整库套件，`release` 包含完整性能/fault registry/soak。分层不会把缺失的运行时测试显示为通过，也不要求首个扫描组件先实现完整分布式数据库，依据 [ADR 0007](../docs/decisions/0007-incremental-delivery-and-gates.md)。
 
@@ -69,4 +69,4 @@ python3 -m venv .venv
 
 非小型任务用 task-start 记录目标与原始 base，task-status 恢复上下文，最终提交后 check，再用 task-finish --report/--review 验证整项范围并归档；task-abandon 只停止记录，保留文件与 Git 历史。checkpoint 同样重验报告/全部命令/日志 SHA-256，证据归档到共同 Git 管理目录，不依赖 artifacts 永久留存。
 
-GitHub Actions 在 PR/push/手动运行同一入口，配置 Python 3.11/3.14 和失败证据上传；共享 runner 不用于给数据库性能背书。当前无远端首跑/保护规则，尚不能保证保护分支或阻止绕过 CI。建立远端后将对应 quality jobs 设为必需检查，并对 harness、基线和持久化协议变更设置独立复核；仓库内自检不替代平台合并权限。CD 待服务/产物/环境合同，见 CI/CD 文档。
+GitHub Actions 在 PR/push/手动运行同一入口，配置 Python 3.11/3.14 和失败证据上传；共享 runner 不用于给数据库性能背书。此前bootstrap远端CI已通过，本轮M0矩阵待推送验证；保护规则未验证，尚不能保证阻止绕过CI。建立远端后将对应 quality jobs 设为必需检查，并对 harness、基线和持久化协议变更设置独立复核；仓库内自检不替代平台合并权限。CD 待服务/产物/环境合同，见 CI/CD 文档。

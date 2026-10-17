@@ -1,11 +1,11 @@
 {
   "openapi": "3.1.1",
   "info": {
-    "title": "GuraDB HTTP API — proposal",
-    "version": "0.0.0-draft.3",
-    "description": "Design-only read-only query contract for an object-store lake database. No service is implemented. M0/M1 start with a PostgreSQL 18 SELECT subset over published read views; batch writes and lake synchronization require a separate job contract. Type encodings, authentication and retention remain subject to POCs and ADRs."
+    "title": "GuraDB M0 HTTP read-only SQL",
+    "version": "0.1.0-m0",
+    "description": "M0 single-process SELECT over pinned Parquet manifests. Only int8/text/bool, one registered table, column projection/filter/order/constant LIMIT. No writes, joins, functions, transactions or wire protocol. See docs/design/m0-parquet-http.md for hard caps and certified scope; this is not a distributed or release-ready database."
   },
-  "x-status": "proposal-not-implemented",
+  "x-status": "m0-implemented-subset",
   "servers": [
     {
       "url": "https://guradb.example.invalid",
@@ -69,7 +69,7 @@
       "get": {
         "operationId": "getQuery",
         "summary": "Get an authorized query handle",
-        "description": "Execution failures after acceptance appear in status=failed and error. Handle retention is TBD. All access requires authorization.",
+        "description": "Status failures are structured on QueryHandle.error. Terminal handles/results expire after operator-configured TTL (default/hard cap 60 seconds); known owned expiry=410, evicted tombstones/unknown/restart/cross-subject=404. Current authorization required on every access.",
         "responses": {
           "200": {
             "description": "Current status; a successful HTTP request does not imply a successful query.",
@@ -142,9 +142,11 @@
             "in": "query",
             "schema": {
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100
             },
-            "description": "Requested page row count within server limits; defaults and maximum TBD."
+            "description": "Page size 1..1000, default 100; fixed result cap is separate."
           }
         ],
         "responses": {
@@ -163,6 +165,25 @@
           }
         }
       }
+    },
+    "/healthz": {
+      "get": {
+        "operationId": "health",
+        "summary": "Process liveness without dataset metadata",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Process accepts HTTP",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -170,7 +191,7 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "description": "Proposal only; token format, issuing authority and identity integration TBD. Protected transport is required."
+        "description": "M0 operator-managed SHA-256 Bearer allowlist, binding tenant/principal/datasets; reloads every request, fails closed. Use protected transport/trusted network; no OIDC/TLS server."
       }
     },
     "parameters": {
@@ -204,18 +225,55 @@
         "required": [
           "sql"
         ],
-        "description": "Single read-only SQL statement. M0/M1 support only the explicitly tested SELECT/type/function subset and published consistency. DDL, DML, side-effecting functions, interactive transactions and row locks must be rejected by planning/execution. No service is implemented.",
+        "description": "M0 accepts only the documented SELECT/type whitelist and published views. Unsupported syntax is rejected before object I/O. General PG compatibility remains planned.",
         "properties": {
           "sql": {
             "type": "string",
             "minLength": 1,
-            "description": "One supported read-only SQL statement; planning/execution must reject side effects. Parameters are bound separately, never interpolated."
+            "description": "One supported read-only SQL statement; planning/execution must reject side effects. Parameters are bound separately, never interpolated.",
+            "maxLength": 16384
           },
           "parameters": {
             "type": "array",
-            "items": {},
+            "items": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "properties": {
+                    "type": {
+                      "const": "int8"
+                    },
+                    "value": {
+                      "type": "string",
+                      "pattern": "^(0|-?[1-9][0-9]*)$",
+                      "description": "Must fit signed 64-bit range."
+                    }
+                  }
+                }
+              ]
+            },
             "default": [],
-            "description": "JSON values bound in positional $1, $2 order. SQL type mappings require a separate decision; ambiguous values must be rejected."
+            "description": "Positional $1..$n. int8 safe JSON integer or typed canonical decimal string; text string; bool; null. Unknown and ambiguous types are rejected.",
+            "maxItems": 64
           },
           "mode": {
             "type": "string",
@@ -228,12 +286,16 @@
           "timeout_ms": {
             "type": "integer",
             "minimum": 1,
-            "description": "Requested total execution timeout, subject to server policy. Default and maximum are TBD."
+            "description": "M0 default/hard cap; operator may reduce, request cannot exceed server cap.",
+            "maximum": 10000,
+            "default": 10000
           },
           "max_rows": {
             "type": "integer",
             "minimum": 1,
-            "description": "Total result row limit, subject to server policy; does not bound scan work. Default and maximum are TBD."
+            "description": "M0 default/hard cap; operator may reduce, request cannot exceed server cap.",
+            "maximum": 1000,
+            "default": 1000
           },
           "read_consistency": {
             "type": "string",
@@ -304,6 +366,9 @@
               "metadata"
             ],
             "description": "Assigned by the server planner, never by the caller. data includes any query reading dataset contents, even aggregates or constant projections; metadata is restricted to constants and catalog-only queries without dataset reads."
+          },
+          "stats": {
+            "$ref": "#/components/schemas/QueryStats"
           }
         },
         "allOf": [
@@ -396,7 +461,7 @@
           },
           "type": {
             "type": "string",
-            "description": "SQL type name. Binary, numeric, temporal and extension type encodings TBD."
+            "description": "M0 emits int8/text/bool. int8 values are decimal JSON strings; bool/text/null use native JSON values. Other SQL types are not implemented."
           }
         }
       },
@@ -428,7 +493,7 @@
               "type": "array",
               "items": {}
             },
-            "description": "Values follow the columns in order. Lossless SQL-to-JSON mappings require a type-contract ADR; do not silently round large numbers."
+            "description": "Values follow columns. M0 int8 is always a decimal JSON string without precision loss; text/bool/null use native JSON. No other types supported."
           },
           "next_cursor": {
             "type": [
@@ -633,6 +698,35 @@
             }
           }
         ]
+      },
+      "QueryStats": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_reads",
+          "source_bytes",
+          "decoded_bytes",
+          "elapsed_ms"
+        ],
+        "properties": {
+          "source_reads": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "source_bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "decoded_bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "elapsed_ms": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "description": "Successful execution only. source_reads counts logical full-object reads, not SDK retries/HTTP wire requests. No source cache in M0; elapsed_ms excludes queue time."
       }
     }
   }

@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GuraDB Parquet manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "dataset_id",
+    "table_name",
+    "schema",
+    "backend",
+    "files",
+    "retention_mode"
+  ],
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z_][a-z_0-9]{0,62}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "dataset_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "table_name": {
+      "$ref": "#/$defs/identifier"
+    },
+    "schema": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "data_type",
+          "nullable"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "#/$defs/identifier"
+          },
+          "data_type": {
+            "enum": [
+              "int8",
+              "text",
+              "bool"
+            ]
+          },
+          "nullable": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "retention_mode": {
+      "const": "best-effort"
+    },
+    "backend": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "root"
+          ],
+          "properties": {
+            "kind": {
+              "const": "local"
+            },
+            "root": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "bucket",
+            "region",
+            "endpoint"
+          ],
+          "properties": {
+            "kind": {
+              "const": "s3"
+            },
+            "bucket": {
+              "type": "string",
+              "minLength": 1
+            },
+            "region": {
+              "type": "string",
+              "minLength": 1
+            },
+            "endpoint": {
+              "type": "string",
+              "minLength": 1
+            },
+            "allow_http": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        }
+      ]
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "fragment_id",
+          "key",
+          "size_bytes",
+          "sha256"
+        ],
+        "properties": {
+          "fragment_id": {
+            "$ref": "#/$defs/identifier"
+          },
+          "key": {
+            "type": "string",
+            "minLength": 1
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 33554432
+          },
+          "sha256": {
+            "$ref": "#/$defs/sha256"
+          },
+          "version_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  },
+  "description": "Runtime additionally enforces unique names/IDs/keys, safe relative keys, no local version_id, schema/Parquet agreement, and pinned config SHA. Sources best-effort retention only; operator-owned configuration, not accepted via HTTP."
+}

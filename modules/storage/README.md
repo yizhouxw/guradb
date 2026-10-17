@@ -1,6 +1,8 @@
 # Storage
 
-状态：技术架构 v0.3 的职责基线，推荐方案待 POC，未实现。
+M0 当前实现见对应 `crates/guradb-storage`，仅限[有界读取设计](../../docs/design/m0-parquet-http.md)与[实际验收映射](../../docs/design/m0-validation.md)，下述长期职责不等于已支持。
+
+状态：长期职责基线；M0 有界读取子集已实现，其余推荐能力待验证。
 
 用户已确定基于对象存储的湖架构。推荐 S3 API 持久层、Iceberg v2 + Parquet 托管事实表、大媒体外置与版本化引用；格式具体读写能力仍需与 connectors 共同验证。
 

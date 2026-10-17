@@ -27,16 +27,14 @@ timeout_seconds = 120
 commands = [["{python}", "-m", "unittest", "discover", "-s", "tests/harness", "-p", "test_*.py"]]
 
 [suites.rust]
-state = "planned"
-reason = "首个 Rust workspace 落地时固定 toolchain、Cargo.lock，再启用 fmt/clippy/test --locked。"
+state = "ready"
 timeout_seconds = 900
-commands = []
+commands = [["{python}", "scripts/cargo.py", "fmt", "--all", "--", "--check"], ["{python}", "scripts/cargo.py", "clippy", "--workspace", "--all-targets", "--locked", "--", "-D", "warnings"], ["{python}", "scripts/cargo.py", "test", "--workspace", "--locked"]]
 
 [suites.functional]
-state = "planned"
-reason = "等待真实内核/客户端：注册单元、差异、属性与集成测试，不能用 harness 测试代替数据库功能测试。"
+state = "ready"
 timeout_seconds = 900
-commands = []
+commands = [["{python}", "scripts/m0.py", "functional", "--run-dir", "{run_dir}/m0-functional"]]
 
 [suites.performance]
 state = "planned"
@@ -45,16 +43,14 @@ timeout_seconds = 1800
 commands = []
 
 [suites.performance-smoke]
-state = "planned"
-reason = "等待当前切片的真实组件测量与预冻结预算；首次建立实测基线，后续比较回归，不能用整库未实现阻塞首个组件或自比较造绿。"
+state = "ready"
 timeout_seconds = 300
-commands = []
+commands = [["{python}", "scripts/m0.py", "performance-smoke", "--run-dir", "{run_dir}/m0-performance"]]
 
 [suites.stability-component]
-state = "planned"
-reason = "等待当前切片真实的失败/重试/取消或恢复测试及日志；不冒充完整多节点 fault registry。"
+state = "ready"
 timeout_seconds = 300
-commands = []
+commands = [["{python}", "scripts/m0.py", "stability-component", "--run-dir", "{run_dir}/m0-stability"]]
 
 [suites.stability]
 state = "planned"
