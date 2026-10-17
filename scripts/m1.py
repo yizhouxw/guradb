@@ -8,10 +8,13 @@ import sys
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from modules.catalog.control import Control
+from modules.catalog.managed import Managed
+from modules.connectors.writer import Writer
 from modules.common.contracts import Failure
 from modules.gateway.m1 import Server
 from modules.query.service import Service
 from modules.query.snapshot import collect, construct, publish
+from modules.query.incremental import refresh, progress
 
 
 def main():
@@ -29,21 +32,28 @@ def main():
         action.add_argument('--dataset',required=True)
         if name=='grant':
             action.add_argument('--token-sha256',required=True)
-    build = sub.add_parser('snapshot')
+    build = sub.add_parser('snapshot', aliases=['refresh'])
     build.add_argument('--dataset',required=True)
     build.add_argument('--operation',required=True)
     build.add_argument('--target',type=Path,required=True)
     build.add_argument('--s3-endpoint')
-    for name in ('run','publish','pin','unpin','gc'):
+    for name in ('run','progress','publish','pin','unpin','gc'):
         action = sub.add_parser(name)
         action.add_argument('run')
         if name=='publish':
             action.add_argument('--expected-epoch',type=int,required=True)
         if name in ('pin','unpin'):
             action.add_argument('--owner',required=True)
+    for name in ('managed-init','append'):
+        action = sub.add_parser(name)
+        action.add_argument('--name',required=True)
+        if name == 'append':
+            action.add_argument('--operation',required=True)
+            action.add_argument('--rows',type=Path,required=True)
     serve = sub.add_parser('serve')
     serve.add_argument('--host',default='127.0.0.1')
     serve.add_argument('--port',type=int,default=8081)
+    serve.add_argument('--workers',type=int,choices=(0,3),default=0)
     args = parser.parse_args()
     try:
         control = Control(os.environ[args.dsn_env])
@@ -60,14 +70,15 @@ def main():
         elif args.command=='revoke':
             control.revoke(args.tenant,args.subject,args.dataset)
             result={'revoked':True}
-        elif args.command=='snapshot':
+        elif args.command in ('snapshot','refresh'):
             s3=None
             if args.s3_endpoint:
                 import boto3
                 from botocore.config import Config
                 s3=boto3.client('s3',endpoint_url=args.s3_endpoint,
                                 config=Config(connect_timeout=2,read_timeout=3,retries={'max_attempts':0}))
-            result=construct(control,args.dataset,args.operation,json.loads(args.target.read_text()),args.root,s3)
+            builder=construct if args.command=='snapshot' else refresh
+            result=builder(control,args.dataset,args.operation,json.loads(args.target.read_text()),args.root,s3)
         elif args.command=='publish':
             result={'epoch':publish(control,args.run,args.expected_epoch)}
         elif args.command in ('pin','unpin'):
@@ -76,10 +87,23 @@ def main():
         elif args.command=='gc':
             collect(control,args.run,args.root)
             result={'retired':True}
+        elif args.command in ('managed-init','append'):
+            managed=Managed(os.environ[args.dsn_env])
+            writer=Writer(args.root,args.name)
+            if args.command=='managed-init':
+                managed.initialize()
+                writer.initialize(managed)
+                result={'initialized':True,'table':args.name}
+            else:
+                from modules.common.contracts import decode_json, require
+                require(args.rows.stat().st_size <= 2 << 20, 'resource_limit')
+                result=writer.append(managed,args.operation,decode_json(args.rows.read_bytes()))
+        elif args.command=='progress':
+            result=progress(control,args.run)
         elif args.command=='run':
             result=control.run(args.run)
         else:
-            service=Service(control,args.root/'jobs')
+            service=Service(control,args.root/'jobs',workers=args.workers)
             server=Server((args.host,args.port),service)
             try:
                 server.serve_forever()

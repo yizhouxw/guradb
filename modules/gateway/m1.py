@@ -61,7 +61,7 @@ class Handler(BaseHTTPRequestHandler):
         token = self.headers.get('Authorization', '')
         require(token.startswith('Bearer '), 'unauthorized')
         principal = service.control.principal(token[7:])
-        if self.command == 'POST' and path.path in ('/v1/search','/v1/scan','/v1/exports'):
+        if self.command == 'POST' and path.path in ('/v1/search','/v1/scan','/v1/exports','/v1/graph'):
             require(not self.headers.get('Transfer-Encoding') and self.headers.get('Content-Type') == 'application/json', 'invalid_request')
             length = int(self.headers.get('Content-Length', '-1'))
             require(0 < length <= 65536, 'resource_limit')
@@ -72,7 +72,7 @@ class Handler(BaseHTTPRequestHandler):
                     'dataset_id' in body and 'query' in body and
                     ('read_view_id' not in body or isinstance(body['read_view_id'], str)), 'invalid_request')
             dataset = str(uuid.UUID(body['dataset_id']))
-            kind = {'/v1/search':'search','/v1/scan':'scan','/v1/exports':'export'}[path.path]
+            kind = {'/v1/search':'search','/v1/scan':'scan','/v1/exports':'export','/v1/graph':'graph'}[path.path]
             return 202, handle(service.submit(principal,dataset,kind,body['query'],body.get('read_view_id'))), False
         parts = path.path.strip('/').split('/')
         if self.command == 'GET' and len(parts) == 3 and parts[:2] == ['v1','datasets']:

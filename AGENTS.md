@@ -36,7 +36,7 @@
 
 开始前写用户可观察验收、范围与支持/拒绝白名单；完成标准、依赖/迁移纪律、两次无新证据失败后的根因定位及交接遵循开发流程。CI/CD 采用 [GitHub Actions 分层方案](harness/ci-cd.md)，此前 bootstrap CI 已通过；新运行时变更需推送后验证，CD 待发布/环境合同。
 
-Python 3.11+ 开发依赖安装与 make 替代入口见 [harness/README.md](harness/README.md)。当前 M0 单进程有界读取已落地；rust/functional/performance-smoke/stability-component 为 ready，完整 performance/stability/soak 仍 planned。组件通过不等于完整发布通过。
+Python 3.11+ 开发依赖安装与 make 替代入口见 [harness/README.md](harness/README.md)。当前 M0/M1 有界读取及部分 M2/本地三 worker 切片已落地，范围见 docs/design/m2-running.md；rust/functional/performance-smoke/stability-component 为 ready，完整 performance/stability/soak 仍 planned。组件通过不等于完整发布通过。
 
 ## 全局质量不变量
 

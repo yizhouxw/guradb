@@ -8,6 +8,7 @@ import tantivy
 
 from modules.common.contracts import MAX_ROWS, encoded, public_media, public_values, require
 from modules.storage.objects import get, put
+from modules.index.ann import candidates
 
 ANALYZER = 'ascii-alnum-lower-v1'
 
@@ -70,12 +71,14 @@ def load_bundle(reference, budget):
         budget.artifact(len(raw))
         return raw
     raw = read(reference)
+    if 'incremental' in reference:
+        read(reference['incremental'])
     bundle = json.loads(raw)
     require(bundle['version'] == 1 and 0 < len(bundle['rows']) <= MAX_ROWS, 'source_invalid')
     for dependency in bundle['source']['dependencies']:
         budget.check()
         read(dependency['copy'])
-    for reference in bundle['index_files']:
+    for reference in bundle['index_files'] + bundle.get('ann', {}).get('files', []):
         budget.check()
         read(reference)
     require(read(bundle['manifest_reference']) == encoded(bundle['manifest']), 'source_invalid')
@@ -86,7 +89,11 @@ def load_bundle(reference, budget):
 
 
 def search(bundle, request, budget):
-    require(set(request) <= {'text', 'vector', 'model', 'top_k', 'candidate_limit', 'filter'}, 'invalid_request')
+    require(set(request) <= {'text', 'vector', 'model', 'top_k', 'candidate_limit', 'filter', 'vector_index', 'nprobes'}, 'invalid_request')
+    mode = request.get('vector_index', 'exact')
+    require(mode in ('exact', 'ann'), 'invalid_request')
+    require(('vector_index' not in request and 'nprobes' not in request) or 'vector' in request, 'invalid_request')
+    require('nprobes' not in request or mode == 'ann', 'invalid_request')
     k, limit = request.get('top_k', 10), request.get('candidate_limit', 100)
     require(type(k) is int and type(limit) is int and 1 <= k <= limit <= 1000, 'resource_limit')
     require('text' in request or 'vector' in request, 'invalid_request')
@@ -95,7 +102,7 @@ def search(bundle, request, budget):
     if 'filter' in request:
         selected = request['filter']
         require(isinstance(selected, dict) and set(selected) == {'field','equals'}, 'invalid_request')
-        require(selected['field'] in next(iter(rows.values()))['values'] and
+        require(selected['field'] in {field['name'] for field in bundle['manifest']['schema']} and
                 type(selected['equals']) in (str, int, bool, type(None)), 'invalid_request')
         value = selected['equals']
         field = next(f for f in bundle['manifest']['schema'] if f['name'] == selected['field'])
@@ -131,10 +138,14 @@ def search(bundle, request, budget):
         require(request.get('model') == bundle['model']['model'], 'model_mismatch')
         query = vector(request['vector'], bundle['model']['dimension'])
         ranked = []
-        for key in allowed:
-            budget.check()
-            distance = math.fsum((a-b)**2 for a,b in zip(rows[key]['vector'], query))
-            ranked.append((key, -distance))
+        if mode == 'ann':
+            ranked, ann_costs = candidates(bundle, query, allowed, limit, request.get('nprobes'), budget)
+            costs.update(ann_costs)
+        else:
+            for key in allowed:
+                budget.check()
+                distance = math.fsum((a-b)**2 for a,b in zip(rows[key]['vector'], query))
+                ranked.append((key, -distance))
         ranks.append(sorted(ranked, key=lambda hit: (-hit[1], hit[0]))[:limit])
     else:
         require('model' not in request, 'invalid_request')
@@ -149,4 +160,4 @@ def search(bundle, request, budget):
     return {'hits': [{'logical_key': key, 'record_version': bundle['revision'], 'score': scores[key],
                       'values': public_values(rows[key]['values']), 'media': public_media(rows[key]['media'])} for key in ordered],
             'read_context': bundle['context'], 'stats': costs,
-            'ranking': 'rrf-k60' if len(ranks) == 2 else ('bm25' if 'text' in request else 'exact-squared-l2')}
+            'ranking': ('rrf-k60-ann' if mode == 'ann' else 'rrf-k60') if len(ranks) == 2 else ('bm25' if 'text' in request else mode+'-squared-l2')}

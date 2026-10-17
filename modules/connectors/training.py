@@ -10,7 +10,7 @@ from modules.common.contracts import MAX_BYTES, digest, encoded, public_media, p
 from modules.storage.objects import put
 
 
-def export(bundle, request, directory, budget):
+def samples_for(bundle, request, budget):
     require(set(request) <= {'seed','train_basis_points'}, 'invalid_request')
     seed, threshold = request.get('seed', '0'), request.get('train_basis_points', 8000)
     require(isinstance(seed, str) and len(seed) <= 128 and type(threshold) is int and 0 <= threshold <= 10000, 'invalid_request')
@@ -23,6 +23,12 @@ def export(bundle, request, directory, budget):
                         'record_version': bundle['revision'], 'split': 'train' if bucket < threshold else 'validation',
                         'values_json': encoded(public_values(row['values'])).decode(), 'vector': row['vector'],
                         'media_json': encoded(public_media(row['media'])).decode()})
+    return samples
+
+
+def export(bundle, request, directory, budget, prepared=None):
+    samples = samples_for(bundle, request, budget) if prepared is None else prepared
+    seed, threshold = request.get('seed', '0'), request.get('train_basis_points', 8000)
     schema = pa.schema([pa.field('dataset_id', pa.string(), False), pa.field('entity_kind', pa.string(), False),
                         pa.field('logical_key', pa.string(), False), pa.field('record_version', pa.string(), False),
                         pa.field('split', pa.string(), False), pa.field('values_json', pa.string(), False),

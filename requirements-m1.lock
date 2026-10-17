@@ -30,3 +30,8 @@ tenacity==9.2.1
 typing-extensions==4.16.0
 typing-inspection==0.4.4
 urllib3==2.8.0
+# M2 immutable internal ANN; tested with the existing Arrow/reader pins.
+pylance==0.39.0
+numpy==2.3.5
+lance-namespace==0.13.0
+lance-namespace-urllib3-client==0.13.0

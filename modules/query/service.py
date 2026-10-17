@@ -14,11 +14,15 @@ from modules.catalog.jobs import Jobs
 from modules.common.contracts import Budget, Failure, encoded, public_media, public_values, require
 from modules.connectors.training import export
 from modules.index.retrieval import load_bundle, search
+from modules.index.graph import expand
 from modules.storage.objects import get, put
+from modules.query.distributed import execute as distributed
 
 
 class Service:
-    def __init__(self, control, root):
+    def __init__(self, control, root, workers=0):
+        require(workers in (0,3), 'invalid_request')
+        self.workers = workers
         self.control, self.root = control, Path(root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
         self.worker = uuid.uuid4()
@@ -62,7 +66,7 @@ class Service:
     def submit(self, principal, dataset, kind, request, view=None):
         deadline = time.monotonic()+10
         self.check_lease()
-        require(kind in ('search','scan','export'), 'invalid_request')
+        require(kind in ('search','scan','export','graph'), 'invalid_request')
         require(isinstance(request, dict), 'invalid_request')
         require(self.capacity.acquire(blocking=False), 'resource_limit')
         try:
@@ -88,8 +92,12 @@ class Service:
             budget.check()
             run = self.control.run(row['run'])
             bundle = load_bundle(run['artifact'], budget)
-            if row['kind'] == 'search':
+            if self.workers == 3:
+                output = distributed(bundle, row['kind'], row['request'], budget, self.root/str(job), principal)
+            elif row['kind'] == 'search':
                 output = search(bundle, row['request'], budget)
+            elif row['kind'] == 'graph':
+                output = expand(bundle, row['request'], budget)
             elif row['kind'] == 'scan':
                 require(set(row['request']) <= {'limit'}, 'invalid_request')
                 limit = row['request'].get('limit', 100)
@@ -142,6 +150,8 @@ class Service:
                 return get(result['parquet'])
             manifest = json.loads(get(result['manifest']))
             manifest['query_id'] = str(job)
+            if 'execution' in result:
+                manifest['execution'] = result['execution']
             manifest['parquet'] = {'sha256': result['parquet']['sha256'], 'download': f'/v1/jobs/{job}/parquet'}
             return manifest
         require(not parquet, 'not_found')

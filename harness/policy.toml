@@ -34,7 +34,7 @@ commands = [["{python}", "scripts/cargo.py", "fmt", "--all", "--", "--check"], [
 [suites.functional]
 state = "ready"
 timeout_seconds = 900
-commands = [["{python}", "scripts/m0.py", "functional", "--run-dir", "{run_dir}/m0-functional"], ["{python}", "scripts/m1_acceptance.py", "functional", "--run-dir", "{run_dir}/m1-functional"]]
+commands = [["{python}", "scripts/m0.py", "functional", "--run-dir", "{run_dir}/m0-functional"], ["{python}", "scripts/m1_acceptance.py", "functional", "--run-dir", "{run_dir}/m1-functional"], ["{python}", "scripts/m2_acceptance.py", "functional", "--run-dir", "{run_dir}/m2-functional"], ["{python}", "-m", "unittest", "tests.functional.graph"]]
 
 [suites.performance]
 state = "planned"
@@ -45,12 +45,12 @@ commands = []
 [suites.performance-smoke]
 state = "ready"
 timeout_seconds = 300
-commands = [["{python}", "scripts/m0.py", "performance-smoke", "--run-dir", "{run_dir}/m0-performance"], ["{python}", "scripts/m1_acceptance.py", "performance-smoke", "--run-dir", "{run_dir}/m1-performance"]]
+commands = [["{python}", "scripts/m0.py", "performance-smoke", "--run-dir", "{run_dir}/m0-performance"], ["{python}", "scripts/m1_acceptance.py", "performance-smoke", "--run-dir", "{run_dir}/m1-performance"], ["{python}", "scripts/m2_acceptance.py", "performance-smoke", "--run-dir", "{run_dir}/m2-performance"]]
 
 [suites.stability-component]
 state = "ready"
 timeout_seconds = 300
-commands = [["{python}", "scripts/m0.py", "stability-component", "--run-dir", "{run_dir}/m0-stability"], ["{python}", "scripts/m1_acceptance.py", "stability-component", "--run-dir", "{run_dir}/m1-stability"]]
+commands = [["{python}", "scripts/m0.py", "stability-component", "--run-dir", "{run_dir}/m0-stability"], ["{python}", "scripts/m1_acceptance.py", "stability-component", "--run-dir", "{run_dir}/m1-stability"], ["{python}", "scripts/m2_acceptance.py", "stability-component", "--run-dir", "{run_dir}/m2-stability"]]
 
 [suites.stability]
 state = "planned"
@@ -67,4 +67,4 @@ commands = []
 [suites.python]
 state = "ready"
 timeout_seconds = 60
-commands = [["{python}", "-m", "compileall", "-q", "modules", "clients", "scripts/m1.py", "scripts/m1_acceptance.py", "scripts/m1lib"], ["{python}", "-m", "pip", "check"]]
+commands = [["{python}", "-m", "compileall", "-q", "modules", "clients", "scripts/m1.py", "scripts/m1_acceptance.py", "scripts/m2_acceptance.py", "scripts/m1lib", "scripts/m2lib"], ["{python}", "-m", "pip", "check"]]

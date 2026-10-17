@@ -5,12 +5,13 @@ import shutil
 
 from modules.common.contracts import Budget, Failure, decode_json, digest, encoded, require
 from modules.connectors.iceberg import snapshot
+from modules.index.ann import build as build_ann
 from modules.index.retrieval import ANALYZER, build, features, load_bundle
 from modules.storage.objects import Objects, put
 
 
 def construct(control, dataset, operation, target, root, s3=None, cancelled=lambda: False):
-    require(set(target) == {'metadata_uri','metadata_sha256','snapshot_id','features_uri','features_sha256'}, 'invalid_request')
+    require(isinstance(target, dict) and set(target) - {'ann'} == {'metadata_uri','metadata_sha256','snapshot_id','features_uri','features_sha256'}, 'invalid_request')
     require(all(isinstance(target[name], str) and len(target[name]) == 64 and
                 all(c in '0123456789abcdef' for c in target[name])
                 for name in ('metadata_sha256','features_sha256')), 'invalid_request', 'both source pins require canonical SHA-256')
@@ -58,6 +59,9 @@ def construct(control, dataset, operation, target, root, s3=None, cancelled=lamb
                   'manifest': result['manifest'], 'manifest_reference': manifest_ref, 'rows': result['rows'],
                   'index_path': str(directory/'tantivy'), 'index_files': index_files,
                   'stats': {'source_reads': budget.reads, 'source_bytes': budget.bytes}}
+        if 'ann' in target:
+            bundle['ann'] = build_ann(directory/'lance', result['rows'], revision, model, target['ann'], budget)
+            context['index_versions'].append({'index_id': str(ds['id'])+':lance-ivf-flat', 'version': str(run['id'])})
         budget.check()
         payload = encoded(bundle)
         require(len(payload) <= 32 << 20, 'resource_limit')

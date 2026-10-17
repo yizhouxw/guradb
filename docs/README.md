@@ -31,3 +31,5 @@ M0/M1当前有界实现的依赖、身份/类型白名单与功能/性能/失败
 M0 实施：[详细设计](design/m0-parquet-http.md)、[运行说明](design/m0-running.md)、[验收映射](design/m0-validation.md)、[任务计划](plans/m0-parquet-http.md)。
 
 M1 实施：[详细设计](design/m1-snapshot-serving.md)、[运行说明](design/m1-running.md)、[验收映射](design/m1-validation.md)、[任务计划](plans/2026-10-17-m1-foundations.md)。
+
+- [M2 与本地三 worker 操作](design/m2-running.md)

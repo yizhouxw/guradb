@@ -10,7 +10,7 @@ GitHub Actions 作为本项目 CI/CD 的推荐执行平台。当前已有[质量
 | push | before 到当前树；初次 push 全树 | 不因本地干净而误用空差异；保留失败日志 |
 | workflow_dispatch | 默认 `base=all`；可明确选择已有 base；scope 为 change/release | 全树检查已提交代码，release 缺任何必需运行时 suite 都失败 |
 
-普通检查 120 分钟、完整 release 240 分钟是 job 上限，不是产品性能目标。本次增加三个真实M1 driver及Python检查，使串行最大门禁预算增加，普通job由90调整为120分钟；没有放宽任何组件性能阈值或删除测试。自动测试对照各 suite 的命令数×超时预算并预留安装/上传时间；新增 driver 使预算不足时需拆 job 或调整合理上限，不删除必需验证。完整性能/长稳接入后按受控硬件、对象区域和拓扑拆分专用 job/runner；共享 hosted runner 只为基础和 smoke 验证提供环境，不据此建立产品性能基线。
+普通检查 150 分钟、完整 release 300 分钟是 job 上限，不是产品性能目标。本次保留M0/M1并增加M2功能/性能/故障与Graph门禁，使串行最大预算增加，普通job由120调整为150分钟，release由240调整为300分钟；没有放宽任何组件性能阈值或删除测试。自动测试对照各 suite 的命令数×超时预算并预留安装/上传时间；新增 driver 使预算不足时需拆 job 或调整合理上限，不删除必需验证。完整性能/长稳接入后按受控硬件、对象区域和拓扑拆分专用 job/runner；共享 hosted runner 只为基础和 smoke 验证提供环境，不据此建立产品性能基线。
 
 权限仅 contents:read；Actions 固定 commit SHA，checkout 不保留写凭据；输入经 env 和带引号 argv 传给 harness，不将任意 ref 输入拼入 shell 代码。所有必需门禁禁止 continue-on-error。报告在 always 路径上传，matrix 产物各有独立名称；普通 push/release 不通过新任务自动取消。依赖安装或 runner 被中止时可能尚无报告，必须查看 Actions job 状态，不能以“没有红色报告”当通过。[工作流语法](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)。
 

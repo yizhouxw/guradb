@@ -4,7 +4,9 @@
 
 GuraDB 的目标是在对象存储与开放湖上统一管理结构化数据、文本、图像、音频、视频、向量及关系数据，在同一查询体系内组合 SQL、全文检索、向量检索与 Graph 检索，并服务数据准备与可复现训练读取。
 
-> 当前阶段：单节点 alpha。M0 提供固定 Parquet manifest → Arrow/DataFusion → HTTP 只读 SQL；M1 增加有界 Iceberg v2 Snapshot → PG 发布目录 → BM25/精确向量/RRF → HTTP/CLI → 同视图训练导出。完整范围和最终本地证据见 [M1 设计与验收](docs/design/m1-validation.md)；ANN、Graph、增量、业务写入和分布式仍待实现，尚不可生产发布。
+> 后续实现：新增有界 ANN/Graph、显式 append 刷新、托管 append、MCP 和本地三 worker 切片，见 [M2 操作](docs/design/m2-running.md) 与 [实现范围](docs/decisions/0012-bounded-p0-and-local-workers.md)。完整 M2/M3 与生产发布仍有明确缺口；最终验证以本轮 commit 报告为准。
+
+> M0/M1 基线阶段：单节点 alpha。M0 提供固定 Parquet manifest → Arrow/DataFusion → HTTP 只读 SQL；M1 增加有界 Iceberg v2 Snapshot → PG 发布目录 → BM25/精确向量/RRF → HTTP/CLI → 同视图训练导出。完整范围和最终本地证据见 [M1 设计与验收](docs/design/m1-validation.md)；后续能力见上述 M2 操作，尚不可生产发布。
 
 M1 操作见 [Snapshot/检索/训练快速开始](docs/design/m1-running.md)。M0 SQL 服务见 [M0 快速开始](docs/design/m0-running.md)，支持边界见 [详细设计](docs/design/m0-parquet-http.md) 和 [验收映射](docs/design/m0-validation.md)。
 

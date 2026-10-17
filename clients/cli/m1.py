@@ -15,7 +15,7 @@ def main():
     parser.add_argument('--url',default='http://127.0.0.1:8081')
     parser.add_argument('--token-env',default='GURADB_TOKEN')
     sub = parser.add_subparsers(dest='command',required=True)
-    for name in ('scan','search','export'):
+    for name in ('scan','search','export','graph'):
         action = sub.add_parser(name)
         action.add_argument('--dataset',required=True)
         action.add_argument('--query',default='{}',help='JSON request, as in the HTTP contract')
