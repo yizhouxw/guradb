@@ -94,14 +94,16 @@ class Control:
             row = conn.execute('SELECT * FROM gura_m1.runs WHERE id=%s', (run,)).fetchone()
             require(row is not None, 'not_found')
             ds = conn.execute('SELECT * FROM gura_m1.datasets WHERE id=%s FOR UPDATE', (row['dataset'],)).fetchone()
+            # Refresh after waiting for the dataset lock: a concurrent identical
+            # publication may have committed since the first lookup.
+            row = conn.execute('SELECT * FROM gura_m1.runs WHERE id=%s FOR UPDATE', (run,)).fetchone()
             # Reconcile after a lost response, including callers with the old expected epoch.
-            if ds['published'] == row['id']:
-                return ds['epoch']
+            if row['published_epoch'] is not None:
+                return row['published_epoch']
             require(row['generation'] == ds['generation'], 'stale_generation', 'newer Snapshot attempt fences this worker')
             require(ds['epoch'] == expected_epoch, 'publication_conflict', 'published epoch changed')
-            row = conn.execute('SELECT * FROM gura_m1.runs WHERE id=%s FOR UPDATE', (run,)).fetchone()
             require(row['status'] == 'ready', 'not_ready')
-            conn.execute("UPDATE gura_m1.runs SET status='published' WHERE id=%s", (run,))
+            conn.execute("UPDATE gura_m1.runs SET status='published',published_epoch=%s WHERE id=%s", (ds['epoch']+1,run))
             conn.execute('UPDATE gura_m1.datasets SET published=%s,epoch=epoch+1 WHERE id=%s', (run, row['dataset']))
             return ds['epoch'] + 1
 

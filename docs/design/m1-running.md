@@ -42,7 +42,7 @@ export GURADB_PG_DSN='host=127.0.0.1 dbname=guradb user=operator'
 
 GC拒绝当前published或任何pin，只删除本工具生成的旧run目录；不删除源湖。指定root必须与构建一致。PG历史run最多128，未提供PG历史清理/容量运维；达到上限应停止并规划下一版迁移，不能手动删约束过门禁。多个服务实例不能共享此单进程lease；DB重启导致连接失效后重启服务，遗留非终态作业明确失败，不透明重放。
 
-M0互操作时使用生成的 `<root>/<run>/manifest.json` 及其实际SHA，按 [M0运行说明](m0-running.md)配置；容器需映射manifest中的本地绝对路径。该M0实例是固定启动清单，不自动跟随PG发布或复用PG grant。
+M0互操作时使用生成的 `<root>/<run>/manifest.json` 及其实际SHA，按 [M0运行说明](m0-running.md)配置；容器需映射manifest中的本地绝对路径。该M0实例是固定启动清单，不自动跟随PG发布或复用PG grant；启动这类外部消费者前必须手工pin对应run，停止消费者后再unpin，不能把它当作自动持有M1查询pin的服务。
 
 真实验证：
 

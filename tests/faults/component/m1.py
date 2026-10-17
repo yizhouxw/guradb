@@ -91,6 +91,8 @@ def run(directory):
         if a=='pinned':control.unpin(first['id'],'racing-reader')
         collect(control,first['id'],directory/'builds')
         assert not (directory/'builds'/str(first['id'])).exists()
+        assert publish(control,first['id'],0)==1
+        assert control.dataset(DATASET)['published']==newer['id'] and control.dataset(DATASET)['epoch']==2
         reject(lambda:control.pin(first['id'],'late-reader'),'not_ready')
         reject(lambda:collect(control,newer['id'],directory/'builds'),'still_referenced')
         assert sorted(table.scan().to_arrow().to_pylist(),key=lambda r:r['id'])==rows  # GC never touches lake.
@@ -107,7 +109,7 @@ def run(directory):
         lab.client.delete_object(Bucket='m0-data',Key=key)
         try:
             try:construct(control,DATASET,'expired-source',selected,directory/'builds',lab.client)
-            except Exception:pass
+            except Failure as error:assert error.code=='source_unavailable'
             else:raise AssertionError('missing source accepted')
             assert control.dataset(DATASET)['published']==newer['id']
             assert len(load_bundle(newer['artifact'],Budget())['rows'])==len(rows)

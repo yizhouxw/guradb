@@ -3,7 +3,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 import os
 
-from modules.common.contracts import MAX_BYTES, digest, require
+from modules.common.contracts import MAX_BYTES, Failure, digest, require
 
 
 class Objects:
@@ -23,6 +23,14 @@ class Objects:
             require(s3 is not None and parsed.netloc)
 
     def read(self, uri, limit=4 << 20, expected=None):
+        try:
+            return self._read(uri, limit, expected)
+        except Failure:
+            raise
+        except Exception:
+            raise Failure('source_unavailable', 'pinned source object is unavailable or unreadable') from None
+
+    def _read(self, uri, limit, expected):
         self.budget.check()
         require(self.budget.reads < 128 and self.budget.bytes < MAX_BYTES, 'resource_limit')
         p = urlsplit(uri)

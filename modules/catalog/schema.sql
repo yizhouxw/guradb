@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS gura_m1.runs (
  id uuid PRIMARY KEY, dataset uuid NOT NULL REFERENCES gura_m1.datasets(id),
  operation text NOT NULL, fingerprint text NOT NULL, generation bigint NOT NULL,
  target jsonb NOT NULL, status text NOT NULL CHECK(status IN ('building','ready','published','failed','retiring','retired')),
- artifact jsonb, error text, created timestamptz NOT NULL DEFAULT now(),
+ artifact jsonb, error text, published_epoch bigint, created timestamptz NOT NULL DEFAULT now(),
  UNIQUE(dataset,operation));
 CREATE TABLE IF NOT EXISTS gura_m1.pins (
  run uuid NOT NULL REFERENCES gura_m1.runs(id), owner text NOT NULL,

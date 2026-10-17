@@ -28,7 +28,7 @@ Tantivy 0.26.0 Python binding（Rust 内核）使用冻结的 ascii-alnum-lower-
 
 `gura_m1` schema v1 仅存数据集/权限、Snapshot 定义与 run、发布指针、pin 和 job 元数据，不存业务逐行数据。数据集 ID/租户/name/定义注册后不可变；定义冻结 root/key/text 字段。Snapshot 目标另固定 metadata/features URI、摘要与快照 ID。run 按 `(dataset,operation)` 幂等对账；同 operation 不同目标拒绝。新尝试递增 generation，旧 worker 即使晚完成也不能发布。
 
-状态为 building → ready → published；失败为 failed。ready 只在完整数据与两路索引都创建并验证后写入。publish 再验证产物，在同一 PG 事务中检查 generation、expected epoch，改变 run 状态和 published 指针。失去发布响应先按 run/operation 查目录，已发布同一 run 返回原 epoch；不重放源提交，因为本服务没有源写。单路失败、取消、发布事务中断保留旧完整视图。新构建失败后旧 ready generation 被 fencing，需新 operation 重建，不能悄悄复活旧任务。
+状态为 building → ready → published；失败为 failed。ready 只在完整数据与两路索引都创建并验证后写入。publish 再验证产物，在同一 PG 事务中检查 generation、expected epoch，改变 run 状态和 published 指针。失去发布响应先按 run/operation 查目录，已发布同一 run 返回持久化的原 published_epoch，即使新版本已发布或旧产物已退休，也只对账不倒退指针；不重放源提交，因为本服务没有源写。单路失败、取消、发布事务中断保留旧完整视图。新构建失败后旧 ready generation 被 fencing，需新 operation 重建，不能悄悄复活旧任务。
 
 首次迁移是显式 init 到独立 schema v1，不覆盖既有业务 schema。没有 v0/v2 自动迁移或 downgrade。构建中进程崩溃可能留下 building 与部分目录；相同 operation 的重试遇到既有目录会失败并记录 failed，先查 run，再以新 operation 重建；不宣称透明断点续建。PG 重启保留指针、epoch、权限与 run；查询进程重启把遗留 queued/running 标为 worker_restarted 失败并释放其 job pin，保留已成功的持久结果及训练 pin。
 

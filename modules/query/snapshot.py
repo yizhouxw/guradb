@@ -11,6 +11,9 @@ from modules.storage.objects import Objects, put
 
 def construct(control, dataset, operation, target, root, s3=None, cancelled=lambda: False):
     require(set(target) == {'metadata_uri','metadata_sha256','snapshot_id','features_uri','features_sha256'}, 'invalid_request')
+    require(all(isinstance(target[name], str) and len(target[name]) == 64 and
+                all(c in '0123456789abcdef' for c in target[name])
+                for name in ('metadata_sha256','features_sha256')), 'invalid_request', 'both source pins require canonical SHA-256')
     ds = control.dataset(dataset)
     definition = ds['definition']
     require(set(definition) == {'root','key_field','text_field'}, 'invalid_definition')
@@ -70,6 +73,8 @@ def construct(control, dataset, operation, target, root, s3=None, cancelled=lamb
 
 def publish(control, run, expected_epoch):
     candidate = control.run(run)
+    if candidate['published_epoch'] is not None:
+        return control.publish(run, expected_epoch)
     require(candidate['artifact'] is not None, 'not_ready')
     load_bundle(candidate['artifact'], Budget())
     return control.publish(run, expected_epoch)

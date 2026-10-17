@@ -49,6 +49,9 @@ def run(directory):
         definition={'root':lake.as_uri(),'key_field':'id','text_field':'title'}
         control.register(DATASET,'tenant-a','documents',definition)
         selected=target(table,full)
+        for missing in (None,'',True):
+            rejects(lambda:construct(control,DATASET,'unpinned',dict(selected,features_sha256=missing),directory/'builds'),'invalid_request')
+        assert control.dataset(DATASET)['generation']==0
         run=construct(control,DATASET,'first',selected,directory/'builds')
         assert run['status']=='ready'
         assert control.dataset(DATASET)['published'] is None

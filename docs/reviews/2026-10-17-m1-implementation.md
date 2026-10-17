@@ -31,3 +31,9 @@ linked worktree第一次真实提交hook暴露旧harness缺陷：hook导出的GI
 修复runner对所有suite清除Git声明的repository-local环境变量；临时Git测试自身也隔离环境。新增真实outer repo + linked worktree + nested git init/config/commit回归，核对父HEAD、index和config字节不变。最终真实pre-commit还需通过同一套自测，不能靠关闭hook提交。
 
 新增依赖用途和固定版本见requirements-m1.lock/ADR0011。已核对安装分发包metadata/license：fastavro、Tantivy binding、SQLAlchemy为MIT，PyIceberg/PyArrow为Apache-2.0，psycopg/psycopg-binary为LGPLv3；原Rust Cargo.lock未改变。许可证文件SHA与用途归档在共同Git目录guradb/m1-evidence/dependencies-20261017.json；这是直接分发包核对，不能替代发布前全量transitive SBOM、原生附带库与分发许可审查。
+
+最终边界复核补充：run持久保存published_epoch，验证“发布响应丢失→新版本发布→旧产物GC→旧operation重试”仍能返回原epoch且不倒退当前指针，不依赖旧产物仍可读取；未发布的旧generation仍拒绝。外部对象缺失转换为明确source_unavailable，真实S3删除测试核对具体错误而非接受任意异常。本任务的新PG schema尚未对外部署，published_epoch包含在首次schema v1；没有自动修改既有外部schema。
+
+该补充的真实并发发布用例首先捕获锁前run读取的陈旧epoch；改为取得dataset锁后重新锁读run，再判断历史published_epoch。保留失败报告，未删除并发断言或改变预算。
+
+输入复核要求metadata和features两者均为canonical SHA-256，显式null不能退化成无pin读取，负例验证不创建generation；独立M0兼容消费者的手工pin责任已明确。
