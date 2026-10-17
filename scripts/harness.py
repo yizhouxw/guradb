@@ -12,6 +12,7 @@ from harnesslib.architecture import lint
 from harnesslib.evidence import compare_performance, read_json, verify_stability
 from harnesslib.policy import HarnessError, load, plan
 from harnesslib.runner import check, discover_changes
+from harnesslib.version_control import checkpoint, install_hooks, recover, require_committable_tree, status
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -31,8 +32,27 @@ def main() -> int:
     performance.add_argument("--candidate", type=Path, required=True)
     stability = commands.add_parser("verify-stability")
     stability.add_argument("--report", type=Path, required=True)
+    commands.add_parser("git-status", help="show commit, dirty state and recovery checkpoints")
+    commands.add_parser("install-git-hooks", help="enable repository hooks without replacing custom hooks")
+    commands.add_parser("pre-commit", help="check the staged snapshot and run change quality gates")
+    snapshot = commands.add_parser("checkpoint", help="tag a clean committed recovery point")
+    snapshot.add_argument("--label", required=True)
+    snapshot.add_argument("--report", type=Path)
+    recovery = commands.add_parser("recover", help="open a checkpoint in a new detached worktree")
+    recovery.add_argument("--checkpoint", required=True)
+    recovery.add_argument("--destination", type=Path, required=True)
     arguments = parser.parse_args()
     try:
+        # Recovery must still work when the current policy is broken.
+        if arguments.command in {"git-status", "install-git-hooks", "recover"}:
+            if arguments.command == "git-status":
+                result = status(ROOT)
+            elif arguments.command == "install-git-hooks":
+                result = install_hooks(ROOT)
+            else:
+                result = recover(ROOT, arguments.checkpoint, arguments.destination)
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return 0
         configuration = load(ROOT)
         policy, architecture, invariants, workloads, faults = configuration
         if arguments.command == "lint":
@@ -42,8 +62,15 @@ def main() -> int:
         elif arguments.command == "plan":
             paths = arguments.path if arguments.path is not None else discover_changes(ROOT, arguments.base)
             print(json.dumps(plan(ROOT, paths, policy, architecture, invariants), ensure_ascii=False, indent=2))
-        elif arguments.command == "check":
+        elif arguments.command in {"check", "pre-commit"}:
+            if arguments.command == "pre-commit":
+                require_committable_tree(ROOT)
+                arguments.scope, arguments.base = "change", "auto"
             report, path = check(ROOT, arguments.scope, arguments.base, configuration)
+            if arguments.command == "pre-commit":
+                require_committable_tree(ROOT)
+                if status(ROOT)["head"] != report["git_commit"]:
+                    raise HarnessError("HEAD changed during pre-commit checks; inspect and retry")
             for item in report["results"]:
                 print(f"{item['status'].upper()}: {item['suite']} {item.get('reason', '')}".rstrip())
             print(f"Report: {path}")
@@ -56,6 +83,8 @@ def main() -> int:
         elif arguments.command == "verify-stability":
             result = verify_stability(read_json(arguments.report), faults, arguments.report.parent)
             print(json.dumps(result, ensure_ascii=False, indent=2))
+        elif arguments.command == "checkpoint":
+            print(json.dumps(checkpoint(ROOT, arguments.label, policy, arguments.report), ensure_ascii=False, indent=2))
         return 0
     except (HarnessError, OSError, ValueError, KeyError, TypeError) as error:
         print(f"HARNESS ERROR: {error}", file=sys.stderr)

@@ -50,6 +50,7 @@ Python 3.11+ 和 Git；开发依赖用于 harness/标准 OpenAPI 契约，不代
 ```sh
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements-dev.lock
+.venv/bin/python scripts/harness.py install-git-hooks
 .venv/bin/python scripts/harness.py plan
 .venv/bin/python scripts/harness.py check
 # 系统有可用 make 时等价入口：
@@ -59,3 +60,5 @@ make check
 当前执行仓库/架构 policy、完整 OpenAPI 与语义契约、harness 自测，生成独立报告和日志。运行时代码出现后按风险要求功能、性能与稳定性 suite；缺失即失败，不能跳过成绿。当前无内核或真实基准/故障 driver，`check --scope release` 预期失败。单独 `python3 scripts/check_repository.py` 仍可用标准库做最小文档检查。
 
 参与设计与开发请先阅读 [贡献指南](CONTRIBUTING.md) 和 [Agent 协作约定](AGENTS.md)。
+
+版本追溯已接入 [Git 工作流](harness/version-control.md)：切片提交、提交前检查、checkpoint 与独立目录恢复。当前仅本地仓库，无远端备份配置。

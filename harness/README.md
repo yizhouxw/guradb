@@ -9,6 +9,7 @@
 ```sh
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements-dev.lock
+.venv/bin/python scripts/harness.py install-git-hooks
 .venv/bin/python scripts/harness.py plan
 .venv/bin/python scripts/harness.py check
 ```
@@ -50,6 +51,7 @@ python3 -m venv .venv
 | [质量模型](quality-model.md) | 风险分级、阶段门禁与复核要求 |
 | [证据协议](evidence.md) | 性能比较、噪声、trace、种子和报告边界 |
 | [首次内核接入](runtime-onboarding.md) | 从 planned 到真实代码门禁的步骤 |
+| [Git 追溯与恢复](version-control.md) | 有限切片提交、检查点、提交前门禁与保留现场的恢复 |
 
 本地依赖检查含 Cargo 普通、dev、build、target-specific 和 workspace 继承，以及包/模块循环。未归属代码、超过 600 行的源文件、检查范围内的符号链接会失败。600 行是可维护性门槛，不是性能指标；新增语言的真实 import 图仍需对应检查器，不能只靠 Cargo lint。
 

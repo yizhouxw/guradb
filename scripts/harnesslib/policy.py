@@ -128,8 +128,9 @@ def load(root: Path) -> tuple[dict, dict, dict, dict, dict]:
     return values
 
 
-def git(root: Path, *args: str, allow_failure: bool = False) -> bytes:
-    result = subprocess.run(["git", *args], cwd=root, capture_output=True, timeout=30)
+def git(root: Path, *args: str, allow_failure: bool = False,
+        environment: dict[str, str] | None = None) -> bytes:
+    result = subprocess.run(["git", *args], cwd=root, capture_output=True, timeout=30, env=environment)
     if result.returncode and not allow_failure:
         raise HarnessError(result.stderr.decode(errors="replace").strip())
     return result.stdout if not result.returncode else b""

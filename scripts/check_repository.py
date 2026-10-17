@@ -131,6 +131,9 @@ def main() -> int:
         "tests/contracts/test_http_contract.py", "tests/harness/test_policy.py",
         "tests/harness/test_architecture.py", "tests/harness/test_evidence.py", "tests/harness/test_runner.py",
         "tests/harness/test_dependencies.py",
+        "harness/version-control.md", "scripts/harnesslib/version_control.py",
+        "tests/harness/test_version_control.py", ".githooks/pre-commit",
+        "docs/decisions/0008-git-traceability-and-recovery.md",
     ]
     required += [f"modules/{name}/README.md" for name in
                  ("gateway", "query", "catalog", "storage", "index", "cluster", "connectors")]

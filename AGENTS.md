@@ -6,6 +6,14 @@
 
 默认中文说明，英文代码标识符。按需加载相关文档，不把全部历史塞进上下文；长期决定进入 ADR，根文件保留导航和全局规则。
 
+## Git 追溯与恢复
+
+遵循 [Git 工作流](harness/version-control.md) 与 [ADR 0008](docs/decisions/0008-git-traceability-and-recovery.md)。开始记录 `git status`、起始 commit/分支与检查点；复杂实验或已有用户改动使用独立 worktree，不能自动 stage/stash/覆盖他人改动。
+
+有限切片通过门禁和复核后提交，记录变更、验证与恢复点；提交后生成精确绑定新 commit 的检查报告并建立 checkpoint。本仓库作者使用 `yizhouxw <yizhou.xw@gmail.com>`。本地提交属于后续开发闭环，推送/远端设置另行授权。禁止为过门禁使用 `--no-verify` 或关闭 hook。
+
+遇到阻断错误先保留日志/diff/失败现场，用 `harness.py recover` 在新目录恢复 checkpoint；需要撤销主线提交时在干净树用经复核的 revert 新提交。默认禁止破坏性 reset/clean、强制 checkout、强推或重写共享历史。代码恢复不撤销数据迁移和外部副作用，必须独立对账/补偿。
+
 ## 产品与架构边界
 
 - [ADR 0002](docs/decisions/0002-object-store-lake-boundary.md)：对象存储湖架构，不做高并发 OLTP/实时敏感业务事务。
