@@ -1,0 +1,73 @@
+schema_version = 1
+
+[[invariants]]
+id = "INV-001"
+name = "固定快照：扫描、候选、图路径、回表与分页不得混用版本"
+modules = ["query", "catalog", "index", "connectors"]
+suite = "functional"
+
+[[invariants]]
+id = "INV-002"
+name = "逻辑 ID/记录版本独立于 Parquet 行位置、Lance rowid 与压缩布局"
+modules = ["storage", "index", "connectors"]
+suite = "functional"
+
+[[invariants]]
+id = "INV-003"
+name = "数据提交与 search_ready 分离；索引未覆盖不能静默漏读"
+modules = ["gateway", "query", "catalog", "index"]
+suite = "stability"
+
+[[invariants]]
+id = "INV-004"
+name = "发布 CAS 校验目标 revision/generation；旧任务不能倒退视图"
+modules = ["catalog", "cluster", "index"]
+suite = "stability"
+
+[[invariants]]
+id = "INV-005"
+name = "源提交与 GuraDB 发布分别 fencing；结果未知先对账再重试"
+modules = ["catalog", "cluster", "connectors"]
+suite = "stability"
+
+[[invariants]]
+id = "INV-006"
+name = "GC 不删除被快照、查询、训练 pin 或源格式引用的数据"
+modules = ["storage", "catalog", "cluster"]
+suite = "stability"
+
+[[invariants]]
+id = "INV-007"
+name = "权限撤销/强制擦除不能被旧索引、缓存、游标或图路径绕过"
+modules = ["gateway", "query", "catalog", "storage", "index"]
+suite = "stability"
+
+[[invariants]]
+id = "INV-008"
+name = "内存、对象请求、图扇出、超时与取消预算跨 worker 生效"
+modules = ["gateway", "query", "storage", "index", "cluster"]
+suite = "stability"
+
+[[invariants]]
+id = "INV-009"
+name = "ANN 质量/过滤与全局融合可解释；不得以降召回换取表面提速"
+modules = ["query", "index", "cluster"]
+suite = "performance"
+
+[[invariants]]
+id = "INV-010"
+name = "外部删除/schema/快照过期按格式语义执行或明确失败"
+modules = ["connectors", "query", "storage"]
+suite = "functional"
+
+[[invariants]]
+id = "INV-011"
+name = "固定训练清单的样本身份、模态对齐、split 与恢复语义可复现"
+modules = ["query", "storage", "connectors", "cluster"]
+suite = "functional"
+
+[[invariants]]
+id = "INV-012"
+name = "PG18 子集和只读约束逐项验证；不支持事务/扩展行为明确拒绝"
+modules = ["gateway", "query", "cli", "mcp"]
+suite = "functional"

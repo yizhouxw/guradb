@@ -1,0 +1,60 @@
+schema_version = 1
+minimum_repetitions = 5
+maximum_spread_pct = 30.0
+# Relative regression budgets are initial review thresholds, NOT product SLOs.
+# Each real driver must freeze its own absolute floor/ceiling before baseline.
+[metrics.latency_p95_ms]
+direction = "lower"
+max_regression_pct = 10.0
+unit = "ms"
+
+[metrics.latency_p99_ms]
+direction = "lower"
+max_regression_pct = 10.0
+unit = "ms"
+
+[metrics.throughput_samples_s]
+direction = "higher"
+max_regression_pct = 5.0
+unit = "samples/s"
+
+[metrics.recall_at_10]
+direction = "higher"
+aggregation = "min"
+max_regression_pct = 0.0
+unit = "ratio"
+minimum = 0.0
+maximum = 1.0
+
+[metrics.object_get_count]
+direction = "lower"
+max_regression_pct = 10.0
+unit = "requests"
+
+[metrics.bytes_read]
+direction = "lower"
+max_regression_pct = 10.0
+unit = "bytes"
+
+[metrics.peak_rss_bytes]
+direction = "lower"
+max_regression_pct = 10.0
+unit = "bytes"
+
+[[workloads]]
+id = "retrieval.hybrid"
+state = "planned"
+description = "结构过滤+全文/ANN+有界图+RRF；每种 cache_mode 独立比较"
+metrics = ["latency_p95_ms", "latency_p99_ms", "recall_at_10", "object_get_count", "bytes_read", "peak_rss_bytes"]
+
+[[workloads]]
+id = "training.scan"
+state = "planned"
+description = "固定 revision，投影/过滤、样本对齐与分片读取"
+metrics = ["throughput_samples_s", "object_get_count", "bytes_read", "peak_rss_bytes"]
+
+[[workloads]]
+id = "retrieval.with-background-load"
+state = "planned"
+description = "训练扫描+索引构建并发下的在线检索与资源隔离"
+metrics = ["latency_p95_ms", "latency_p99_ms", "recall_at_10", "object_get_count", "bytes_read", "peak_rss_bytes"]

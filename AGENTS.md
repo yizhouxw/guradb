@@ -1,0 +1,46 @@
+# GuraDB Agent 工作约定
+
+## 开始与恢复
+
+先阅读 [README](README.md)、受影响目录的 AGENTS、对应 ADR 和 [harness 入口](harness/README.md)。长任务/上下文恢复时检查 Git 状态、当前变更计划、未解决风险与最新报告；旧摘要里的“通过”不能替代当前代码证据。
+
+默认中文说明，英文代码标识符。按需加载相关文档，不把全部历史塞进上下文；长期决定进入 ADR，根文件保留导航和全局规则。
+
+## 产品与架构边界
+
+- [ADR 0002](docs/decisions/0002-object-store-lake-boundary.md)：对象存储湖架构，不做高并发 OLTP/实时敏感业务事务。
+- [ADR 0003](docs/decisions/0003-storage-and-execution-baseline.md)：Rust/Arrow/DataFusion、Iceberg/Parquet、Lance/Tantivy/邻接和小型 PG 控制面为推荐 POC 基线，尚未验证实现。
+- [ADR 0004](docs/decisions/0004-snapshot-and-index-publication.md)：事实数据有唯一权威来源，默认读已发布 read view；数据提交与索引就绪分离。
+- [ADR 0007](docs/decisions/0007-incremental-delivery-and-gates.md)：按路线图切片实施；身份/版本/保留遵循[数据合同](docs/product/data-contracts.md)，组件验证与完整产品发布分别验收。
+- 需求、推荐设计、已接受决定与已实测能力分别描述。不得把骨架/目录/契约或模拟测试写成已支持功能。
+- PG18 语法/类型、wire、目录、事务、扩展分别验收；格式按版本、方向、删除/schema/快照语义验收，不解析后忽略不支持行为。
+
+## 每次变更的闭环
+
+1. 运行 `.venv/bin/python scripts/harness.py plan`；对拟议文件可用 `--path` 预判风险。
+2. 跨模块、热点、持久化/发布/GC、基线变化使用 [变更计划](harness/templates/change-plan.md)，写清不变量、最小切片、功能真值、性能预算及故障断言；小型文档修改不强制填表。
+3. 实现相关行为与负向测试，避免捎带重构。改变公开接口/布局时同步文档、示例、兼容与迁移说明。
+4. 运行 `.venv/bin/python scripts/harness.py check`，根据实际变更选择门禁。缺失命令/证据、超时或失败不能跳过成绿。
+5. 单独审查差异、复杂度、边界和证据；高风险变更需要独立审查轮次或人工复核。
+6. 报告改了什么、为什么、实际命令和报告、缺失证据及风险。仅 bootstrap 通过不得宣称数据库质量通过或可发布。
+
+Python 3.11+ 开发依赖安装与 make 替代入口见 [harness/README.md](harness/README.md)。当前无数据库运行实现；功能、组件性能/稳定性及完整性能/稳定性/soak 为 planned，运行时代码出现后相应 missing 门禁必须补齐。组件通过不等于完整发布通过。
+
+## 全局质量不变量
+
+[机器清单](harness/invariants.toml) 是验证义务，不是覆盖证明。尤其不能破坏：
+
+- 稳定逻辑 ID/记录版本不依赖物理 rowid；扫描、ANN、全文、图路径与分页读同一固定视图。
+- 索引缺口要补偿/等待/报错；旧构建不能倒退发布，源提交 fencing 与目录发布 fencing 分别验证。
+- 提交结果未知先对账；GC 检查源引用、快照、查询与训练 pin；撤权不被缓存/旧索引绕过。
+- 取消、内存、远程请求、图扇出与执行预算贯穿远端任务；派生索引不得变成独立双主。
+- ANN/融合/训练优化同时证明结果与质量，不能通过漏读、降低 recall、缩小负载或换暖缓存声称提速。
+
+## 规模与证据纪律
+
+- 遵循 [architecture.toml](harness/architecture.toml) 的唯一归属与依赖 DAG；公共类型不能反向依赖上层，不建立多套客户端语义。
+- 源文件上限 600 行；按职责拆分，不压缩代码规避。新增语言补充实际依赖/静态检查，当前 Cargo 检查不证明其它语言 import 图。
+- 功能采用独立真值/差异/属性/负例；性能固定输入和环境，区分冷热并计请求/字节/内存/构建；稳定性记录 seed、注入和恢复 trace。
+- 禁止手填/复用不匹配的性能结果、把 synthetic 结果写成产品 baseline、删用例或调预算消除回归。基线/门禁削弱需前后证据与独立复核。
+- 不提交凭证、用户数据、大型媒体或运行产物。日志放 artifacts，不把敏感参数写入证据。
+- 只使用本项目约定，不沿用其它仓库的分支/提交/推送规则。

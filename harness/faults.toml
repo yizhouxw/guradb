@@ -1,0 +1,63 @@
+schema_version = 1
+suite_id = "lake-publication-recovery"
+state = "planned"
+
+[[scenarios]]
+id = "crash-after-upload"
+invariants = ["INV-003", "INV-005"]
+minimum_workers = 1
+
+[[scenarios]]
+id = "commit-response-lost"
+invariants = ["INV-005"]
+minimum_workers = 1
+
+[[scenarios]]
+id = "crash-before-view-publish"
+invariants = ["INV-003", "INV-004"]
+minimum_workers = 1
+
+[[scenarios]]
+id = "partial-index-failure"
+invariants = ["INV-001", "INV-003"]
+minimum_workers = 1
+
+[[scenarios]]
+id = "stale-builder-late-publish"
+invariants = ["INV-004"]
+minimum_workers = 2
+
+[[scenarios]]
+id = "stale-source-writer"
+invariants = ["INV-005"]
+minimum_workers = 2
+
+[[scenarios]]
+id = "worker-loss-and-duplicate-task"
+invariants = ["INV-001", "INV-004", "INV-008"]
+minimum_workers = 3
+
+[[scenarios]]
+id = "object-throttle-timeout"
+invariants = ["INV-008"]
+minimum_workers = 1
+
+[[scenarios]]
+id = "gc-versus-training-pin"
+invariants = ["INV-006", "INV-011"]
+minimum_workers = 1
+
+[[scenarios]]
+id = "external-snapshot-expired"
+invariants = ["INV-001", "INV-010"]
+minimum_workers = 1
+
+[[scenarios]]
+id = "authorization-revoked"
+invariants = ["INV-007"]
+minimum_workers = 1
+
+[[scenarios]]
+id = "cancel-high-fanout"
+invariants = ["INV-008"]
+minimum_workers = 3

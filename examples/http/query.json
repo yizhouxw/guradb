@@ -1,0 +1,10 @@
+{
+  "sql": "SELECT asset_id, media_type FROM assets WHERE media_type = $1 ORDER BY asset_id LIMIT 10",
+  "parameters": [
+    "image/jpeg"
+  ],
+  "mode": "read_only",
+  "timeout_ms": 10000,
+  "max_rows": 10,
+  "read_consistency": "published"
+}

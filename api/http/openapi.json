@@ -1,0 +1,639 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "GuraDB HTTP API — proposal",
+    "version": "0.0.0-draft.3",
+    "description": "Design-only read-only query contract for an object-store lake database. No service is implemented. M0/M1 start with a PostgreSQL 18 SELECT subset over published read views; batch writes and lake synchronization require a separate job contract. Type encodings, authentication and retention remain subject to POCs and ADRs."
+  },
+  "x-status": "proposal-not-implemented",
+  "servers": [
+    {
+      "url": "https://guradb.example.invalid",
+      "description": "Reserved illustrative hostname; not a deployed service."
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/v1/queries": {
+      "post": {
+        "operationId": "submitQuery",
+        "summary": "Submit one parameterized read-only SQL statement",
+        "description": "Acceptance does not indicate query success. This endpoint rejects DDL, DML and side-effecting statements before execution. Tenant and principal are derived from authenticated identity. Batch writes and synchronization are outside this contract.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryRequest"
+              },
+              "example": {
+                "sql": "SELECT asset_id, media_type FROM assets WHERE media_type = $1 ORDER BY asset_id LIMIT 10",
+                "parameters": [
+                  "image/jpeg"
+                ],
+                "mode": "read_only",
+                "timeout_ms": 10000,
+                "max_rows": 10,
+                "read_consistency": "published"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted query handle; poll status for final outcome.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryHandle"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/RequestError"
+          }
+        }
+      }
+    },
+    "/v1/queries/{query_id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/QueryId"
+        }
+      ],
+      "get": {
+        "operationId": "getQuery",
+        "summary": "Get an authorized query handle",
+        "description": "Execution failures after acceptance appear in status=failed and error. Handle retention is TBD. All access requires authorization.",
+        "responses": {
+          "200": {
+            "description": "Current status; a successful HTTP request does not imply a successful query.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryHandle"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/RequestError"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "cancelQuery",
+        "summary": "Request cancellation",
+        "description": "Cancellation races with completion; cancel_requested is not terminal. Once terminal, status never changes. Repeated calls return the current authorized handle without reverting a completed task to cancel_requested.",
+        "responses": {
+          "202": {
+            "description": "Cancellation requested or pending; poll for terminal state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryHandle"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Query already terminal; existing outcome is unchanged.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryHandle"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/RequestError"
+          }
+        }
+      }
+    },
+    "/v1/queries/{query_id}/results": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/QueryId"
+        }
+      ],
+      "get": {
+        "operationId": "getQueryResults",
+        "summary": "Read one page from a successful query result",
+        "description": "Only available after status=succeeded. Results are bounded by total max_rows and response byte policy. Every data page carries the same read_context as its successful handle. Opaque cursors bind the fixed result snapshot, tenant and authorized principal, expire, and do not reexecute SQL. Non-ready=409; expired=410; inaccessible resources may use 404 to avoid disclosure.",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": "Opaque cursor from the previous page. Omit for the first page."
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Requested page row count within server limits; defaults and maximum TBD."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page from the fixed query result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultPage"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/RequestError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Proposal only; token format, issuing authority and identity integration TBD. Protected transport is required."
+      }
+    },
+    "parameters": {
+      "QueryId": {
+        "name": "query_id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": "Opaque query handle, scoped and authorized by server identity."
+      }
+    },
+    "responses": {
+      "RequestError": {
+        "description": "Request-level error: invalid request (400), unauthenticated (401), forbidden (403), not found (404), not ready (409), expired (410), over budget (429), or server failure (5xx). Execution failures after acceptance are reported on QueryHandle.error.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "QueryRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "sql"
+        ],
+        "description": "Single read-only SQL statement. M0/M1 support only the explicitly tested SELECT/type/function subset and published consistency. DDL, DML, side-effecting functions, interactive transactions and row locks must be rejected by planning/execution. No service is implemented.",
+        "properties": {
+          "sql": {
+            "type": "string",
+            "minLength": 1,
+            "description": "One supported read-only SQL statement; planning/execution must reject side effects. Parameters are bound separately, never interpolated."
+          },
+          "parameters": {
+            "type": "array",
+            "items": {},
+            "default": [],
+            "description": "JSON values bound in positional $1, $2 order. SQL type mappings require a separate decision; ambiguous values must be rejected."
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "read_only"
+            ],
+            "default": "read_only",
+            "description": "Only read_only is accepted. The execution layer independently enforces side-effect freedom and principal permissions; this field cannot authorize writes."
+          },
+          "timeout_ms": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Requested total execution timeout, subject to server policy. Default and maximum are TBD."
+          },
+          "max_rows": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Total result row limit, subject to server policy; does not bound scan work. Default and maximum are TBD."
+          },
+          "read_consistency": {
+            "type": "string",
+            "enum": [
+              "published",
+              "data_committed"
+            ],
+            "default": "published",
+            "description": "published binds a complete published read view and may lag committed data. M0/M1 accept published only. data_committed is a later capability: bind an actual committed revision, compensate/scan correctly or wait within budget, otherwise fail. Reject unsupported modes rather than silently using published."
+          },
+          "read_view_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Pin an authorized published view covering every data resource in the query. Incompatible scope or expired sources must fail. Cannot combine with data_committed; current authorization still applies."
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "read_view_id"
+              ]
+            },
+            "then": {
+              "properties": {
+                "read_consistency": {
+                  "const": "published"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "QueryHandle": {
+        "type": "object",
+        "required": [
+          "query_id",
+          "status"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "query_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed",
+              "cancel_requested",
+              "cancelled"
+            ],
+            "description": "succeeded, failed and cancelled are terminal and immutable; a late cancellation request must not move them back to cancel_requested."
+          },
+          "error": {
+            "$ref": "#/components/schemas/QueryError"
+          },
+          "read_context": {
+            "$ref": "#/components/schemas/ReadContext"
+          },
+          "result_kind": {
+            "type": "string",
+            "enum": [
+              "data",
+              "metadata"
+            ],
+            "description": "Assigned by the server planner, never by the caller. data includes any query reading dataset contents, even aggregates or constant projections; metadata is restricted to constants and catalog-only queries without dataset reads."
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "failed"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "required": [
+                "error"
+              ]
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "status"
+              ],
+              "properties": {
+                "status": {
+                  "const": "succeeded"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "result_kind"
+              ]
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "status",
+                "result_kind"
+              ],
+              "properties": {
+                "status": {
+                  "const": "succeeded"
+                },
+                "result_kind": {
+                  "const": "data"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "read_context"
+              ]
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "result_kind"
+              ],
+              "properties": {
+                "result_kind": {
+                  "const": "metadata"
+                }
+              }
+            },
+            "then": {
+              "not": {
+                "required": [
+                  "read_context"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "Column": {
+        "type": "object",
+        "required": [
+          "name",
+          "type"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "description": "SQL type name. Binary, numeric, temporal and extension type encodings TBD."
+          }
+        }
+      },
+      "ResultPage": {
+        "type": "object",
+        "required": [
+          "query_id",
+          "columns",
+          "rows",
+          "next_cursor",
+          "truncated",
+          "result_kind"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "query_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Column"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {}
+            },
+            "description": "Values follow the columns in order. Lossless SQL-to-JSON mappings require a type-contract ADR; do not silently round large numbers."
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Null means no further page in this bounded result set, not necessarily all source rows were returned.",
+            "minLength": 1
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "True when total result row cap omitted rows. It is not a pagination indicator."
+          },
+          "read_context": {
+            "$ref": "#/components/schemas/ReadContext"
+          },
+          "result_kind": {
+            "type": "string",
+            "enum": [
+              "data",
+              "metadata"
+            ],
+            "description": "Assigned by the server planner, never by the caller. data includes any query reading dataset contents, even aggregates or constant projections; metadata is restricted to constants and catalog-only queries without dataset reads."
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "result_kind"
+              ],
+              "properties": {
+                "result_kind": {
+                  "const": "data"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "read_context"
+              ]
+            },
+            "else": {
+              "not": {
+                "required": [
+                  "read_context"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "QueryError": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "retryable",
+          "request_id"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "retryable": {
+            "type": "boolean",
+            "description": "Retry may be possible; a newly submitted query can read another version unless its view is pinned."
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "sqlstate": {
+            "type": "string",
+            "pattern": "^[0-9A-Z]{5}$",
+            "description": "Present only where a PostgreSQL-compatible mapping is defined."
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Sanitized structured context, excluding credentials and private query parameters."
+          }
+        }
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/QueryError"
+          }
+        }
+      },
+      "SourceVersion": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_id",
+          "format",
+          "version"
+        ],
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "format": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "type": "string",
+            "description": "Opaque source snapshot, dataset version or immutable manifest identity. Not a cross-source transaction timestamp.",
+            "minLength": 1
+          }
+        }
+      },
+      "IndexVersion": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "index_id",
+          "version"
+        ],
+        "properties": {
+          "index_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "ReadContext": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "read_consistency",
+          "data_revision_id",
+          "source_versions",
+          "index_versions"
+        ],
+        "description": "Required for successful data handles and every data result page. The same fixed revision, sources and index set are retained across pages. Versions describe what was read, not a global atomic moment. Catalog-only/constant queries use result_kind=metadata and omit this object.",
+        "properties": {
+          "read_consistency": {
+            "type": "string",
+            "enum": [
+              "published",
+              "data_committed"
+            ]
+          },
+          "data_revision_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Opaque aggregate revision binding every data source selected for this query; not an arbitrary single-table snapshot ID."
+          },
+          "read_view_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Opaque view binding the aggregate revision and its required index bundle. All result pages preserve this exact context."
+          },
+          "source_versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourceVersion"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "index_versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IndexVersion"
+            },
+            "uniqueItems": true
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "read_consistency"
+              ],
+              "properties": {
+                "read_consistency": {
+                  "const": "published"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "read_view_id"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}
