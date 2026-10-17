@@ -20,6 +20,8 @@
 | [测试规划](../tests/README.md) | 未来兼容性、故障与性能验收要求 |
 | [Agent Harness](../harness/README.md) | 工作闭环、模块约束、变更门禁、性能/故障证据与 CI |
 | [Git 追溯与恢复](../harness/version-control.md) | 起始/最终 commit、检查点、提交前门禁与安全回滚 |
+| [开发流程](../harness/development-workflow.md) | 任务起止、验收/复核、失败与交接、证据归档 |
+| [GitHub Actions CI/CD](../harness/ci-cd.md) | 当前 CI 配置、远端接入与后续 CD 合同 |
 | [本次设计复审](reviews/2026-10-17-implementation-readiness.md) | 实施阻碍、修正位置、门禁前后范围与验证边界 |
 
 下一步从 M0 固定 Parquet manifest 与参数化只读 HTTP 扫描开始，冻结当前切片的依赖、身份/类型白名单和功能/性能/失败预算。各组件在首次使用前验证，后续能力不作为首个运行切片的总前置条件；实施范围统一以路线图为准。

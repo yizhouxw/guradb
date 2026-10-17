@@ -14,7 +14,7 @@ python3 -m venv .venv
 .venv/bin/python scripts/harness.py check
 ```
 
-`check` 默认按实际变更运行。没有首个 commit 时检查全部文件；有历史时包含 staged、unstaged、untracked、删除和重命名的两端。`--base <ref>` 按 merge-base 计算；CI 自动读取 PR base 或 push before。无法解析基线时失败，不把变更当空集。
+`check` 默认按实际变更运行。本地 active task 使用其原始 base；没有任务时与 HEAD 比较，包含 staged、unstaged、untracked、删除和重命名两端。`--base <ref>` 按 merge-base 计算，`--base all` 检查整树；CI 自动读取 PR base 或 push before，手动运行默认全树。无法解析基线时失败，不把变更当空集。
 
 可用 make 时 `make setup`、`make plan`、`make check` 提供同样入口；本机 make 受 Xcode 许可限制时直接使用上述 Python 命令。
 
@@ -52,6 +52,8 @@ python3 -m venv .venv
 | [证据协议](evidence.md) | 性能比较、噪声、trace、种子和报告边界 |
 | [首次内核接入](runtime-onboarding.md) | 从 planned 到真实代码门禁的步骤 |
 | [Git 追溯与恢复](version-control.md) | 有限切片提交、检查点、提交前门禁与保留现场的恢复 |
+| [开发流程](development-workflow.md) | 任务起止、验收/复核、失败与交接、依赖/迁移及证据归档 |
+| [GitHub Actions CI/CD](ci-cd.md) | CI 事件/权限/预算、远端接入与后续部署晋升合同 |
 
 本地依赖检查含 Cargo 普通、dev、build、target-specific 和 workspace 继承，以及包/模块循环。未归属代码、超过 600 行的源文件、检查范围内的符号链接会失败。600 行是可维护性门槛，不是性能指标；新增语言的真实 import 图仍需对应检查器，不能只靠 Cargo lint。
 
@@ -65,4 +67,6 @@ python3 -m venv .venv
 
 每次检查生成独立的 `artifacts/harness/<run>/report.json` 和命令日志，包含 commit、工作区指纹、选择依据、状态与耗时。超时/工具缺失/退出非零/超量日志分别记录；POSIX 下清理整个子进程组；检查期间源文件变化使结果失效。
 
-CI 在 PR/push 运行同一入口，并保留失败日志；共享 runner 不用于给数据库性能背书。当前无远端仓库规则配置，尚不能保证保护分支或阻止绕过 CI。建立远端后应将该 job 设为必需检查，并对 harness、基线和持久化协议变更设置独立复核；仓库内自检不替代平台合并权限。
+非小型任务用 task-start 记录目标与原始 base，task-status 恢复上下文，最终提交后 check，再用 task-finish --report/--review 验证整项范围并归档；task-abandon 只停止记录，保留文件与 Git 历史。checkpoint 同样重验报告/全部命令/日志 SHA-256，证据归档到共同 Git 管理目录，不依赖 artifacts 永久留存。
+
+GitHub Actions 在 PR/push/手动运行同一入口，配置 Python 3.11/3.14 和失败证据上传；共享 runner 不用于给数据库性能背书。当前无远端首跑/保护规则，尚不能保证保护分支或阻止绕过 CI。建立远端后将对应 quality jobs 设为必需检查，并对 harness、基线和持久化协议变更设置独立复核；仓库内自检不替代平台合并权限。CD 待服务/产物/环境合同，见 CI/CD 文档。

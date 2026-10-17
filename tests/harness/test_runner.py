@@ -99,6 +99,34 @@ class RunnerTests(unittest.TestCase):
             with patch.dict(os.environ, {"GITHUB_EVENT_PATH": str(event), "GITHUB_EVENT_NAME": "push"}):
                 self.assertIn("Cargo.toml", discover_changes(root, "auto"))
 
+    def test_clean_manual_ci_checks_all_committed_code(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.init(root)
+            source = root / "modules/storage/src/lib.rs"
+            source.parent.mkdir(parents=True)
+            source.write_text("pub struct Store;\n")
+            subprocess.run(["git", "add", "."], cwd=root, check=True, capture_output=True)
+            subprocess.run(["git", "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                            "commit", "-m", "fixture"], cwd=root, check=True, capture_output=True)
+            event = root / "artifacts/event.json"
+            event.parent.mkdir()
+            event.write_text("{}")
+            with patch.dict(os.environ, {"GITHUB_EVENT_PATH": str(event), "GITHUB_EVENT_NAME": "workflow_dispatch"}):
+                self.assertIn("modules/storage/src/lib.rs", discover_changes(root, "auto"))
+
+    def test_head_change_without_source_mutation_invalidates_evidence(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"PATH": os.environ["PATH"]}, clear=True):
+            root = Path(directory)
+            self.init(root)
+            configuration = self.configuration()
+            configuration[0]["suites"]["smoke"]["commands"] = [[
+                "git", "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                "commit", "--allow-empty", "-m", "change HEAD during check"]]
+            report, _ = check(root, "bootstrap", None, configuration)
+            self.assertFalse(report["passed"])
+            self.assertEqual(report["results"][-1]["suite"], "head-unchanged")
+
 
 if __name__ == "__main__":
     unittest.main()

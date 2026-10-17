@@ -1,4 +1,5 @@
 from contextlib import redirect_stdout
+import copy
 import io
 import json
 import os
@@ -12,7 +13,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 from harnesslib.policy import HarnessError, load
-from harnesslib.runner import checkout_digest
+from harnesslib.runner import check
 from harnesslib.version_control import checkpoint, install_hooks, recover, require_committable_tree, status
 import harness
 
@@ -27,13 +28,18 @@ class VersionControlTests(unittest.TestCase):
         self.git("config", "user.name", "Harness Test")
         self.git("config", "user.email", "harness@example.invalid")
         self.policy = load(ROOT)[0]
+        (self.root / ".gitignore").write_text("artifacts/\n")
+        self.configuration = copy.deepcopy(load(ROOT))
+        self.configuration[0]["bootstrap_suites"] = ["fixture"]
+        self.configuration[0]["suites"]["fixture"] = {"state": "ready", "timeout_seconds": 5,
+                                                        "commands": [["{python}", "-c", "print('fixture')"]]}
 
     def git(self, *args):
         return subprocess.run(["git", *args], cwd=self.root, check=True, capture_output=True).stdout.decode().strip()
 
     def commit(self):
         (self.root / "file.txt").write_text("baseline\n")
-        self.git("add", "file.txt")
+        self.git("add", "file.txt", ".gitignore")
         self.git("commit", "-m", "fixture baseline")
 
     def test_checkpoint_rejects_unborn_dirty_and_invalid_labels(self):
@@ -67,18 +73,17 @@ class VersionControlTests(unittest.TestCase):
 
     def test_evidence_must_match_commit_digest_and_passed_state(self):
         self.commit()
-        report = {"kind": "harness-check", "passed": True, "scope": "change",
-                  "git_commit": status(self.root)["head"],
-                  "checkout_digest": checkout_digest(self.root, self.policy)}
-        path = self.root.parent / "report.json"
+        with patch.dict(os.environ, {"PATH": os.environ["PATH"]}, clear=True):
+            report, path = check(self.root, "change", None, self.configuration)
         for field, value in (("passed", False), ("git_commit", "0" * 40), ("checkout_digest", "bad")):
             path.write_text(json.dumps({**report, field: value}))
             with self.assertRaises(HarnessError):
-                checkpoint(self.root, "verified", self.policy, path)
+                checkpoint(self.root, "verified", self.policy, path, self.configuration)
         path.write_text(json.dumps(report))
-        result = checkpoint(self.root, "verified", self.policy, path)
+        result = checkpoint(self.root, "verified", self.policy, path, self.configuration)
         self.assertEqual(result["quality"], "selected_gates_passed")
         self.assertIn(result["checkpoint"], status(self.root)["checkpoints"])
+        self.assertTrue((Path(result["evidence_directory"]) / "report.json").is_file())
 
     def test_pre_commit_rejects_unstaged_and_untracked_not_staged_snapshot(self):
         self.commit()
@@ -95,6 +100,7 @@ class VersionControlTests(unittest.TestCase):
         hooks = self.root / ".githooks"
         hooks.mkdir()
         (hooks / "pre-commit").write_text("#!/bin/sh\nexit 0\n")
+        (hooks / "pre-commit").chmod(0o755)
         install_hooks(self.root)
         install_hooks(self.root)
         self.assertEqual(self.git("config", "--get", "core.hooksPath"), ".githooks")
@@ -102,6 +108,23 @@ class VersionControlTests(unittest.TestCase):
         with self.assertRaises(HarnessError):
             install_hooks(self.root)
         self.assertEqual(self.git("config", "--get", "core.hooksPath"), "custom-hooks")
+
+    def test_global_hook_path_is_preserved(self):
+        global_config = self.root.parent / "global-gitconfig"
+        global_config.write_text("[core]\n    hooksPath = global-hooks\n")
+        with patch.dict(os.environ, {"GIT_CONFIG_GLOBAL": str(global_config)}):
+            with self.assertRaises(HarnessError):
+                install_hooks(self.root)
+            self.assertEqual(self.git("config", "--get", "core.hooksPath"), "global-hooks")
+
+    @unittest.skipUnless(os.name == "posix", "Git executable hook mode on POSIX")
+    def test_non_executable_hook_cannot_claim_installation(self):
+        hook = self.root / ".githooks/pre-commit"
+        hook.parent.mkdir()
+        hook.write_text("#!/bin/sh\nexit 0\n")
+        hook.chmod(0o644)
+        with self.assertRaises(HarnessError):
+            install_hooks(self.root)
 
     def test_recovery_cli_does_not_depend_on_current_policy_being_valid(self):
         self.commit()

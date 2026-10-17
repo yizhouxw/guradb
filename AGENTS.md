@@ -12,6 +12,8 @@
 
 有限切片通过门禁和复核后提交，记录变更、验证与恢复点；提交后生成精确绑定新 commit 的检查报告并建立 checkpoint。本仓库作者使用 `yizhouxw <yizhou.xw@gmail.com>`。本地提交属于后续开发闭环，推送/远端设置另行授权。禁止为过门禁使用 `--no-verify` 或关闭 hook。
 
+非小型任务按[开发流程](harness/development-workflow.md)使用 `task-start --label ... --objective ...` 固定基点；plan/check/pre-commit 自动覆盖整项任务。恢复先读 `task-status`，最终提交后执行 check，再用 `task-finish --report ... --review ...` 核验原始范围、归档证据并结束。停止/交接用 task-abandon 保留现场，不把它标成完成。
+
 遇到阻断错误先保留日志/diff/失败现场，用 `harness.py recover` 在新目录恢复 checkpoint；需要撤销主线提交时在干净树用经复核的 revert 新提交。默认禁止破坏性 reset/clean、强制 checkout、强推或重写共享历史。代码恢复不撤销数据迁移和外部副作用，必须独立对账/补偿。
 
 ## 产品与架构边界
@@ -31,6 +33,8 @@
 4. 运行 `.venv/bin/python scripts/harness.py check`，根据实际变更选择门禁。缺失命令/证据、超时或失败不能跳过成绿。
 5. 单独审查差异、复杂度、边界和证据；高风险变更需要独立审查轮次或人工复核。
 6. 报告改了什么、为什么、实际命令和报告、缺失证据及风险。仅 bootstrap 通过不得宣称数据库质量通过或可发布。
+
+开始前写用户可观察验收、范围与支持/拒绝白名单；完成标准、依赖/迁移纪律、两次无新证据失败后的根因定位及交接遵循开发流程。CI/CD 采用 [GitHub Actions 分层方案](harness/ci-cd.md)，当前远端未运行、CD 待服务/环境合同。
 
 Python 3.11+ 开发依赖安装与 make 替代入口见 [harness/README.md](harness/README.md)。当前无数据库运行实现；功能、组件性能/稳定性及完整性能/稳定性/soak 为 planned，运行时代码出现后相应 missing 门禁必须补齐。组件通过不等于完整发布通过。
 

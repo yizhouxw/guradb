@@ -12,6 +12,7 @@ ADR 用来记录已经比较过的方案和取舍。编号只表示记录顺序�
 | [0005](0005-agent-harness-and-quality-gates.md) | Agent Harness 与质量门禁 | 工程约定已采用，harness 层已实现 |
 | [0007](0007-incremental-delivery-and-gates.md) | 可验收切片与组件/发布分层门禁 | 本次设计复审采用；数据库能力待实现 |
 | [0008](0008-git-traceability-and-recovery.md) | Git 追溯、检查点与安全恢复 | 本地已接入；远端待配置 |
+| [0009](0009-task-evidence-and-actions-workflow.md) | 任务范围、证据与 GitHub Actions | 本地已接入；Actions/CD 待实际环境验收 |
 | [模板](0000-template.md) | 后续决策的记录格式 | 模板 |
 
 ## 优先讨论的问题

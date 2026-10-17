@@ -15,6 +15,8 @@
 
 组件 driver 放在 `tests/performance/component/`、`benchmarks/component/` 或 `tests/faults/component/`；这些路径触发对应组件门禁。父目录的其它 driver 仍触发完整性能/故障门禁。新组件测试也必须真的执行当前生产代码；不能以 stub、空发现、合成测量或总是成功的命令启用 ready。
 
+CI 的实际结果 JSON、原始测量、trace 和恢复日志写入 `{run_dir}` 下的独立目录，确保上传步骤能捕获；外部 baseline/数据引用固定摘要和可取位置。发布前完整证据另存持久位置，本地 checkpoint 仅自动归档 harness 报告和命令日志，不代替 driver 产物归档。新增命令时核对 Actions job 总时限，必要时拆到受控 runner/job，不能让总时限小于所需串行门禁预算。
+
 首次性能 smoke 先冻结输入、规模、缓存、重复次数、独立正确性真值，以及时间/内存/I/O 等适用绝对预算，再实际测量并保留原始数据。没有旧基线时记录 `baseline-established` 和未做回归比较的限制，不用 candidate 自比较。组件后续变更与经审查的同环境基线比较；复杂检索实现后注册真实 workload 并使用完整比较器。基线晋升不是测量命令自动批准的结果。
 
 组件稳定性按实际风险覆盖失败传播、资源释放、取消或重启恢复，保留注入点、seed/步骤和断言日志。它不调用全库 `verify-stability` 冒充子集通过；该校验器始终要求完整 registry。尚未实现的全库场景列为缺口，在对应能力交付前补齐。此分层依据 [ADR 0007](../docs/decisions/0007-incremental-delivery-and-gates.md)，不是临时关闭某一质量维度。

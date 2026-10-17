@@ -9,6 +9,8 @@
 3. 对影响长期边界的选型，在 [ADR 目录](docs/decisions/README.md) 新增提案并解释备选方案与代价。
 4. 按 [harness](harness/README.md) 运行 plan，更新文档、示例和契约，执行 `.venv/bin/python scripts/harness.py check`（或 `make check`）。
 
+非小型需求按[开发流程](harness/development-workflow.md)先冻结验收/边界并 task-start，自动保留原始范围；依赖升级、持久迁移、失败定位与交接遵循同一规范。提交后重验并 task-finish 归档证据。小型文字修改可用轻量提交说明和显式 base。
+
 ## 文档约定
 
 - 产品需求、技术建议与实现状态分别描述；计划中的能力必须明确标记。

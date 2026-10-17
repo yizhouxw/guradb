@@ -62,3 +62,5 @@ make check
 参与设计与开发请先阅读 [贡献指南](CONTRIBUTING.md) 和 [Agent 协作约定](AGENTS.md)。
 
 版本追溯已接入 [Git 工作流](harness/version-control.md)：切片提交、提交前检查、checkpoint 与独立目录恢复。当前仅本地仓库，无远端备份配置。
+
+后续开发使用[任务与验收闭环](harness/development-workflow.md)，CI/CD 采用 [GitHub Actions 方案](harness/ci-cd.md)。CI 配置已入库、待远端首跑；CD 随可部署服务和环境合同接入。

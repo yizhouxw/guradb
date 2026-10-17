@@ -2,6 +2,8 @@
 
 当前有仓库/policy 检查、`tests/contracts` 的标准 OpenAPI/语义契约，以及 `tests/harness` 的执行/架构/性能比较/故障证据自测，尚无数据库运行时测试。运行入口见 [harness](../harness/README.md)，不要把这些测试称为数据库能力验证。
 
+开发工具测试还覆盖真实 Git checkpoint/恢复、任务 base 与 worktree 状态、完成证据重算/日志摘要和归档、GitHub Actions 范围/权限/总预算；本地 CI 配置检查不证明远端 job、分支保护或部署已经运行。
+
 | 层次 | 要验证的行为 |
 | --- | --- |
 | 查询正确性 | SQL 子集、空值/类型、参数、过滤、排序、全文、精确向量、图遍历及组合结果 |

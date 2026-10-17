@@ -13,6 +13,8 @@ from harnesslib.evidence import compare_performance, read_json, verify_stability
 from harnesslib.policy import HarnessError, load, plan
 from harnesslib.runner import check, discover_changes
 from harnesslib.version_control import checkpoint, install_hooks, recover, require_committable_tree, status
+from harnesslib.task_state import read_task
+from harnesslib.workflow import abandon_task, finish_task, start_task
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -41,14 +43,27 @@ def main() -> int:
     recovery = commands.add_parser("recover", help="open a checkpoint in a new detached worktree")
     recovery.add_argument("--checkpoint", required=True)
     recovery.add_argument("--destination", type=Path, required=True)
+    starter = commands.add_parser("task-start", help="record a clean task base and create a recovery checkpoint")
+    starter.add_argument("--label", required=True)
+    starter.add_argument("--objective", required=True)
+    commands.add_parser("task-status", help="read the worktree-local task receipt")
+    finish = commands.add_parser("task-finish", help="verify task-wide evidence and archive its logs")
+    finish.add_argument("--report", type=Path, required=True)
+    finish.add_argument("--review", required=True)
+    abandon = commands.add_parser("task-abandon", help="record a stopped task without changing Git/files")
+    abandon.add_argument("--reason", required=True)
     arguments = parser.parse_args()
     try:
         # Recovery must still work when the current policy is broken.
-        if arguments.command in {"git-status", "install-git-hooks", "recover"}:
+        if arguments.command in {"git-status", "install-git-hooks", "recover", "task-status", "task-abandon"}:
             if arguments.command == "git-status":
                 result = status(ROOT)
             elif arguments.command == "install-git-hooks":
                 result = install_hooks(ROOT)
+            elif arguments.command == "task-status":
+                result = read_task(ROOT)
+            elif arguments.command == "task-abandon":
+                result = abandon_task(ROOT, arguments.reason)
             else:
                 result = recover(ROOT, arguments.checkpoint, arguments.destination)
             print(json.dumps(result, ensure_ascii=False, indent=2))
@@ -84,7 +99,11 @@ def main() -> int:
             result = verify_stability(read_json(arguments.report), faults, arguments.report.parent)
             print(json.dumps(result, ensure_ascii=False, indent=2))
         elif arguments.command == "checkpoint":
-            print(json.dumps(checkpoint(ROOT, arguments.label, policy, arguments.report), ensure_ascii=False, indent=2))
+            print(json.dumps(checkpoint(ROOT, arguments.label, policy, arguments.report, configuration), ensure_ascii=False, indent=2))
+        elif arguments.command == "task-start":
+            print(json.dumps(start_task(ROOT, arguments.label, arguments.objective, configuration), ensure_ascii=False, indent=2))
+        elif arguments.command == "task-finish":
+            print(json.dumps(finish_task(ROOT, arguments.report, arguments.review, configuration), ensure_ascii=False, indent=2))
         return 0
     except (HarnessError, OSError, ValueError, KeyError, TypeError) as error:
         print(f"HARNESS ERROR: {error}", file=sys.stderr)

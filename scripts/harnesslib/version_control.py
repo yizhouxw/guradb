@@ -8,8 +8,9 @@ from pathlib import Path
 import re
 from uuid import uuid4
 
-from .policy import HarnessError, git
+from .policy import HarnessError, git, load
 from .runner import checkout_digest
+from .check_evidence import archive_report, validate_report
 
 
 def status(root: Path) -> dict:
@@ -32,16 +33,20 @@ def require_committable_tree(root: Path) -> None:
 
 
 def install_hooks(root: Path) -> dict:
-    previous = git(root, "config", "--local", "--get", "core.hooksPath", allow_failure=True).decode().strip()
+    previous = git(root, "config", "--get", "core.hooksPath", allow_failure=True).decode().strip()
     if previous not in {"", ".githooks"}:
         raise HarnessError("existing core.hooksPath preserved; integrate hooks manually")
-    if not (root / ".githooks" / "pre-commit").is_file():
+    hook = root / ".githooks" / "pre-commit"
+    if not hook.is_file():
         raise HarnessError("missing repository pre-commit hook")
+    if os.name == "posix" and not os.access(hook, os.X_OK):
+        raise HarnessError("repository pre-commit hook is not executable; restore its Git executable mode")
     git(root, "config", "--local", "core.hooksPath", ".githooks")
     return {"hooks_path": ".githooks", "scope": "local repository config"}
 
 
-def checkpoint(root: Path, label: str, policy: dict, report_path: Path | None = None) -> dict:
+def checkpoint(root: Path, label: str, policy: dict, report_path: Path | None = None,
+               configuration: tuple | None = None) -> dict:
     if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", label):
         raise HarnessError("checkpoint label must be 1..64 lowercase letters, digits or hyphens")
     current = status(root)
@@ -50,14 +55,11 @@ def checkpoint(root: Path, label: str, policy: dict, report_path: Path | None = 
     metadata = {"schema_version": 1, "kind": "git-checkpoint", "commit": current["head"],
                 "checkout_digest": checkout_digest(root, policy), "quality": "not_assessed"}
     if report_path is not None:
-        raw = report_path.read_bytes()
-        report = json.loads(raw)
-        if (report.get("kind") != "harness-check" or report.get("passed") is not True
-                or report.get("git_commit") != current["head"]
-                or report.get("checkout_digest") != metadata["checkout_digest"]):
-            raise HarnessError("checkpoint evidence must be a passing report for the current commit and checkout")
+        report = validate_report(root, report_path, configuration or load(root))
         metadata.update(quality="selected_gates_passed", scope=report["scope"],
-                        report_sha256=hashlib.sha256(raw).hexdigest())
+                        selection_base=report["selection_base"],
+                        report_sha256=hashlib.sha256(report_path.read_bytes()).hexdigest(),
+                        evidence_directory=archive_report(root, report_path, report))
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     reference = f"checkpoints/{stamp}-{label}-{uuid4().hex[:8]}"
     git(root, "tag", "-a", reference, "-m", json.dumps(metadata, ensure_ascii=False), current["head"])

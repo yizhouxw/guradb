@@ -134,6 +134,10 @@ def main() -> int:
         "harness/version-control.md", "scripts/harnesslib/version_control.py",
         "tests/harness/test_version_control.py", ".githooks/pre-commit",
         "docs/decisions/0008-git-traceability-and-recovery.md",
+        "harness/development-workflow.md", "harness/ci-cd.md",
+        "scripts/harnesslib/task_state.py", "scripts/harnesslib/workflow.py",
+        "scripts/harnesslib/check_evidence.py", "tests/harness/test_workflow.py",
+        "tests/harness/test_ci_workflow.py", "docs/decisions/0009-task-evidence-and-actions-workflow.md",
     ]
     required += [f"modules/{name}/README.md" for name in
                  ("gateway", "query", "catalog", "storage", "index", "cluster", "connectors")]

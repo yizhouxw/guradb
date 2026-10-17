@@ -14,6 +14,7 @@ import time
 from uuid import uuid4
 
 from .policy import HarnessError, changed_paths, files, git, plan
+from .task_state import active_base
 
 
 def write_json(path: Path, value: dict) -> None:
@@ -83,30 +84,41 @@ def run_command(argv: list[str], root: Path, log: Path, timeout: float,
             "duration_seconds": round(time.monotonic() - started, 3), "log": str(log)}
 
 
-def discover_changes(root: Path, base: str | None) -> list[str]:
+def selection_base(root: Path, base: str | None) -> str | None:
     if base != "auto":
-        return changed_paths(root, base)
+        if base in {None, "all"}:
+            return base
+        commit = git(root, "rev-parse", "--verify", "--end-of-options", base + "^{commit}").decode().strip()
+        return git(root, "merge-base", commit, "HEAD").decode().strip()
     event_path = os.environ.get("GITHUB_EVENT_PATH")
     if not event_path:
-        return changed_paths(root, None)
+        return active_base(root)
     event = json.loads(Path(event_path).read_text())
     if "pull_request" in event:
-        return changed_paths(root, event["pull_request"]["base"]["sha"])
+        return selection_base(root, event["pull_request"]["base"]["sha"])
     before = event.get("before")
     if before and set(before) == {"0"}:
+        return "all"
+    if before:
+        return selection_base(root, before)
+    if os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch":
+        return "all"
+    raise HarnessError("unsupported CI event: cannot determine changed paths")
+
+
+def discover_changes(root: Path, base: str | None) -> list[str]:
+    selected = selection_base(root, base)
+    if selected == "all":
         raw = git(root, "ls-files", "-z") + git(root, "ls-files", "--others", "--exclude-standard", "-z")
         return sorted({value.decode() for value in raw.split(b"\0") if value})
-    if before:
-        return changed_paths(root, before)
-    if os.environ.get("GITHUB_EVENT_NAME") not in {"workflow_dispatch", None, ""}:
-        raise HarnessError("unsupported CI event: cannot determine changed paths")
-    return changed_paths(root, None)
+    return changed_paths(root, selected)
 
 
 def check(root: Path, scope: str, base: str | None, configuration: tuple) -> tuple[dict, Path]:
     root = root.resolve()
     policy, architecture, invariants, _, _ = configuration
-    changes = discover_changes(root, base)
+    selected_base = selection_base(root, base)
+    changes = discover_changes(root, selected_base)
     selected = plan(root, changes, policy, architecture, invariants)
     suites = policy["bootstrap_suites"] if scope == "bootstrap" else selected["required_suites"]
     if scope == "release":
@@ -115,7 +127,7 @@ def check(root: Path, scope: str, base: str | None, configuration: tuple) -> tup
     run_directory = root / "artifacts" / "harness" / stamp
     run_directory.mkdir(parents=True)
     digest = checkout_digest(root, policy)
-    report = {"schema_version": 1, "kind": "harness-check", "scope": scope,
+    report = {"schema_version": 1, "kind": "harness-check", "scope": scope, "selection_base": selected_base,
               "created_at": datetime.now(timezone.utc).isoformat(),
               "git_commit": git(root, "rev-parse", "--verify", "HEAD", allow_failure=True).decode().strip() or None,
               "checkout_digest": digest, "plan": selected, "results": [],
@@ -137,6 +149,7 @@ def check(root: Path, scope: str, base: str | None, configuration: tuple) -> tup
                     for arg in command]
             result = run_command(argv, root, run_directory / f"{name}-{index}.log", suite["timeout_seconds"])
             result["log"] = Path(result["log"]).relative_to(root).as_posix()
+            result["log_sha256"] = hashlib.sha256((root / result["log"]).read_bytes()).hexdigest()
             results.append(result)
             if result["status"] != "passed":
                 break
@@ -146,6 +159,9 @@ def check(root: Path, scope: str, base: str | None, configuration: tuple) -> tup
     if checkout_digest(root, policy) != digest:
         report["results"].append({"suite": "checkout-unchanged", "status": "failed",
                                   "reason": "source/config changed while checks ran; run again"})
+    if git(root, "rev-parse", "--verify", "HEAD", allow_failure=True).decode().strip() != (report["git_commit"] or ""):
+        report["results"].append({"suite": "head-unchanged", "status": "failed",
+                                  "reason": "HEAD changed while checks ran; inspect task base and rerun"})
     report["passed"] = all(item["status"] == "passed" for item in report["results"])
     write_json(report_path, report)
     return report, report_path

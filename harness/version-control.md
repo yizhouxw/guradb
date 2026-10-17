@@ -10,6 +10,8 @@
 4. 提交后执行 `harness.py check --base <任务起始commit>`，使报告精确绑定新 commit/checkout 指纹，且仍覆盖整项任务差异；不能省略 base 后只检查空差异。再用 `harness.py checkpoint --label <label> --report <report.json>` 建立带证据的检查点。报告中的 scope 只是实际运行范围，bootstrap/change 不能冒充数据库 release。
 5. 结束报告基点/最终 commit、检查点、实际验证和剩余改动。常规本地任务提交已授权的实现；不自动推送、改远端、强推、重写共享历史或删除检查点。
 
+非小型任务由 [task-start/status/finish](development-workflow.md) 将原始 base 和完成证据持久化；本地 auto 检查沿用 active task 基点。`task-finish` 对 change/release 报告重算整项变更和门禁、校验日志并归档，再结束任务；不支持用 bootstrap 或提交后的空差异报告结项。
+
 安装本仓库 hook（每个新 clone/工作环境显式执行；自定义 hooksPath 会保留并报错）：
 
 ```sh
@@ -20,7 +22,7 @@
 
 `pre-commit` 调用同一 change 门禁。存在未暂存/未跟踪文件时拒绝提交，防止“测试工作区 A、提交索引 B”；应选择性整理本任务文件或用 worktree 隔离，不能为过检查而提交别人的内容。缺失依赖/运行时 suites 仍阻断。hook 是本地协作约束，可被 Git 参数绕过；禁止 agent 使用 `--no-verify`、`HUSKY=0` 或禁用 hook 消除失败，远端必需检查仍需另配。
 
-`checkpoint` 仅接受已有提交且无未提交文件的工作区，创建不覆盖旧名字的 annotated tag `checkpoints/<UTC>-<label>-<random>`；不自动提交。未给报告时 `quality=not_assessed`，它只是恢复点。给 `--report <report.json>` 时要求 passed、本次 commit 与 checkout digest 全部匹配，tag 保存 scope、摘要和报告 SHA-256；校验不是报告真实性证明。产物日志仍在 artifacts/，需保留或上传到 CI，不把 tag 摘要当完整测试报告。
+`checkpoint` 仅接受已有提交且无未提交文件的工作区，创建不覆盖旧名字的 annotated tag `checkpoints/<UTC>-<label>-<random>`；不自动提交。未给报告时 `quality=not_assessed`，它只是恢复点。给 `--report <report.json>` 时重新计算范围/门禁，校验全部命令、日志 SHA-256、本次 commit 与 checkout digest；tag 保存 scope、base、报告摘要及本地归档位置。报告和日志保存在共同 Git 管理目录 `guradb/evidence/`；只有头部 passed 的旧报告需重跑，不能补填为通过。校验不证明报告诚实，归档不是异地备份。
 
 ## 错误阻断后的恢复
 

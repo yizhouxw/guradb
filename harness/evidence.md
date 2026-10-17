@@ -65,6 +65,8 @@
 
 `check` 在独立 run 目录中写 `report.json` 和各命令日志，包含选择依据、commit/checkout digest、状态、耗时和未实现 suite。原始日志不可因失败被覆盖；检查途中源码/配置变化会使结果失效。
 
+check 报告还保存实际 selection_base、每条命令的 argv/退出码与 log_sha256，HEAD 变化也使证据失效。checkpoint/task-finish 按当前 policy 重算范围，核对完整 suites/commands 及日志；成功后归档 report、日志和路径映射，见[开发流程](development-workflow.md)。本地任务完成必须覆盖起始 base，不能以提交后空差异或 bootstrap 报告结项；旧报告缺新增字段时重新测量。
+
 退出码：0 = 指定范围的门禁通过；1 = 回归/失败/缺失必需 suite；2 = 策略/输入/前置条件不合法或结果不可比较。bootstrap 的 0 不能用于宣称数据库正确、性能合格、稳定或可发布。
 
 命令通过 argv 执行，无隐式 shell。超时、退出失败、缺工具和超量输出有独立状态；POSIX 下结束子进程组。非 POSIX 的后代进程清理能力有限，目标 CI 为 Linux；真实 driver 仍需释放端口、worker、临时 bucket 前缀和租约。
