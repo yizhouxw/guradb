@@ -8,7 +8,7 @@
 
 ```sh
 python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements-dev.lock -r requirements-m0.lock
+.venv/bin/python -m pip install -r requirements-dev.lock -r requirements-m0.lock -r requirements-m1.lock
 .venv/bin/python scripts/harness.py install-git-hooks
 .venv/bin/python scripts/harness.py plan
 .venv/bin/python scripts/harness.py check
@@ -55,13 +55,13 @@ python3 -m venv .venv
 | [开发流程](development-workflow.md) | 任务起止、验收/复核、失败与交接、依赖/迁移及证据归档 |
 | [GitHub Actions CI/CD](ci-cd.md) | CI 事件/权限/预算、远端接入与后续部署晋升合同 |
 
-本地依赖检查含 Cargo 普通、dev、build、target-specific 和 workspace 继承，以及包/模块循环。未归属代码、超过 600 行的源文件、检查范围内的符号链接会失败。600 行是可维护性门槛，不是性能指标；新增语言的真实 import 图仍需对应检查器，不能只靠 Cargo lint。
+本地依赖检查含 Cargo 普通、dev、build、target-specific 和 workspace 继承，以及包/模块循环。未归属代码、超过 600 行的源文件、检查范围内的符号链接会失败。600 行是可维护性门槛，不是性能指标；Python生产模块另做真实AST import DAG、compileall与锁/依赖检查；其它新语言仍需对应检查器，不能只靠Cargo lint。
 
 ## 现在能证明什么
 
 当前可执行：仓库检查、OpenAPI 标准/语义契约、policy/架构检查、harness 自测、性能比较器和稳定性证据校验器。
 
-M0 已接入真实功能、组件基准和故障注入；完整性能、完整fault registry、长稳/升级在 policy 中仍为 `planned`。涉及运行时的变更要求相应 suite；未接入时返回 `missing` 并失败，不跳过成绿。`release` 当前也必须失败。
+M0/M1 已接入真实功能、组件基准和故障注入；完整性能、完整fault registry、长稳/升级在 policy 中仍为 `planned`。涉及运行时的变更要求相应 suite；未接入时返回 `missing` 并失败，不跳过成绿。`release` 当前也必须失败。
 
 普通服务端变更要求功能、适用语言检查、`performance-smoke` 与 `stability-component`，先验证当前可运行切片。完整 driver 变更仍要求对应整库套件，`release` 包含完整性能/fault registry/soak。分层不会把缺失的运行时测试显示为通过，也不要求首个扫描组件先实现完整分布式数据库，依据 [ADR 0007](../docs/decisions/0007-incremental-delivery-and-gates.md)。
 

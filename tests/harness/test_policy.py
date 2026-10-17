@@ -48,6 +48,10 @@ class PolicyTests(unittest.TestCase):
         for path, required in (
             ("modules/index/settings.toml", {"functional", "performance-smoke", "stability-component"}),
             ("config/query.yaml", {"functional", "performance-smoke", "stability-component"}),
+            ("requirements-m1.lock", {"rust", "functional", "performance-smoke", "stability-component"}),
+            ("scripts/m1.py", {"functional", "performance-smoke", "stability-component"}),
+            ("scripts/m1_acceptance.py", {"functional", "performance-smoke", "stability-component"}),
+            ("scripts/m1lib/fixtures.py", {"functional", "performance-smoke", "stability-component"}),
             ("requirements-m0.lock", {"rust", "functional", "performance-smoke", "stability-component"}),
             ("scripts/m0lib/kit.py", {"rust", "functional", "performance-smoke", "stability-component"}),
             ("scripts/m0.py", {"functional", "performance-smoke", "stability-component"}),

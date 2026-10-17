@@ -14,6 +14,7 @@ ADR 用来记录已经比较过的方案和取舍。编号只表示记录顺序�
 | [0008](0008-git-traceability-and-recovery.md) | Git 追溯、检查点与安全恢复 | 本地已接入，私有远端已建立 |
 | [0009](0009-task-evidence-and-actions-workflow.md) | 任务范围、证据与 GitHub Actions | bootstrap Actions已通过，M0 Actions待推送验证；CD待环境 |
 | [0010](0010-m0-bounded-manifest-reader.md) | M0 有界 manifest 读取服务 | 接受，仅限单进程读取alpha |
+| [0011](0011-m1-bounded-snapshot-serving.md) | M1 有界 Snapshot 服务化 | 接受，仅限单节点alpha；完整P0待后续 |
 | [模板](0000-template.md) | 后续决策的记录格式 | 模板 |
 
 ## 优先讨论的问题

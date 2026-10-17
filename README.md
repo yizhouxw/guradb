@@ -4,9 +4,9 @@
 
 GuraDB 的目标是在对象存储与开放湖上统一管理结构化数据、文本、图像、音频、视频、向量及关系数据，在同一查询体系内组合 SQL、全文检索、向量检索与 Graph 检索，并服务数据准备与可复现训练读取。
 
-> 当前阶段：M0 单进程读取 alpha。固定 Parquet manifest → 校验对象 → Arrow/DataFusion → HTTP 参数化只读 SQL；含真实功能、组件性能及故障门禁。多模态索引、Iceberg、写入和分布式按路线图继续实现，尚不可生产发布。
+> 当前阶段：单节点 alpha。M0 提供固定 Parquet manifest → Arrow/DataFusion → HTTP 只读 SQL；M1 增加有界 Iceberg v2 Snapshot → PG 发布目录 → BM25/精确向量/RRF → HTTP/CLI → 同视图训练导出。完整范围和最终本地证据见 [M1 设计与验收](docs/design/m1-validation.md)；ANN、Graph、增量、业务写入和分布式仍待实现，尚不可生产发布。
 
-运行服务见 [M0 快速开始](docs/design/m0-running.md)，支持边界见 [详细设计](docs/design/m0-parquet-http.md) 和 [验收映射](docs/design/m0-validation.md)。
+M1 操作见 [Snapshot/检索/训练快速开始](docs/design/m1-running.md)。M0 SQL 服务见 [M0 快速开始](docs/design/m0-running.md)，支持边界见 [详细设计](docs/design/m0-parquet-http.md) 和 [验收映射](docs/design/m0-validation.md)。
 
 ## 已确定的方向
 
@@ -17,7 +17,7 @@ GuraDB 的目标是在对象存储与开放湖上统一管理结构化数据、�
 - 兼容主流开放数据湖与 AI 多模态数据格式；通过持续扩展的能力矩阵管理具体版本与读写边界。
 - PostgreSQL 语法兼容方向，提供 SQL 与 HTTP 接口，并便于扩展 CLI、MCP 客户端。
 
-推荐目标栈为 **Iceberg v2/Parquet 事实层 + 媒体对象 + Lance 检索物化层，Rust/Arrow/DataFusion 执行，Tantivy 全文与有界 Graph，小型 PostgreSQL 控制面**。按[路线图](docs/roadmap.md)逐片接入：先固定 Parquet 文件读取，再做一个 Iceberg 源的 Snapshot、BM25/精确向量与训练闭环，随后加入 ANN、Graph、受限增量、托管 append 和真实多节点。M0 已验证有界 Parquet 读取与 PG18 SELECT 子集，其余能力待验证；PG18 SQL 子集优先，wire protocol 后续单独验收。
+推荐目标栈为 **Iceberg v2/Parquet 事实层 + 媒体对象 + Lance 检索物化层，Rust/Arrow/DataFusion 执行，Tantivy 全文与有界 Graph，小型 PostgreSQL 控制面**。按[路线图](docs/roadmap.md)逐片接入：先固定 Parquet 文件读取，再做一个 Iceberg 源的 Snapshot、BM25/精确向量与训练闭环，随后加入 ANN、Graph、受限增量、托管 append 和真实多节点。M0 已验证有界 Parquet 读取与 PG18 SELECT 子集，M1通过Python编排/PG和Tantivy Rust binding提供下述有界闭环，其余能力待验证；PG18 SQL 子集优先，wire protocol 后续单独验收。
 
 ## 从这里开始
 
@@ -52,7 +52,7 @@ Python 3.11+、Git 和 Docker；Rust 通过固定容器构建，运行时验收�
 
 ```sh
 python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements-dev.lock -r requirements-m0.lock
+.venv/bin/python -m pip install -r requirements-dev.lock -r requirements-m0.lock -r requirements-m1.lock
 .venv/bin/python scripts/harness.py install-git-hooks
 .venv/bin/python scripts/harness.py plan
 .venv/bin/python scripts/harness.py check
@@ -60,7 +60,7 @@ python3 -m venv .venv
 make check
 ```
 
-当前按风险执行仓库/架构、OpenAPI/契约、harness 自测、Rust fmt/clippy/test、真实 M0 功能/组件性能/组件故障，生成独立报告和日志。完整 performance/stability/soak 尚未实现，`check --scope release` 预期失败。单独 `python3 scripts/check_repository.py` 仍可用标准库做最小文档检查。
+当前按风险执行仓库/架构、OpenAPI/契约、harness 自测、Rust fmt/clippy/test、Python编译/依赖、真实 M0/M1 功能/组件性能/组件故障，生成独立报告和日志。完整 performance/stability/soak 尚未实现，`check --scope release` 预期失败。单独 `python3 scripts/check_repository.py` 仍可用标准库做最小文档检查。
 
 参与设计与开发请先阅读 [贡献指南](CONTRIBUTING.md) 和 [Agent 协作约定](AGENTS.md)。
 

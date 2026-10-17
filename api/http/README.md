@@ -22,3 +22,5 @@ draft.3 遵循对象存储湖与非 OLTP 边界，不支持业务多语句事务
 基础 `scripts/check_repository.py` 仅验证 JSON、内部引用和基本结构。完整 `harness.py check` 还执行标准 OpenAPI/JSON Schema 校验与 `tests/contracts` 的语义正反例，开发依赖由 lock 固定。它仍不验证运行时行为；真实端到端/客户端兼容测试随内核接入。
 
 详细语义见 [查询与客户端设计](../../docs/interfaces/query-and-clients.md)。
+
+M1 的有界 scan/search/export 服务另有 [OpenAPI](m1-openapi.json) 与 [语义合同](../../docs/design/m1-snapshot-serving.md)，不扩展M0 SQL语法；HTTP薄CLI访问同一授权/视图入口。

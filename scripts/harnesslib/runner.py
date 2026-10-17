@@ -45,6 +45,15 @@ def stop_group(process: subprocess.Popen) -> None:
     process.wait()
 
 
+def child_environment(root: Path) -> dict[str, str]:
+    # Hooks export worktree-local Git paths. Never leak them into nested fixture
+    # repositories: git init/config/commit would otherwise mutate the caller.
+    environment = os.environ.copy()
+    for name in git(root, "rev-parse", "--local-env-vars").decode().splitlines():
+        environment.pop(name, None)
+    return environment
+
+
 def run_command(argv: list[str], root: Path, log: Path, timeout: float,
                 max_log_bytes: int = 16 * 1024 * 1024) -> dict:
     started = time.monotonic()
@@ -55,7 +64,7 @@ def run_command(argv: list[str], root: Path, log: Path, timeout: float,
     try:
         with log.open("wb") as stream:
             process = subprocess.Popen(argv, cwd=root, stdout=stream, stderr=subprocess.STDOUT,
-                                       start_new_session=os.name == "posix")
+                                       start_new_session=os.name == "posix", env=child_environment(root))
             deadline = started + timeout
             while process.poll() is None:
                 if time.monotonic() >= deadline:

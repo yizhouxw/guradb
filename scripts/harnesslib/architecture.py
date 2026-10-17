@@ -81,6 +81,8 @@ def lint(root: Path, policy: dict, architecture: dict) -> list[str]:
                     raise HarnessError(f"forbidden module dependency: {source_module} -> {target_module}")
                 graph[path].add(target)
     cycles(graph)
-    return [f"module DAG and {len(graph)} Cargo packages checked",
+    from .python_architecture import check as check_python
+    python_summary = check_python(root, paths, policy, architecture, cycles)
+    return [python_summary, f"module DAG and {len(graph)} Cargo packages checked",
             "Cargo edges include normal/build/dev/target and workspace inheritance",
             "Rust imports, remote dependency behavior and runtime invariants still need compiler/tests"]

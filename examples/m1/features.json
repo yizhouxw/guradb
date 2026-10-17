@@ -1,0 +1,1 @@
+{"model":"demo-v1","dimension":2,"metric":"squared_l2","preprocessing":"identity-v1","records":[{"logical_key":"010000000102000000080000000000000001","vector":[0,1],"media":[{"uri":"file:///absolute/lake/media/one.bin","sha256":"0000000000000000000000000000000000000000000000000000000000000000","size_bytes":10}]}]}

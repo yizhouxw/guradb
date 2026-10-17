@@ -59,6 +59,27 @@ class ArchitectureTests(unittest.TestCase):
             with self.assertRaisesRegex(HarnessError, "exceeds"):
                 lint(root, self.policy, self.architecture)
 
+    def test_python_real_edges_cycles_and_unknown_imports_fail(self):
+        cases = [
+            ('modules/storage/objects.py', 'from modules.query.service import execute\n', 'storage -> query'),
+            ('modules/query/service.py', 'import mystery_package\n', 'undeclared external'),
+            ('modules/query/service.py', "__import__('os')\n", 'dynamic code'),
+            ('modules/query/service.py', 'import modules.query.missing\n', 'unresolved local'),
+        ]
+        for path, source, message in cases:
+            with self.subTest(source=source), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                self.write(root, 'modules/query/service.py', 'import json\n')
+                self.write(root, path, source)
+                with self.assertRaisesRegex(HarnessError, message):
+                    lint(root, self.policy, self.architecture)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write(root, 'modules/query/a.py', 'from modules.query.b import entry\n')
+            self.write(root, 'modules/query/b.py', 'from modules.query.a import entry\n')
+            with self.assertRaisesRegex(HarnessError, 'dependency cycle'):
+                lint(root, self.policy, self.architecture)
+
     def test_generated_root_data_does_not_hide_nested_source(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

@@ -20,6 +20,9 @@ import harness
 
 class VersionControlTests(unittest.TestCase):
     def setUp(self):
+        environment = patch.dict(os.environ, {"PATH": os.environ["PATH"]}, clear=True)
+        environment.start()
+        self.addCleanup(environment.stop)
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name) / "repository"

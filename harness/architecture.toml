@@ -46,3 +46,6 @@ allowed = ["common", "client-api"]
 [modules.mcp]
 paths = ["clients/mcp/"]
 allowed = ["common", "client-api"]
+
+[python]
+external = ["pyarrow", "fastavro", "psycopg", "tantivy"]

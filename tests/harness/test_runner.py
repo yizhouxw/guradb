@@ -27,6 +27,33 @@ class RunnerTests(unittest.TestCase):
     def init(self, root):
         subprocess.run(["git", "init", "-b", "main"], cwd=root, check=True, capture_output=True)
 
+    def test_worktree_hook_environment_cannot_mutate_parent_git_state(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base=Path(directory);outer=base/'outer';outer.mkdir()
+            def command(root,*args):
+                return subprocess.check_output(['git',*args],cwd=root)
+            self.init(outer)
+            command(outer,'config','user.name','Outer fixture')
+            command(outer,'config','user.email','outer@example.invalid')
+            (outer/'file').write_text('outer')
+            command(outer,'add','file');command(outer,'commit','-m','outer')
+            worktree=base/'worktree'
+            command(outer,'worktree','add','-b','task',str(worktree))
+            gitdir=Path(command(worktree,'rev-parse','--absolute-git-dir').decode().strip())
+            before=(command(worktree,'rev-parse','HEAD'),(outer/'.git/config').read_bytes(),(gitdir/'index').read_bytes())
+            script=("import pathlib,subprocess; p=pathlib.Path('nested');p.mkdir(); "
+                    "subprocess.run(['git','init','-b','main'],cwd=p,check=True); "
+                    "subprocess.run(['git','config','core.bare','false'],cwd=p,check=True); "
+                    "subprocess.run(['git','config','user.name','Nested'],cwd=p,check=True); "
+                    "(p/'nested.txt').write_text('nested');subprocess.run(['git','add','.'],cwd=p,check=True); "
+                    "subprocess.run(['git','-c','user.email=nested@example.invalid','commit','-m','nested'],cwd=p,check=True)")
+            with patch.dict(os.environ,{'GIT_DIR':str(gitdir),'GIT_COMMON_DIR':str(outer/'.git'),
+                                        'GIT_INDEX_FILE':str(gitdir/'index'),'GIT_WORK_TREE':str(worktree),'GIT_PREFIX':''}):
+                result=run_command([sys.executable,'-c',script],worktree,base/'hook.log',5)
+            self.assertEqual(result['status'],'passed',(base/'hook.log').read_text())
+            self.assertEqual(before,(command(worktree,'rev-parse','HEAD'),(outer/'.git/config').read_bytes(),(gitdir/'index').read_bytes()))
+            self.assertTrue((worktree/'nested/.git/HEAD').is_file())
+
     def test_exit_failure_missing_tool_and_output_cap(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

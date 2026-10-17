@@ -7,7 +7,7 @@ help:
 
 setup:
 	python3 -m venv .venv
-	.venv/bin/python -m pip install -r requirements-dev.lock -r requirements-m0.lock
+	.venv/bin/python -m pip install -r requirements-dev.lock -r requirements-m0.lock -r requirements-m1.lock
 	.venv/bin/python scripts/harness.py install-git-hooks
 
 plan:

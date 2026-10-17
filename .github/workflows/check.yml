@@ -24,7 +24,7 @@ jobs:
   quality:
     name: quality (Python ${{ matrix.python }})
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ inputs.scope == 'release' && 240 || 90 }}
+    timeout-minutes: ${{ inputs.scope == 'release' && 240 || 120 }}
     strategy:
       fail-fast: false
       matrix:
@@ -44,7 +44,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Install locked harness tools
-        run: python -m pip install -r requirements-dev.lock -r requirements-m0.lock
+        run: python -m pip install -r requirements-dev.lock -r requirements-m0.lock -r requirements-m1.lock
       - name: Verify installed dependencies
         run: python -m pip check
       - name: Run quality harness

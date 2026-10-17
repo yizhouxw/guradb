@@ -139,3 +139,7 @@ Iceberg 的稳定规范目前覆盖 v1–v3，v4 尚未正式采纳；v2 与 v3 
 - 外部引用与托管对象可共存，但保留等级和删除拥有者必须登记；哪些源能提供可执行的 upstream 保护协议？
 - 源端高频变更时，检索的新鲜度、训练可复现性和索引维护成本如何权衡？
 - 是否开放第三方连接器接口，以及扩展类型、字段约定、媒体解码和数据集布局的认证流程？
+
+## M1 当前实测切片
+
+Iceberg v2的显式metadata-location固定Snapshot读取已接入有界单节点服务；仅单schema、非分区、long/string/boolean/Parquet，拒绝position/equality delete及演进。PyIceberg独立互操作、真实S3/PG与失败路径见[M1验收](../design/m1-validation.md)。这是具体reader白名单，不将上表的长期目标整体升级为支持。训练Parquet导出为固定身份/向量/media_json合同，不是外部Iceberg写回。

@@ -4,7 +4,7 @@ non_runtime_prefixes = ["scripts/", "tests/", "examples/", "benchmarks/"]
 ignored_directories = [".git", ".venv", "node_modules", "target", "build", "dist", "__pycache__", ".pytest_cache", "artifacts/", "data/", "tmp/"]
 max_source_lines = 600
 bootstrap_suites = ["repository", "policy", "contracts", "harness-tests"]
-release_suites = ["repository", "policy", "contracts", "harness-tests", "rust", "functional", "performance-smoke", "stability-component", "performance", "stability", "soak"]
+release_suites = ["repository", "policy", "contracts", "harness-tests", "python", "rust", "functional", "performance-smoke", "stability-component", "performance", "stability", "soak"]
 
 [suites.repository]
 state = "ready"
@@ -34,7 +34,7 @@ commands = [["{python}", "scripts/cargo.py", "fmt", "--all", "--", "--check"], [
 [suites.functional]
 state = "ready"
 timeout_seconds = 900
-commands = [["{python}", "scripts/m0.py", "functional", "--run-dir", "{run_dir}/m0-functional"]]
+commands = [["{python}", "scripts/m0.py", "functional", "--run-dir", "{run_dir}/m0-functional"], ["{python}", "scripts/m1_acceptance.py", "functional", "--run-dir", "{run_dir}/m1-functional"]]
 
 [suites.performance]
 state = "planned"
@@ -45,12 +45,12 @@ commands = []
 [suites.performance-smoke]
 state = "ready"
 timeout_seconds = 300
-commands = [["{python}", "scripts/m0.py", "performance-smoke", "--run-dir", "{run_dir}/m0-performance"]]
+commands = [["{python}", "scripts/m0.py", "performance-smoke", "--run-dir", "{run_dir}/m0-performance"], ["{python}", "scripts/m1_acceptance.py", "performance-smoke", "--run-dir", "{run_dir}/m1-performance"]]
 
 [suites.stability-component]
 state = "ready"
 timeout_seconds = 300
-commands = [["{python}", "scripts/m0.py", "stability-component", "--run-dir", "{run_dir}/m0-stability"]]
+commands = [["{python}", "scripts/m0.py", "stability-component", "--run-dir", "{run_dir}/m0-stability"], ["{python}", "scripts/m1_acceptance.py", "stability-component", "--run-dir", "{run_dir}/m1-stability"]]
 
 [suites.stability]
 state = "planned"
@@ -63,3 +63,8 @@ state = "planned"
 reason = "发布前需真实持续负载、资源趋势、重启/滚动升级及恢复证据；当前没有运行服务。"
 timeout_seconds = 3600
 commands = []
+
+[suites.python]
+state = "ready"
+timeout_seconds = 60
+commands = [["{python}", "-m", "compileall", "-q", "modules", "clients", "scripts/m1.py", "scripts/m1_acceptance.py", "scripts/m1lib"], ["{python}", "-m", "pip", "check"]]

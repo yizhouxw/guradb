@@ -1,0 +1,1 @@
+{"dataset":"89b349e2-cc73-4c22-871d-c80a159d7789","tenant":"demo","name":"documents","definition":{"root":"file:///absolute/lake","key_field":"id","text_field":"title"}}

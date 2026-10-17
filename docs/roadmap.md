@@ -1,6 +1,6 @@
 # 路线图与关键 POC
 
-状态：M0 有界单进程读取已落地，实际范围见[详细设计](design/m0-parquet-http.md)与[验收映射](design/m0-validation.md)；M1–M4 为后续实施路径。日期：2026-10-17。里程碑不是日历承诺。
+状态：M0 有界单进程读取已落地，M1 有界单节点闭环已实现（最终本地证据与拒绝范围见 [M1验收](design/m1-validation.md)），实际范围见[详细设计](design/m0-parquet-http.md)与[验收映射](design/m0-validation.md)；M2–M4 为后续实施路径。日期：2026-10-17。里程碑不是日历承诺。
 
 ## 1. 范围与验收规则
 
@@ -26,6 +26,8 @@ M0/M1 是内部 alpha 切片；M2 补齐 P0 能力；M3 才验收真实分布式
 冻结数据来源/种子、规模、硬件、并发、对象区域、冷热定义及预算；记录扫描吞吐、冷热延迟、对象请求/字节和内存。M0 不需要 ANN、Graph、Iceberg writer、PG 控制面或分布式先行完成。退出产物是可复现的小型读取服务及其报告，不能标为分布式数据库或可发布产品。
 
 ## 3. M1：首个湖快照服务化与检索/训练闭环
+
+实施落位：[详细设计](design/m1-snapshot-serving.md)、[操作与CLI](design/m1-running.md)、[验收映射](design/m1-validation.md)、[ADR 0011](decisions/0011-m1-bounded-snapshot-serving.md)。仅覆盖其中明确冻结的有界白名单；通用SQL检索融合、更多Iceberg特性与多语言分析器不在本次支持声明中。
 
 ### 依赖与范围
 

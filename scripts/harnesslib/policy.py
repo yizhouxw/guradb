@@ -173,6 +173,8 @@ def plan(root: Path, paths: list[str], policy: dict, architecture: dict,
                 affected.add(module)
             if module not in {"cli", "mcp", "client-api"}:
                 gates.update({"performance-smoke", "stability-component"})
+            if path.endswith((".py", ".sql")):
+                gates.add("python")
             if path.endswith(".rs"):
                 gates.add("rust")
         if not documentation:
@@ -188,8 +190,10 @@ def plan(root: Path, paths: list[str], policy: dict, architecture: dict,
                 if path.startswith(prefix):
                     gates.add(component if path.startswith(prefix + "component/") else full)
         dependency_change = (PurePosixPath(path).name in {
-            "Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "requirements-m0.lock"}
-            or path in {"scripts/cargo.py", "scripts/m0.py"} or path.startswith("scripts/m0lib/"))
+            "Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "requirements-m0.lock", "requirements-m1.lock"}
+            or path in {"scripts/cargo.py", "scripts/m0.py", "scripts/m1.py", "scripts/m1_acceptance.py"} or path.startswith(("scripts/m0lib/", "scripts/m1lib/")))
+        if path == "requirements-m1.lock" or path in {"scripts/m1.py", "scripts/m1_acceptance.py"} or path.startswith("scripts/m1lib/"):
+            gates.add("python")
         if dependency_change:
             runtime_changed = True
             gates.update({"rust", "functional", "performance-smoke", "stability-component"})

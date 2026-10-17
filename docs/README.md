@@ -24,8 +24,10 @@
 | [GitHub Actions CI/CD](../harness/ci-cd.md) | 当前 CI 配置、远端接入与后续 CD 合同 |
 | [本次设计复审](reviews/2026-10-17-implementation-readiness.md) | 实施阻碍、修正位置、门禁前后范围与验证边界 |
 
-下一步从 M0 固定 Parquet manifest 与参数化只读 HTTP 扫描开始，冻结当前切片的依赖、身份/类型白名单和功能/性能/失败预算。各组件在首次使用前验证，后续能力不作为首个运行切片的总前置条件；实施范围统一以路线图为准。
+M0/M1当前有界实现的依赖、身份/类型白名单与功能/性能/失败预算见下方实施文档；下一步沿M2继续切片。各组件在首次使用前验证，后续能力不作为首个运行切片的总前置条件；实施范围统一以路线图为准。
 
 文档状态采用：`需求基线`、`提案`、`推荐基线（待 POC）`、`已接受`、`已实现并验证`、`已替代`。ADR 的接受只代表设计决定，不能单独证明功能已经实现。
 
 M0 实施：[详细设计](design/m0-parquet-http.md)、[运行说明](design/m0-running.md)、[验收映射](design/m0-validation.md)、[任务计划](plans/m0-parquet-http.md)。
+
+M1 实施：[详细设计](design/m1-snapshot-serving.md)、[运行说明](design/m1-running.md)、[验收映射](design/m1-validation.md)、[任务计划](plans/2026-10-17-m1-foundations.md)。

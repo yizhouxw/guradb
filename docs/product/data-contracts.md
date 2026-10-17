@@ -1,6 +1,6 @@
 # 记录身份、版本与可复现读取合同
 
-状态：实施基线；M0仅落实固定manifest/视图、键编码向量与受限读取，覆盖见[M0验收](../design/m0-validation.md)。适用于扫描、全文、向量、图、增量同步和训练；范围依 [路线图](../roadmap.md) 逐片实现。
+状态：实施基线；M0落实固定manifest/视图、键编码向量与受限读取；M1增加单字段稳定键全量校验、managed-copy快照/索引/训练pin与发布恢复，具体白名单见[M1合同](../design/m1-snapshot-serving.md)，覆盖见[M0验收](../design/m0-validation.md)。适用于扫描、全文、向量、图、增量同步和训练；范围依 [路线图](../roadmap.md) 逐片实现。
 
 ## 记录身份与空键、重复键
 
