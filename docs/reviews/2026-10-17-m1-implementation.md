@@ -37,3 +37,5 @@ linked worktree第一次真实提交hook暴露旧harness缺陷：hook导出的GI
 该补充的真实并发发布用例首先捕获锁前run读取的陈旧epoch；改为取得dataset锁后重新锁读run，再判断历史published_epoch。保留失败报告，未删除并发断言或改变预算。
 
 输入复核要求metadata和features两者均为canonical SHA-256，显式null不能退化成无pin读取，负例验证不创建generation；独立M0兼容消费者的手工pin责任已明确。
+
+最终导出边界负例：8MiB引号文本的二次JSON转义生成33,555,014字节manifest，原实现会给出随后无法读取的成功引用（artifacts/export-budget-probe保留复现）。导出前增加Arrow64MiB、Parquet32MiB、manifest32MiB减4KiB传输空间检查；同一大转义输入必须resource_limit失败，无部分成功，真实普通导出照常通过。

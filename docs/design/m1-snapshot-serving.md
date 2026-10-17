@@ -46,7 +46,7 @@ HTTP token 哈希、租户、主体与 dataset grant 位于 PG。每次请求、
 
 ## 冻结资源边界
 
-单个 metadata/Avro/feature/media默认对象限 4MiB，data 单对象32MiB；所有源读取合计32MiB、最多128次。最多32个 data file、64字段、10000行；单个Avro文件最多4096条。总 Arrow nbytes/声明解码检查64MiB；Tantivy writer 16MB 单线程。bundle 单文件32MiB，读取验证完整依赖/事实/索引累计128MiB、最多256次。服务2个执行线程、32个在途槽、16个HTTP连接，自提交起（含排队）的10秒应用作业 deadline；普通结果2MiB、单次下载32MiB。源构建30秒应用预算。
+单个 metadata/Avro/feature/media默认对象限 4MiB，data 单对象32MiB；所有源读取合计32MiB、最多128次。最多32个 data file、64字段、10000行；单个Avro文件最多4096条。总 Arrow nbytes/声明解码检查64MiB；Tantivy writer 16MB 单线程。bundle 单文件32MiB，读取验证完整依赖/事实/索引累计128MiB、最多256次。服务2个执行线程、32个在途槽、16个HTTP连接，自提交起（含排队）的10秒应用作业 deadline；普通结果2MiB、单次下载32MiB；训练manifest预留4KiB传输元数据空间，导出前检查Arrow/Parquet/manifest体积，不能成功后才发现结果不可读取。源构建30秒应用预算。
 
 PG 最多16数据集、128 Snapshot run、128持久 job；达到 job 上限需 release 终态 job，CLI输出保留 query_id。手工 pin 上限1024；这些是 alpha 操作预算，非多租户硬隔离保证。JSON/Avro/Parquet/Tantivy 的同步库调用不能任意 CPU 抢占；库临时分配、OS缓存和Python对象额外计入实测RSS。只接受操作者控制的源，不宣称不可信文件沙箱。
 

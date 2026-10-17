@@ -18,6 +18,7 @@ from m1lib.negative import mutated
 from m1lib.fixtures import HttpProcess, feature_file, iceberg, pg, target
 from modules.common.contracts import Budget, Failure, digest, encoded, key
 from modules.connectors.iceberg import snapshot
+from modules.connectors.training import export as training_export
 from modules.query.snapshot import construct, publish
 from modules.storage.objects import Objects
 
@@ -62,6 +63,13 @@ def run(directory):
         bundle=json.loads(Path(run['artifact']['path']).read_bytes())
         assert [r['values'] for r in bundle['rows']]==rows
         assert bundle['context']['source_versions'][0]['version']==str(table.current_snapshot().snapshot_id)
+        # Pure export boundary negative: escaping must not publish an unreadable result.
+        oversized=deepcopy(bundle)
+        oversized['rows']=[deepcopy(bundle['rows'][0])]
+        oversized['rows'][0]['values']['title']='"'*(8<<20)
+        rejects(lambda:training_export(oversized,{},directory/'oversized-export',Budget()),'resource_limit')
+        del oversized
+        checks+=1
         # Existing Rust/M0 HTTP independently scans the normalized Parquet artifact.
         lab.manifest=deepcopy(bundle['manifest'])
         lab.manifest['backend']['root']=mapped(Path(lab.manifest['backend']['root']))

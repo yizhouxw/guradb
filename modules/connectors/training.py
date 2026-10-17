@@ -6,7 +6,7 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from modules.common.contracts import digest, encoded, public_media, public_values, require
+from modules.common.contracts import MAX_BYTES, digest, encoded, public_media, public_values, require
 from modules.storage.objects import put
 
 
@@ -28,13 +28,16 @@ def export(bundle, request, directory, budget):
                         pa.field('split', pa.string(), False), pa.field('values_json', pa.string(), False),
                         pa.field('vector', pa.list_(pa.float64()), False), pa.field('media_json', pa.string(), False)])
     table = pa.Table.from_pylist(samples, schema=schema)
+    require(table.nbytes <= 64 << 20, 'resource_limit', 'training Arrow budget exceeded')
     sink = BytesIO()
     pq.write_table(table, sink, compression='snappy')
     parquet = sink.getvalue()
+    require(len(parquet) <= MAX_BYTES, 'resource_limit', 'training Parquet exceeds download budget')
     artifact = put(Path(directory) / (digest(parquet)+'.parquet'), parquet)
     manifest = {'version': 1, 'read_context': bundle['context'], 'model': bundle['model'],
                 'retention_mode': bundle['retention_mode'], 'seed': seed, 'train_basis_points': threshold,
                 'rows': len(samples), 'samples': samples, 'parquet': artifact}
     raw = encoded(manifest)
+    require(len(raw) <= MAX_BYTES-4096, 'resource_limit', 'training manifest exceeds response budget')
     return {'manifest': put(Path(directory)/(digest(raw)+'.json'), raw), 'parquet': artifact,
             'read_context': bundle['context'], 'rows': len(samples)}
