@@ -87,6 +87,8 @@ class Lab:
         name = self.network + '-' + str(len(self.names))
         docker('run', '-d', '--name', name, '--network', self.network, *options, image, *args)
         self.names.append(name)
+        mounts = json.loads(docker('inspect', '--format', '{{json .Mounts}}', name).stdout)
+        self.event('container_created', name=name, volumes=[m['Name'] for m in mounts if m['Type']=='volume'])
         return name
 
     def port(self, name, port):
@@ -136,7 +138,7 @@ class Lab:
 
     def start(self, limits=None):
         if self.server:
-            docker('rm', '-f', self.server, check=False)
+            docker('rm', '-f', '-v', self.server, check=False)
         path = self.directory / 'manifest.json'
         write(path, self.manifest)
         config = {'listen': '0.0.0.0:8080', 'auth_file': mapped(self.auth),
@@ -210,7 +212,7 @@ class Lab:
             docker('unpause', name, check=False)
             logs = docker('logs', name, check=False)
             (self.directory / (name + '.log')).write_text(logs.stdout + logs.stderr)
-            docker('rm', '-f', name, check=False)
+            docker('rm', '-f', '-v', name, check=False)
         docker('network', 'rm', self.network, check=False)
 
 

@@ -12,6 +12,8 @@
 - 真实driver移动到functional、performance/component、faults/component对应目录；M0构建/fixture/锁文件变更触发运行时门禁。旧“planned应阻断”单测显式构造planned fixture，保留原断言，不因生产gate启用而删测试。
 - 固定镜像、Cargo.lock及Python测试依赖；Actions保留只读权限/固定SHA/失败上传/原总预算约束。新M0远端运行尚未执行，不混用此前bootstrap首跑。
 
+- 提交前清理复核发现PG/SeaweedFS镜像隐式创建匿名卷。增加容器创建时的关联卷记录，并在删除本任务容器时一并清理其匿名卷，避免重复验收累积测试数据。
+
 ## 实际范围与剩余风险
 
 初轮真实功能、组件性能和组件故障均已通过，最终结论以本任务最终提交后的harness report为准；中途失败日志保留在artifacts。功能包括PyArrow/PG18独立对照、S3版本读取、对象覆盖/删除、local symlink/损坏/schema拒绝、授权和分页、预算/TTL；故障包括排队/运行取消、执行点撤权、超时、恢复和进程重启。
