@@ -35,3 +35,5 @@ ADR 用来记录已经比较过的方案和取舍。编号只表示记录顺序�
 新增记录可复制 `0000-template.md`，采用下一个可用编号。尚待讨论的内容保持“提案”，决定后补齐依据和影响，再标“已接受”；被替代时链接新 ADR。
 
 - [ADR 0012：有界 P0 与本地 worker](0012-bounded-p0-and-local-workers.md)
+
+- [ADR 0013：本地 P0 分片、记录版本与恢复](0013-local-p0-partitions-and-recovery.md)

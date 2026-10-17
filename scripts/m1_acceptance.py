@@ -6,13 +6,13 @@ import hashlib
 import json
 from pathlib import Path
 import runpy
-import shutil
 import subprocess
 import sys
 import traceback
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
+from harnesslib.acceptance_archive import archive_run
 from harnesslib.policy import load
 from harnesslib.runner import checkout_digest
 from m0lib.kit import write
@@ -39,14 +39,7 @@ def main():
         write(directory/'result.json',result)
         common=Path(subprocess.check_output(['git','rev-parse','--git-common-dir'],cwd=ROOT,text=True).strip())
         if not common.is_absolute():common=ROOT/common
-        archive=common/'guradb'/'m1-evidence'/hashlib.sha256((directory/'result.json').read_bytes()).hexdigest()
-        archive.mkdir(parents=True,exist_ok=False)
-        copied={}
-        for path in [directory/'result.json',directory/'trace.json',*directory.glob('*.log')]:
-            if path.is_file():
-                shutil.copy2(path,archive/path.name)
-                copied[path.name]=hashlib.sha256(path.read_bytes()).hexdigest()
-        write(archive/'checksums.json',copied)
+        archive = archive_run(common, 'm1', directory)
         print(json.dumps({'passed':result['passed'],'evidence':str(directory/'result.json'),'archive':str(archive)}))
         return 0 if result['passed'] else 1
     except Exception:

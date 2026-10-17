@@ -40,8 +40,8 @@ def edges(directory, count=60):
 
 
 class Serving:
-    def __init__(self, control, root, token, workers=3):
-        self.service = Service(control,root,workers=workers)
+    def __init__(self, control, root, token, workers=3, worker_endpoints=None, worker_secret=None):
+        self.service = Service(control,root,workers=workers,worker_endpoints=worker_endpoints,worker_secret=worker_secret)
         self.server = Server(('127.0.0.1',0),self.service)
         self.thread = threading.Thread(target=self.server.serve_forever,daemon=True)
         self.thread.start()

@@ -31,6 +31,9 @@ def run(directory):
         actual = load_bundle(candidate['artifact'], Budget())
         assert sorted([r['values'] for r in actual['rows']], key=lambda r:r['id']) == sorted(
             table.scan().to_arrow().to_pylist(), key=lambda r:r['id'])
+        old_versions = {r['logical_key']: r['record_version'] for r in old['rows']}
+        assert all(r['record_version'] == old_versions[r['logical_key']] for r in actual['rows']
+                   if r['logical_key'] in old_versions)
         assert publish(control, candidate['id'], 1) == 2
         assert refresh(control, DATASET, 'append', selected, directory/'builds')['id'] == candidate['id']
         assert publish(control, candidate['id'], 1) == 2
@@ -47,6 +50,6 @@ def run(directory):
             raise AssertionError('duplicate logical key accepted')
         assert control.dataset(DATASET)['published'] == candidate['id']
         control.unpin(first['id'], 'retained-old')
-    return {'passed': True, 'suite': 'incremental', 'assertions': 13,
+    return {'passed': True, 'suite': 'incremental', 'assertions': 14,
             'oracles': ['PyIceberg independent append and scan', 'real PG CAS/replay'],
-            'execution': 'full_snapshot_and_index_rebuild'}
+            'execution': 'append_data_and_index_rebuild'}

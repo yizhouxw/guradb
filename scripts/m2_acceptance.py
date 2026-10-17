@@ -6,13 +6,13 @@ import hashlib
 import json
 from pathlib import Path
 import runpy
-import shutil
 import subprocess
 import sys
 import traceback
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
+from harnesslib.acceptance_archive import archive_run
 from harnesslib.policy import load
 from harnesslib.runner import checkout_digest
 from m0lib.kit import write
@@ -35,6 +35,8 @@ def main():
             from tests.functional.incremental import run as incremental_run
             from tests.functional.writer import run as writer_run
             result['incremental'] = incremental_run(directory/'incremental')
+            from tests.functional.incremental_s3 import run as incremental_s3_run
+            result['incremental_s3'] = incremental_s3_run(directory/'incremental-s3')
             result['writer'] = writer_run(directory/'writer')
         after=checkout_digest(ROOT,load(ROOT)[0])
         if before != after or commit != subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip():
@@ -44,14 +46,7 @@ def main():
         write(directory/'result.json',result)
         common=Path(subprocess.check_output(['git','rev-parse','--git-common-dir'],cwd=ROOT,text=True).strip())
         if not common.is_absolute():common=ROOT/common
-        archive=common/'guradb'/'m2-evidence'/hashlib.sha256((directory/'result.json').read_bytes()).hexdigest()
-        archive.mkdir(parents=True,exist_ok=False)
-        copied={}
-        for path in [directory/'result.json',directory/'trace.json',*directory.glob('*.log')]:
-            if path.is_file():
-                shutil.copy2(path,archive/path.name)
-                copied[path.name]=hashlib.sha256(path.read_bytes()).hexdigest()
-        write(archive/'checksums.json',copied)
+        archive = archive_run(common, 'm2', directory)
         print(json.dumps({'passed':result['passed'],'evidence':str(directory/'result.json'),'archive':str(archive)}))
         return 0 if result['passed'] else 1
     except Exception:

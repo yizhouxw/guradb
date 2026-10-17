@@ -1,7 +1,9 @@
 """Validate a bounded complete append chain; never infer changes from listings."""
 import json
+from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
-from modules.common.contracts import MAX_FILES, decode_json, require
+from modules.common.contracts import MAX_FILES, Failure, decode_json, require
 from modules.connectors.iceberg import avro
 
 
@@ -27,7 +29,7 @@ def live_files(objects, meta, selected):
 
 
 def validate(objects, base, target):
-    """Return durable proof, including old file byte checks against copied dependencies."""
+    """Return durable append proof and check old source storage identities."""
     source = base['source']
     old = decode_json(objects.read(source['metadata_uri'], expected=source['metadata_sha256']))
     new = decode_json(objects.read(target['metadata_uri'], expected=target['metadata_sha256']))
@@ -66,10 +68,47 @@ def validate(objects, base, target):
     dependencies = {d['uri']: d for d in source['dependencies']}
     for path in old_paths:
         require(path in dependencies, 'source_invalid')
-        objects.read(path, expected=dependencies[path]['sha256'])
+        verify_identity(objects, dependencies[path])
     return {'base_snapshot': str(base_id), 'target_snapshot': str(target['snapshot_id']),
             'chain': [str(s['snapshot-id']) for s in reversed(chain)],
+            'old_files': sorted(old_paths),
             'added_files': sorted(set(previous) - old_paths),
             'dependencies': objects.dependencies,
             'validation_stats': {'source_reads': objects.budget.reads, 'source_bytes': objects.budget.bytes},
-            'execution': 'full_snapshot_and_index_rebuild'}
+            'execution': 'append_data_and_index_rebuild'}
+
+
+def verify_identity(objects, dependency):
+    """Reject mutable old paths without leaking external storage errors."""
+    try:
+        return _verify_identity(objects, dependency)
+    except Failure:
+        raise
+    except Exception:
+        raise Failure('source_unavailable', 'old source object is unavailable or unreadable') from None
+
+
+def _verify_identity(objects, dependency):
+    identity = dependency.get('identity')
+    require(identity is not None, 'unsupported_change', 'base lacks immutable identity; rebuild snapshot')
+    uri = urlsplit(dependency['uri'])
+    objects.budget.check()
+    require(objects.budget.reads < 128, 'resource_limit')
+    if identity['kind'] == 'file-stat-v1':
+        path = Path(unquote(uri.path))
+        require(not path.is_symlink() and path.resolve(strict=True).is_relative_to(objects.local), 'source_invalid')
+        current = path
+        while current != objects.local:
+            require(not current.is_symlink(), 'source_invalid')
+            current = current.parent
+        stat = path.stat()
+        actual = {'kind': 'file-stat-v1', 'device': stat.st_dev, 'inode': stat.st_ino,
+                  'size': stat.st_size, 'mtime_ns': stat.st_mtime_ns, 'ctime_ns': stat.st_ctime_ns}
+    else:
+        require(identity['kind'] == 's3-head-v1' and identity.get('etag'), 'unsupported_change')
+        objects.budget.account(0)
+        response = objects.s3.head_object(Bucket=uri.netloc, Key=unquote(uri.path).lstrip('/'))
+        actual = {'kind': 's3-head-v1', 'etag': response.get('ETag'),
+                  'version': response.get('VersionId'), 'size': response['ContentLength']}
+    objects.budget.check()
+    require(actual == identity, 'source_invalid', 'old source object identity changed')

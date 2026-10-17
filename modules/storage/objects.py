@@ -45,18 +45,33 @@ class Objects:
                 require(not current.is_symlink(), 'source_invalid', 'symlink source rejected')
                 current = current.parent
             with path.open('rb') as stream:
+                before = os.fstat(stream.fileno())
                 raw = stream.read(min(limit, MAX_BYTES - self.budget.bytes) + 1)
+                raw_digest = digest(raw)
+                stat = os.fstat(stream.fileno())
+                identity_fields = ('st_dev', 'st_ino', 'st_size', 'st_mtime_ns', 'st_ctime_ns')
+                current_stat = path.stat()
+                require(all(getattr(before, name) == getattr(stat, name) == getattr(current_stat, name)
+                            for name in identity_fields), 'source_invalid', 'source changed while reading')
         else:
             response = self.s3.get_object(Bucket=p.netloc, Key=unquote(p.path).lstrip('/'))
             with response['Body'] as stream:
                 require(response['ContentLength'] <= limit, 'resource_limit')
                 raw = stream.read(min(limit, MAX_BYTES - self.budget.bytes) + 1)
+        if p.scheme != 'file':
+            raw_digest = digest(raw)
         require(0 < len(raw) <= limit, 'resource_limit', 'object exceeds byte limit')
         self.budget.account(len(raw))
-        require(expected is None or digest(raw) == expected, 'source_invalid', 'pinned object changed')
-        dependency = {'uri': uri, 'sha256': digest(raw), 'size_bytes': len(raw)}
+        require(expected is None or raw_digest == expected, 'source_invalid', 'pinned object changed')
+        dependency = {'uri': uri, 'sha256': raw_digest, 'size_bytes': len(raw)}
+        if p.scheme == 'file':
+            dependency['identity'] = {'kind': 'file-stat-v1', 'device': stat.st_dev, 'inode': stat.st_ino,
+                                      'size': stat.st_size, 'mtime_ns': stat.st_mtime_ns, 'ctime_ns': stat.st_ctime_ns}
+        else:
+            dependency['identity'] = {'kind': 's3-head-v1', 'etag': response.get('ETag'),
+                                      'version': response.get('VersionId'), 'size': response['ContentLength']}
         if self.archive is not None:
-            dependency['copy'] = put(self.archive/digest(raw), raw)
+            dependency['copy'] = put(self.archive/raw_digest, raw)
         self.dependencies.append(dependency)
         return raw
 

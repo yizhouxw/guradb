@@ -15,6 +15,7 @@ from modules.gateway.m1 import Server
 from modules.query.service import Service
 from modules.query.snapshot import collect, construct, publish
 from modules.query.incremental import refresh, progress
+from modules.query.rebuild import rebuild
 
 
 def main():
@@ -37,6 +38,9 @@ def main():
     build.add_argument('--operation',required=True)
     build.add_argument('--target',type=Path,required=True)
     build.add_argument('--s3-endpoint')
+    repair = sub.add_parser('rebuild-indexes')
+    repair.add_argument('--dataset',required=True)
+    repair.add_argument('--operation',required=True)
     for name in ('run','progress','publish','pin','unpin','gc'):
         action = sub.add_parser(name)
         action.add_argument('run')
@@ -54,6 +58,7 @@ def main():
     serve.add_argument('--host',default='127.0.0.1')
     serve.add_argument('--port',type=int,default=8081)
     serve.add_argument('--workers',type=int,choices=(0,3),default=0)
+    serve.add_argument('--worker-endpoint',action='append',help='exactly three loopback worker URLs; shared immutable root required')
     args = parser.parse_args()
     try:
         control = Control(os.environ[args.dsn_env])
@@ -79,6 +84,8 @@ def main():
                                 config=Config(connect_timeout=2,read_timeout=3,retries={'max_attempts':0}))
             builder=construct if args.command=='snapshot' else refresh
             result=builder(control,args.dataset,args.operation,json.loads(args.target.read_text()),args.root,s3)
+        elif args.command=='rebuild-indexes':
+            result=rebuild(control,args.dataset,args.operation,args.root)
         elif args.command=='publish':
             result={'epoch':publish(control,args.run,args.expected_epoch)}
         elif args.command in ('pin','unpin'):
@@ -103,7 +110,8 @@ def main():
         elif args.command=='run':
             result=control.run(args.run)
         else:
-            service=Service(control,args.root/'jobs',workers=args.workers)
+            service=Service(control,args.root/'jobs',workers=args.workers,worker_endpoints=args.worker_endpoint,
+                            worker_secret=os.environ.get('GURADB_WORKER_SECRET'))
             server=Server((args.host,args.port),service)
             try:
                 server.serve_forever()

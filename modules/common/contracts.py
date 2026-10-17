@@ -75,6 +75,7 @@ class Budget:
         self.deadline = time.monotonic() + seconds
         self.reads = self.bytes = 0
         self.artifact_reads = self.artifact_bytes = 0
+        self.limits = {"reads": 128, "bytes": MAX_BYTES, "artifact_reads": 256, "artifact_bytes": 128 << 20}
 
     def check(self):
         require(not self.cancelled(), 'cancelled', 'operation cancelled')
@@ -84,10 +85,25 @@ class Budget:
         self.check()
         self.artifact_reads += 1
         self.artifact_bytes += size
-        require(self.artifact_reads <= 256 and self.artifact_bytes <= 128 << 20, 'resource_limit', 'artifact budget exceeded')
+        require(self.artifact_reads <= self.limits['artifact_reads'] and self.artifact_bytes <= self.limits['artifact_bytes'], 'resource_limit', 'artifact budget exceeded')
 
     def account(self, size):
         self.check()
         self.reads += 1
         self.bytes += size
-        require(self.bytes <= MAX_BYTES, 'resource_limit', 'source byte budget exceeded')
+        require(self.reads <= self.limits['reads'] and self.bytes <= self.limits['bytes'], 'resource_limit', 'source byte budget exceeded')
+
+    def counters(self):
+        return {name: getattr(self, name) for name in self.limits}
+
+    def allocation(self, count):
+        self.check()
+        return {name: max(0, limit-getattr(self, name)) // count for name, limit in self.limits.items()}
+
+    def merge(self, counters):
+        require(isinstance(counters, dict) and set(counters) == set(self.limits) and
+                all(type(value) is int and value >= 0 for value in counters.values()), 'worker_mismatch')
+        for name, value in counters.items():
+            setattr(self, name, getattr(self, name)+value)
+            require(getattr(self, name) <= self.limits[name], 'resource_limit', 'aggregate task budget exceeded')
+        self.check()

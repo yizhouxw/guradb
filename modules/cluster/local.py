@@ -25,7 +25,7 @@ def fanout(module, payloads, budget, root):
                 budget.check()
                 identity = uuid.uuid4().hex
                 envelope = {'task_id': identity, 'shard': shard, 'deadline': budget.deadline,
-                            'payload': payload, 'fingerprint': digest(encoded(payload))}
+                            'payload': payload, 'fingerprint': digest(encoded(payload)), 'limits': budget.allocation(3)}
                 input_ref = put(Path(directory)/f'{shard}.input', encoded(envelope))
                 output = Path(directory)/f'{shard}.output'
                 log = (Path(directory)/f'{shard}.log').open('wb')
@@ -54,10 +54,16 @@ def fanout(module, payloads, budget, root):
                 bytes_read += len(raw)
                 require(bytes_read <= MAX_BYTES, 'resource_limit', 'worker output budget exceeded')
                 result = decode_json(raw)
+                require(isinstance(result, dict) and {'task_id','fingerprint','shard','pid'} <= set(result), 'worker_mismatch')
                 require((result['task_id'],result['fingerprint']) == identity and result['shard'] == shard and
                         result['pid'] == process.pid, 'worker_mismatch')
                 if 'error' in result:
                     raise Failure(result['error'], 'worker rejected task')
+                require({'output','read_context','records','rss_bytes','work'} <= set(result) and
+                        type(result['records']) is int and result['records'] >= 0 and
+                        type(result['rss_bytes']) is int and 0 < result['rss_bytes'] <= 512 << 20 and
+                        isinstance(result['output'], dict), 'worker_mismatch')
+                budget.merge(result['work']['budget'])
                 results.append(result)
             budget.check()
             require(len({result['pid'] for result in results}) == 3, 'worker_mismatch')

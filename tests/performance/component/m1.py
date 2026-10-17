@@ -51,6 +51,8 @@ def run(directory):
                     assert [int(r['values']['id']) for r in result['hits']]==[r['id'] for r in truth]
                     assert result['stats']['records_examined']==8192
                     references=[run['artifact'],bundle['manifest_reference']]+bundle['index_files']+[d['copy'] for d in bundle['source']['dependencies']]+[{'path':str(Path(bundle['manifest']['backend']['root'])/f['key'])} for f in bundle['manifest']['files']]
+                    references += [bundle['bm25']['stats'], *bundle['bm25']['files']]
+                    references += [shard['file'] for shard in bundle['shards']]
                     assert result['stats']['artifact_reads']==len(references)
                     assert result['stats']['artifact_bytes']==sum(Path(ref['path']).stat().st_size for ref in references)
                     assert latency<=10000 and rss<=512*(1<<20),(latency,rss)

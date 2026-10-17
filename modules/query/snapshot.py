@@ -6,11 +6,13 @@ import shutil
 from modules.common.contracts import Budget, Failure, decode_json, digest, encoded, require
 from modules.connectors.iceberg import snapshot
 from modules.index.ann import build as build_ann
+from modules.index.bm25 import build as build_bm25
+from modules.index.shards import build as build_shards
 from modules.index.retrieval import ANALYZER, build, features, load_bundle
-from modules.storage.objects import Objects, put
+from modules.storage.objects import Objects, get, put
 
 
-def construct(control, dataset, operation, target, root, s3=None, cancelled=lambda: False):
+def construct(control, dataset, operation, target, root, s3=None, cancelled=lambda: False, inherited=None, added_files=None):
     require(isinstance(target, dict) and set(target) - {'ann'} == {'metadata_uri','metadata_sha256','snapshot_id','features_uri','features_sha256'}, 'invalid_request')
     require(all(isinstance(target[name], str) and len(target[name]) == 64 and
                 all(c in '0123456789abcdef' for c in target[name])
@@ -27,10 +29,34 @@ def construct(control, dataset, operation, target, root, s3=None, cancelled=lamb
         budget = Budget(cancelled)
         objects = Objects(definition['root'], budget, s3, directory/'dependencies')
         result = snapshot(objects, target['metadata_uri'], target['metadata_sha256'], target['snapshot_id'],
-                          str(ds['id']), ds['name'], definition['key_field'], directory/'objects')
+                          str(ds['id']), ds['name'], definition['key_field'], directory/'objects', inherited, added_files)
         model = features(result['rows'], decode_json(objects.read(target['features_uri'], expected=target['features_sha256'])),
                          definition['text_field'])
+        if inherited:
+            require(model == inherited['model'], 'unsupported_change', 'append changed feature model')
+            originals = {row['logical_key']: row for row in inherited['rows']}
+            for row in result['rows']:
+                if row['logical_key'] in originals:
+                    previous = originals[row['logical_key']]
+                    row['record_version'] = previous.get('record_version', inherited['revision'])
+                    require(row['vector'] == previous['vector'] and
+                            [{k:v for k,v in m.items() if k != 'copy'} for m in row['media']] ==
+                            [{k:v for k,v in m.items() if k != 'copy'} for m in previous['media']],
+                            'unsupported_change', 'append changed existing features')
+            present = {d['uri'] for d in objects.dependencies}
+            for dependency in inherited['source']['dependencies']:
+                if dependency['uri'] in present:
+                    continue
+                raw = get(dependency['copy'])
+                budget.artifact(len(raw))
+                objects.dependencies.append(dict(dependency, copy=put(directory/'dependencies'/digest(raw), raw)))
         seen_media = {}
+        if inherited:
+            for old_row in inherited['rows']:
+                for media in old_row['media']:
+                    raw = get(media['copy'])
+                    budget.artifact(len(raw))
+                    seen_media[(media['uri'], media['sha256'], media['size_bytes'])] = put(directory/'dependencies'/digest(raw), raw)
         for row in result['rows']:
             for media in row['media']:
                 identity = (media['uri'], media['sha256'], media['size_bytes'])
@@ -44,6 +70,8 @@ def construct(control, dataset, operation, target, root, s3=None, cancelled=lamb
         result['source']['dependencies'] = objects.dependencies
         version_source = dict(result['source'], dependencies=[{k:v for k,v in d.items() if k != 'copy'} for d in objects.dependencies])
         revision = 'rev_' + digest(encoded({'source': version_source, 'model': model, 'text_field': definition['text_field']}))
+        for row in result['rows']:
+            row.setdefault('record_version', revision)
         context = {'read_consistency': 'published', 'data_revision_id': revision,
                    'read_view_id': 'view_' + str(run['id']),
                    'source_versions': [{'source_id': str(ds['id']), 'format': 'iceberg-v2',
@@ -51,18 +79,20 @@ def construct(control, dataset, operation, target, root, s3=None, cancelled=lamb
                                        {'source_id': str(ds['id'])+':metadata', 'format': 'iceberg-v2-metadata',
                                         'version': target['metadata_sha256']},
                                        {'source_id': model['model'], 'format': 'features-v1', 'version': target['features_sha256']}],
-                   'index_versions': [{'index_id': str(ds['id'])+':bm25:'+ANALYZER, 'version': str(run['id'])},
+                   'index_versions': [{'index_id': str(ds['id'])+':bm25-global-v2:'+ANALYZER, 'version': str(run['id'])},
                                       {'index_id': str(ds['id'])+':exact-vector:'+digest(encoded(model)), 'version': str(run['id'])}]}
         index_files = build(directory/'tantivy', result['rows'], definition['text_field'], budget)
+        bm25 = build_bm25(directory/'bm25', result['rows'], definition['text_field'], budget)
         manifest_ref = put(directory/'manifest.json', encoded(result['manifest']))
-        bundle = {'version': 1, 'retention_mode': 'managed-copy', 'revision': revision, 'context': context, 'model': model, 'source': result['source'],
+        bundle = {'version': 2, 'retention_mode': 'managed-copy', 'revision': revision, 'context': context, 'model': model, 'source': result['source'],
                   'manifest': result['manifest'], 'manifest_reference': manifest_ref, 'rows': result['rows'],
-                  'index_path': str(directory/'tantivy'), 'index_files': index_files,
+                  'index_path': str(directory/'tantivy'), 'index_files': index_files, 'bm25': bm25,
                   'stats': {'source_reads': budget.reads, 'source_bytes': budget.bytes}}
         if 'ann' in target:
             bundle['ann'] = build_ann(directory/'lance', result['rows'], revision, model, target['ann'], budget)
             context['index_versions'].append({'index_id': str(ds['id'])+':lance-ivf-flat', 'version': str(run['id'])})
         budget.check()
+        bundle['shards'] = build_shards(bundle, directory/'shards', budget)
         payload = encoded(bundle)
         require(len(payload) <= 32 << 20, 'resource_limit')
         reference = put(directory/'bundle.json', payload)

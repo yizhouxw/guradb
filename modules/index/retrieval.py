@@ -9,6 +9,7 @@ import tantivy
 from modules.common.contracts import MAX_ROWS, encoded, public_media, public_values, require
 from modules.storage.objects import get, put
 from modules.index.ann import candidates
+from modules.index.bm25 import ranked as bm25_ranked
 
 ANALYZER = 'ascii-alnum-lower-v1'
 
@@ -74,13 +75,22 @@ def load_bundle(reference, budget):
     if 'incremental' in reference:
         read(reference['incremental'])
     bundle = json.loads(raw)
-    require(bundle['version'] == 1 and 0 < len(bundle['rows']) <= MAX_ROWS, 'source_invalid')
+    require(bundle['version'] in (1, 2) and 0 < len(bundle['rows']) <= MAX_ROWS, 'source_invalid')
+    if bundle['version'] == 2:
+        require('bm25' in bundle and len(bundle.get('shards', [])) == 3, 'source_invalid')
     for dependency in bundle['source']['dependencies']:
         budget.check()
         read(dependency['copy'])
     for reference in bundle['index_files'] + bundle.get('ann', {}).get('files', []):
         budget.check()
         read(reference)
+    if 'bm25' in bundle:
+        for reference in [bundle['bm25']['stats'], *bundle['bm25']['files']]:
+            read(reference)
+    for shard in bundle.get('shards', []):
+        read(shard['file'])
+        for reference in shard.get('ann', {}).get('files', []):
+            read(reference)
     require(read(bundle['manifest_reference']) == encoded(bundle['manifest']), 'source_invalid')
     for fragment in bundle['manifest']['files']:
         budget.check()
@@ -124,14 +134,19 @@ def search(bundle, request, budget):
         require(isinstance(text, str) and len(text) <= 512 and re.fullmatch(r'[A-Za-z0-9 ]+', text) is not None, 'invalid_request')
         tokens = text.lower().split()
         require(0 < len(tokens) <= 16 and all(len(t) <= 40 for t in tokens), 'invalid_request')
-        index = tantivy.Index.open(bundle['index_path'])
-        index.register_tokenizer(ANALYZER, analyzer())
-        index.reload()
-        searcher = index.searcher()
-        query = index.parse_query(' '.join(tokens), ['body'])
-        hits = searcher.search(query, limit=len(rows)).hits
-        ranked = [(searcher.doc(address).to_dict()['logical_key'][0], float(score)) for score, address in hits]
-        ranked = sorted(((key, score) for key, score in ranked if key in allowed), key=lambda hit: (-hit[1], hit[0]))[:limit]
+        if 'bm25' in bundle:
+            all_hits = bm25_ranked(bundle, text, allowed, budget)
+            ranked = all_hits[:limit]
+            hits = all_hits
+        else:
+            index = tantivy.Index.open(bundle['index_path'])
+            index.register_tokenizer(ANALYZER, analyzer())
+            index.reload()
+            searcher = index.searcher()
+            query = index.parse_query(' '.join(tokens), ['body'])
+            hits = searcher.search(query, limit=bundle.get('global_rows', len(rows))).hits
+            ranked = [(searcher.doc(address).to_dict()['logical_key'][0], float(score)) for score, address in hits]
+            ranked = sorted(((key, score) for key, score in ranked if key in allowed), key=lambda hit: (-hit[1], hit[0]))[:limit]
         ranks.append(ranked)
         costs['bm25_matches'] = len(hits)
     if 'vector' in request:
@@ -157,7 +172,8 @@ def search(bundle, request, budget):
         scores = dict(ranks[0])
     ordered = sorted(scores, key=lambda key: (-scores[key], key))[:k]
     budget.check()
-    return {'hits': [{'logical_key': key, 'record_version': bundle['revision'], 'score': scores[key],
+    costs.update(artifact_reads=budget.artifact_reads, artifact_bytes=budget.artifact_bytes)
+    return {'hits': [{'logical_key': key, 'record_version': rows[key].get('record_version', bundle['revision']), 'score': scores[key],
                       'values': public_values(rows[key]['values']), 'media': public_media(rows[key]['media'])} for key in ordered],
             'read_context': bundle['context'], 'stats': costs,
             'ranking': ('rrf-k60-ann' if mode == 'ann' else 'rrf-k60') if len(ranks) == 2 else ('bm25' if 'text' in request else mode+'-squared-l2')}

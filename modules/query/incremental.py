@@ -2,15 +2,16 @@
 from pathlib import Path
 
 from modules.common.contracts import Budget, Failure, digest, encoded, require
-from modules.connectors.incremental import validate
+from modules.connectors.incremental import validate, verify_identity
 from modules.index.retrieval import load_bundle
 from modules.query.snapshot import construct
 from modules.storage.objects import Objects, put
 
 
 class _BuildControl:
-    def __init__(self, control, run, proof, root):
+    def __init__(self, control, run, proof, root, objects, inherited):
         self.control, self.fixed_run, self.proof, self.root = control, run, proof, root
+        self.objects, self.inherited = objects, inherited
 
     def __getattr__(self, name):
         return getattr(self.control, name)
@@ -25,6 +26,9 @@ class _BuildControl:
         for dependency in self.proof['dependencies']:
             if dependency['uri'] in actual:
                 require(actual[dependency['uri']] == dependency['sha256'], 'source_invalid', 'source changed during refresh')
+        for dependency in self.inherited['source']['dependencies']:
+            if dependency['uri'] in self.proof['old_files']:
+                verify_identity(self.objects, dependency)
         proof = put(Path(self.root).resolve()/str(run)/'incremental.json', encoded(self.proof))
         self.control.ready(run, dict(artifact, incremental=proof))
 
@@ -71,7 +75,8 @@ def _refresh(control, dataset, operation, target, root, s3, cancelled):
         proof = validate(objects, base, target)
         proof['base_run'] = str(base_run['id'])
         proof['definition_sha256'] = digest(encoded(ds['definition']))
-        return construct(_BuildControl(control, run, proof, root), dataset, operation, target, root, s3, cancelled)
+        return construct(_BuildControl(control, run, proof, root, objects, base), dataset, operation, target, root, s3, cancelled,
+                         inherited=base, added_files=set(proof['added_files']))
     except Exception as error:
         control.fail(run['id'], error.code if isinstance(error, Failure) else 'build_failed')
         raise
@@ -89,4 +94,4 @@ def progress(control, run_id):
             'base_run': run['target']['incremental']['base_run'], 'discovered': target,
             'applied': target if ready else None, 'indexed': target if ready else None,
             'published': target if run['published_epoch'] is not None else None,
-            'error': run['error'], 'execution': 'full_snapshot_and_index_rebuild'}
+            'error': run['error'], 'execution': 'append_data_and_index_rebuild'}

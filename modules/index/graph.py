@@ -77,7 +77,7 @@ def expand(bundle, request, budget):
             fanouts[seed] += 1
             require(fanouts[seed] <= max_fanout and len(paths) < max_edges, 'resource_limit',
                     'graph path or fanout budget exceeded')
-            paths.append({'logical_key': logical, 'record_version': bundle['revision'],
+            paths.append({'logical_key': logical, 'record_version': row.get('record_version', bundle['revision']),
                           'source': left, 'target': right, 'type': label,
                           'seed': seed, 'neighbor': neighbor, 'direction': traversal})
     paths.sort(key=lambda path: (path['logical_key'], path['seed'], path['direction']))

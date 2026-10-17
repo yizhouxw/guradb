@@ -25,7 +25,7 @@
 .venv/bin/python scripts/m1.py publish "$RUN" --expected-epoch 1
 ```
 
-它验证完整 append 历史后全量重读并重建索引，尚无只读取新增文件的 delta 执行；不会把更新/删除/rewrite当作append。
+它验证完整 append 历史和旧文件身份，只读取新增源数据文件；旧记录版本继承，派生索引仍全量重建。不会把更新/删除/rewrite当作append。旧bundle缺identity时先执行显式Snapshot。
 未知结果先查询 run/operation；同operation不同target拒绝。详情见 [增量合同](m2-incremental.md)。
 
 ## 托管 append
@@ -46,8 +46,8 @@ rows 文件为固定 `[{"id":1,"title":"first","active":true}]`。单机可信�
 GURADB_URL=http://127.0.0.1:8081 .venv/bin/python -m clients.mcp.server
 ```
 
-token 使用已有 `GURADB_TOKEN` 环境变量。三 worker 返回各 PID、分片和实际记录数；精确向量/scan/Graph/训练转换分担记录，全文统计与ANN仍协调器执行。
-详见 [本地运行时边界](m3-local-workers.md)、[MCP说明](../../clients/mcp/README.md)。所有入口仍由HTTP授权、固定view、job生命周期控制。
+token 使用已有 `GURADB_TOKEN` 环境变量。三 worker 返回各 PID、分片和实际记录数；scan/Graph/训练读取各自持久serving文件；新视图使用物理BM25/ANN分片和全局归并，小ANN分片明确精确回退。
+还可启用[三个HTTP worker](local-worker-http.md)验证网络协议。详见 [本地运行时边界](m3-local-workers.md)、[MCP说明](../../clients/mcp/README.md)。所有入口仍由HTTP授权、固定view、job生命周期控制。
 
 ## 验证与兼容
 
@@ -61,3 +61,16 @@ token 使用已有 `GURADB_TOKEN` 环境变量。三 worker 返回各 PID、分�
 旧M1 bundle继续支持exact；ANN只在新目标显式启用，新索引不是独立事实源。原M1目录schema不变；托管writer显式初始化独立gura_managed表。
 新服务的job kind增加graph；回退旧服务前先排空新作业。新ANN view应保留新服务读取，回退到旧binary前显式选择旧view；不要删除仍被pin/源快照引用的产物。
 本地原始证据在artifacts，最终报告按commit归档；不自动推送。完整performance/stability/soak与HA/跨机/升级仍不通过。
+
+
+## 本地状态检查
+
+停止或运行中均可使用只读 PG 当前状态快照；DSN 仅从环境变量读取：
+
+```sh
+GURADB_PG_DSN='本地连接参数' .venv/bin/python scripts/inspect_state.py
+```
+
+输出 dataset generation/epoch、各 run 的 discovered/applied/indexed/published、job 类型/状态/错误码聚合、pin scope 保留计数、grant 数与 managed intent 状态；不输出凭证摘要、URI、业务值或查询参数。报告采用单个 repeatable-read 只读事务。**这是当前状态快照不是不可篡改/全历史安全审计**；没有事件历史、认证签名或独立审计存储，无法推导已删除记录与过往撤权。
+
+派生索引文件丢失时使用[从保留事实副本重建](m2-index-rebuild.md)，然后显式CAS发布；事实副本损坏必须先恢复备份，不能以重建跳过。

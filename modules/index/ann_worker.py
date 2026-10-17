@@ -15,7 +15,7 @@ def execute(task):
         schema = pa.schema([pa.field('logical_key', pa.string(), nullable=False),
                             pa.field('record_version', pa.string(), nullable=False),
                             pa.field('vector', pa.list_(pa.float32(), model['dimension']), nullable=False)])
-        table = pa.Table.from_pylist([{'logical_key': r['logical_key'], 'record_version': task['revision'],
+        table = pa.Table.from_pylist([{'logical_key': r['logical_key'], 'record_version': r.get('record_version', task['revision']),
                                       'vector': r['vector']} for r in rows], schema=schema)
         dataset = lance.write_dataset(table, task['path'], mode='create')
         dataset.create_index('vector', index_type='IVF_FLAT', metric='l2', num_partitions=task['partitions'])

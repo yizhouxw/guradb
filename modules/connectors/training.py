@@ -20,7 +20,7 @@ def samples_for(bundle, request, budget):
         identity = [bundle['manifest']['dataset_id'], 'record', row['logical_key']]
         bucket = int.from_bytes(hashlib.sha256(encoded([seed, identity])).digest()[:8], 'big') % 10000
         samples.append({'dataset_id': identity[0], 'entity_kind': 'record', 'logical_key': row['logical_key'],
-                        'record_version': bundle['revision'], 'split': 'train' if bucket < threshold else 'validation',
+                        'record_version': row.get('record_version', bundle['revision']), 'split': 'train' if bucket < threshold else 'validation',
                         'values_json': encoded(public_values(row['values'])).decode(), 'vector': row['vector'],
                         'media_json': encoded(public_media(row['media'])).decode()})
     return samples

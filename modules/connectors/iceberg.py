@@ -22,7 +22,7 @@ def avro(raw):
     return reader.metadata, rows
 
 
-def snapshot(objects, metadata_uri, metadata_sha256, snapshot_id, dataset_id, table_name, key_field, output):
+def snapshot(objects, metadata_uri, metadata_sha256, snapshot_id, dataset_id, table_name, key_field, output, inherited=None, added_files=None):
     require(identifier(table_name) and identifier(key_field), 'invalid_request')
     uuid.UUID(dataset_id)
     require(type(snapshot_id) is int and snapshot_id > 0, 'invalid_request')
@@ -72,13 +72,28 @@ def snapshot(objects, metadata_uri, metadata_sha256, snapshot_id, dataset_id, ta
             require(0 < data['file_size_in_bytes'] <= MAX_BYTES, 'resource_limit')
             files.append(data)
     require(files, 'unsupported_source', 'empty snapshot not yet supported')
-    rows, keys, fragments = [], set(), []
-    decoded_bytes = copied_bytes = 0
+    rows = [dict(row) for row in inherited['rows']] if inherited else []
+    keys = {row['logical_key'] for row in rows}
+    fragments = []
+    if inherited:
+        from modules.storage.objects import get
+        for fragment in inherited['manifest']['files']:
+            raw = get({'path': str(Path(inherited['manifest']['backend']['root']) / fragment['key']),
+                       'sha256': fragment['sha256']})
+            objects.budget.artifact(len(raw))
+            put(Path(output) / fragment['key'], raw)
+            fragments.append(dict(fragment))
+    copied_bytes = sum(fragment['size_bytes'] for fragment in fragments)
+    require(copied_bytes <= MAX_BYTES and len(rows) <= MAX_ROWS, 'resource_limit')
     arrow_fields = [pa.field(f['name'], {'long': pa.int64(), 'string': pa.string(), 'boolean': pa.bool_()}[f['type']],
                              nullable=not f['required']) for f in fields]
     expected = pa.schema(arrow_fields)
+    decoded_bytes = pa.Table.from_pylist([row['values'] for row in rows], schema=expected).nbytes if rows else 0
+    require(decoded_bytes <= 64 << 20, 'resource_limit')
     for n, data in enumerate(files):
         objects.budget.check()
+        if inherited and data['file_path'] not in added_files:
+            continue
         raw = objects.read(data['file_path'], MAX_BYTES)
         require(len(raw) == data['file_size_in_bytes'], 'source_invalid')
         parquet = pq.ParquetFile(BytesIO(raw))
@@ -108,7 +123,7 @@ def snapshot(objects, metadata_uri, metadata_sha256, snapshot_id, dataset_id, ta
         require(copied_bytes <= MAX_BYTES, 'resource_limit')
         name = digest(payload) + '.parquet'
         put(Path(output) / name, payload)
-        fragments.append({'fragment_id': f'fragment_{n}', 'key': name, 'size_bytes': len(payload), 'sha256': digest(payload)})
+        fragments.append({'fragment_id': f'fragment_{len(fragments)}', 'key': name, 'size_bytes': len(payload), 'sha256': digest(payload)})
     manifest = {'schema_version': 1, 'dataset_id': dataset_id, 'table_name': table_name,
                 'schema': [{'name': f['name'], 'data_type': {'long': 'int8', 'string': 'text', 'boolean': 'bool'}[f['type']],
                             'nullable': not f['required']} for f in fields],

@@ -6,7 +6,7 @@ from pathlib import Path
 
 from modules.common.contracts import MAX_BYTES, MAX_ROWS, require
 from modules.common.process import run_process
-from modules.storage.objects import put
+from modules.storage.objects import get, put
 
 
 def build(directory, rows, revision, model, config, budget):
@@ -19,7 +19,7 @@ def build(directory, rows, revision, model, config, budget):
     require(not directory.exists(), 'artifact_conflict')
     native = run_process([sys.executable, '-m', 'modules.index.ann_worker'],
         {'kind': 'build', 'path': str(directory), 'rows': [
-            {'logical_key': row['logical_key'], 'vector': row['vector']} for row in rows],
+            {'logical_key': row['logical_key'], 'vector': row['vector'], 'record_version': row.get('record_version', revision)} for row in rows],
          'revision': revision, 'model': model, 'partitions': partitions}, budget)
     files, size = [], 0
     for path in sorted(directory.rglob('*')):
@@ -44,6 +44,11 @@ def candidates(bundle, query, allowed, limit, nprobes, budget):
     budget.check()
     if not allowed:
         return [], {'ann_candidates': 0, 'nprobes': probes, 'native_rss_bytes': 0}
+    input_bytes = 0
+    for reference in index['files']:
+        raw = get(reference)
+        budget.artifact(len(raw))
+        input_bytes += len(raw)
     # Logical keys are canonical hex, not caller-provided SQL expressions.
     require(all(isinstance(key, str) and key and all(c in '0123456789abcdef' for c in key) for key in allowed), 'source_invalid')
     condition = 'logical_key IN (' + ','.join("'" + key + "'" for key in sorted(allowed)) + ')'
@@ -57,8 +62,8 @@ def candidates(bundle, query, allowed, limit, nprobes, budget):
     for hit in found:
         budget.check()
         logical = hit['logical_key']
-        require(logical in allowed and logical not in seen and hit['record_version'] == bundle['revision'], 'source_invalid')
+        require(logical in allowed and logical not in seen and hit['record_version'] == by_key[logical].get('record_version', bundle['revision']), 'source_invalid')
         seen.add(logical)
         distance = math.fsum((a-b)**2 for a, b in zip(by_key[logical]['vector'], query))
         ranked.append((logical, -distance))
-    return sorted(ranked, key=lambda hit: (-hit[1], hit[0])), {'ann_candidates': len(found), 'nprobes': probes, 'native_rss_bytes': native['native_rss_bytes']}
+    return sorted(ranked, key=lambda hit: (-hit[1], hit[0])), {'ann_candidates': len(found), 'ann_input_files': len(index['files']), 'ann_input_bytes': input_bytes, 'nprobes': probes, 'native_rss_bytes': native['native_rss_bytes']}

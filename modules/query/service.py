@@ -9,6 +9,7 @@ import uuid
 
 import psycopg
 
+from modules.cluster.transport import endpoint, signature
 from modules.catalog.control import Control
 from modules.catalog.jobs import Jobs
 from modules.common.contracts import Budget, Failure, encoded, public_media, public_values, require
@@ -20,9 +21,16 @@ from modules.query.distributed import execute as distributed
 
 
 class Service:
-    def __init__(self, control, root, workers=0):
+    def __init__(self, control, root, workers=0, worker_endpoints=None, worker_secret=None):
         require(workers in (0,3), 'invalid_request')
         self.workers = workers
+        self.transport = None
+        if worker_endpoints is not None:
+            require(workers == 3 and len(worker_endpoints) == 3 and len(set(worker_endpoints)) == 3, 'invalid_request')
+            for value in worker_endpoints:
+                endpoint(value)
+            signature(worker_secret, '', b'')
+            self.transport = (worker_endpoints, worker_secret)
         self.control, self.root = control, Path(root).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
         self.worker = uuid.uuid4()
@@ -93,7 +101,7 @@ class Service:
             run = self.control.run(row['run'])
             bundle = load_bundle(run['artifact'], budget)
             if self.workers == 3:
-                output = distributed(bundle, row['kind'], row['request'], budget, self.root/str(job), principal)
+                output = distributed(bundle, row['kind'], row['request'], budget, self.root/str(job), principal, transport=self.transport)
             elif row['kind'] == 'search':
                 output = search(bundle, row['request'], budget)
             elif row['kind'] == 'graph':
@@ -102,7 +110,7 @@ class Service:
                 require(set(row['request']) <= {'limit'}, 'invalid_request')
                 limit = row['request'].get('limit', 100)
                 require(type(limit) is int and 1 <= limit <= 1000, 'resource_limit')
-                output = {'rows': [{'logical_key': r['logical_key'], 'values': public_values(r['values']), 'record_version': bundle['revision'],
+                output = {'rows': [{'logical_key': r['logical_key'], 'values': public_values(r['values']), 'record_version': r.get('record_version', bundle['revision']),
                                     'media': public_media(r['media'])} for r in sorted(bundle['rows'], key=lambda r:r['logical_key'])[:limit]],
                           'truncated': len(bundle['rows']) > limit, 'read_context': bundle['context']}
             else:
