@@ -9,6 +9,12 @@ baseline、完整性能或 soak**。依据[下一阶段 A0](../plans/2026-10-18-
 `scripts/p0lib/contract.py` 定义 `a0-synthetic-p0-v1`，输入/查询/driver 内容摘要写入每次
 result；`inputs/trace.json` 保存全部源行、向量、关系与各发布视图，不依赖业务数据。
 
+`dataset_digest` 对持久 `inputs` 作 UTF-8 canonical JSON（对象键排序、紧凑分隔符、
+保留 Unicode、拒绝非有限数）后计算 SHA-256；`vectors` 的记录 ID 键固定为十进制
+字符串，因此 JSON 读取后可直接重算。早期 `063ef1e` 使用内存整数键排序，存在
+往返摘要不一致；旧归档及结果保持原字节，不补写摘要。此修复只更正持久表示，
+源行、向量值、查询和预算不变；新证据仍按实际 commit、driver 与合同摘要区分。
+
 | 项目 | 固定合同 |
 | --- | --- |
 | 源/规模 | 本机托管 Iceberg v2，初始256行，每批16行；原256条数据保留 |

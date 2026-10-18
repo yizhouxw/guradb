@@ -70,7 +70,8 @@ def workload_contract(duration, requested_updates, offsets, transport):
     rows = [document(i) for i in range(INITIAL_ROWS + APPEND_ROWS * len(offsets))]
     vectors = input_vectors(rows)
     pairs = query_pairs(vectors, 'documents', 'relations')
-    inputs = {'documents': rows, 'vectors': vectors,
+    # JSON object keys are strings: freeze that form before sorting and hashing.
+    inputs = {'documents': rows, 'vectors': {str(key): vector for key, vector in vectors.items()},
               'relations': [{'id': i, 'source': i % 10, 'target': (i + 1) % 13,
                              'kind': 'link' if i % 2 == 0 else 'other'} for i in range(60)]}
     scripts = Path(__file__).resolve().parents[1]
