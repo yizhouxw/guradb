@@ -67,6 +67,7 @@ class Lab:
         self.directory.mkdir(parents=True, exist_ok=True)
         self.manifest, self.rows = fixture(self.directory / 'objects', count)
         self.names = []
+        self.removed = set()
         self.network = 'gura-' + uuid.uuid4().hex[:12]
         self.token = secrets.token_hex(24)
         self.other_token = secrets.token_hex(24)
@@ -138,7 +139,7 @@ class Lab:
 
     def start(self, limits=None):
         if self.server:
-            docker('rm', '-f', '-v', self.server, check=False)
+            self.remove(self.server)
         path = self.directory / 'manifest.json'
         write(path, self.manifest)
         config = {'listen': '0.0.0.0:8080', 'auth_file': mapped(self.auth),
@@ -207,13 +208,38 @@ class Lab:
         rows = json.loads(result.stdout)
         return [[str(v) if isinstance(v, int) and not isinstance(v, bool) else v for v in row.values()] for row in rows]
 
+    def remove(self, name):
+        if name in self.removed:
+            return
+        # Stop first so the saved stream includes final output, then collect before
+        # removing. A failed extraction leaves both diagnostics and container.
+        docker('unpause', name, check=False)
+        stopped = docker('kill', name, check=False)
+        if stopped.returncode:
+            state = docker('inspect', '--format', '{{.State.Running}}', name, check=False)
+            if state.returncode or state.stdout.strip() != 'false':
+                raise RuntimeError('container stop not confirmed; preserve container ' + name)
+        logs = docker('logs', name, check=False)
+        raw = (logs.stdout + logs.stderr).encode()
+        with (self.directory / (name + '.log')).open('xb') as stream:
+            stream.write(raw)
+        self.event('container_logs_collected', name=name, returncode=logs.returncode,
+                   sha256=hashlib.sha256(raw).hexdigest())
+        if logs.returncode:
+            raise RuntimeError('container log collection failed; preserve container ' + name)
+        docker('rm', '-f', '-v', name)
+        self.removed.add(name)
+
     def close(self):
+        errors = []
         for name in reversed(self.names):
-            docker('unpause', name, check=False)
-            logs = docker('logs', name, check=False)
-            (self.directory / (name + '.log')).write_text(logs.stdout + logs.stderr)
-            docker('rm', '-f', '-v', name, check=False)
+            try:
+                self.remove(name)
+            except Exception as error:
+                errors.append(str(error))
         docker('network', 'rm', self.network, check=False)
+        if errors:
+            raise RuntimeError('; '.join(errors))
 
 
 @contextmanager
