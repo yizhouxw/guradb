@@ -37,7 +37,16 @@ def checkout_digest(root: Path, policy: dict) -> str:
 def stop_group(process: subprocess.Popen) -> None:
     try:
         if os.name == "posix":
-            os.killpg(process.pid, signal.SIGKILL)
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except PermissionError as denied:
+                # Darwin PID removal can precede waitpid readiness. This is
+                # bounded cleanup grace, not an extension of the command budget.
+                try:
+                    process.wait(timeout=0.1)
+                except subprocess.TimeoutExpired:
+                    raise denied from None
+                os.killpg(process.pid, signal.SIGKILL)
         elif process.poll() is None:
             process.kill()
     except ProcessLookupError:

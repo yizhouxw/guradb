@@ -136,13 +136,15 @@ class Lab:
                         '/workspace/target/debug/guradb','--config',mapped(config),check=False)
         assert result.returncode == 1 and expected in result.stderr, result.stderr
 
-    def start(self, limits=None):
+    def start(self, limits=None, pg_listen=None):
         if self.server:
             docker('rm', '-f', '-v', self.server, check=False)
         path = self.directory / 'manifest.json'
         write(path, self.manifest)
         config = {'listen': '0.0.0.0:8080', 'auth_file': mapped(self.auth),
                   'manifests': [{'path': mapped(path), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}], 'limits': limits or {}}
+        if pg_listen is not None:
+            config['pg_listen'] = pg_listen
         server_config = self.directory / 'server.json'
         write(server_config, config)
         self.server = self.container(RUST, '/workspace/target/debug/guradb', '--config', mapped(server_config),
@@ -153,7 +155,7 @@ class Lab:
             self.wait(lambda: urllib.request.urlopen(self.url + '/healthz', timeout=1).status == 200)
         except Exception:
             raise AssertionError(docker('logs', self.server).stdout + docker('logs', self.server).stderr)
-        self.event('server_started', manifest=config['manifests'][0]['sha256'], limits=limits or {})
+        self.event('server_started', manifest=config['manifests'][0]['sha256'], limits=limits or {}, pg_listen=pg_listen)
 
     def http(self, method, path, body=None, token=None, auth=True):
         headers = {'Content-Type': 'application/json'}

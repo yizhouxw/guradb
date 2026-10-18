@@ -19,7 +19,7 @@
 | 查询基础 | Rust + Arrow + DataFusion | M0 单进程固定 manifest/Parquet 查询；检索扩展与 M3 分布式执行逐步接入 |
 | 全文 / Graph | Tantivy 分片索引；边表 + 邻接物化 + 有界遍历 | M1 BM25；M2 有界 Graph 独立门禁；不自建完整搜索引擎或完整通用图数据库 |
 | 控制面 | PostgreSQL 小型元数据库 + Iceberg REST Catalog 适配 | M0 固定清单无需可变 catalog；M1 起验证持久目录/作业/发布，不保存业务逐行数据 |
-| 接口 | HTTP 查询/作业 + PostgreSQL 18 SQL 子集 | M0 只读 HTTP；语法、类型/函数与 wire 分开验收，不继承完整 PG 事务/扩展行为 |
+| 接口 | HTTP 查询/作业 + PostgreSQL 18 SQL 子集 + 有界 PG wire | M0 只读 HTTP；PG SQL 端口作为独立切片实施，语法、类型/函数与 wire 分开验收，不继承完整 PG 事务/扩展行为 |
 
 上述选择与替代项见 [ADR 0003](decisions/0003-storage-and-execution-baseline.md)。依赖版本需要在联编和互操作 POC 后固定，不能单凭各组件独立可用就假定组合可用。
 
@@ -39,6 +39,12 @@
 | 恢复 | 冻结服务/源写入后的本地 PG、对象、目录与 pin 联合备份恢复 | 不是 HA/PITR/异地 DR；恢复后需补撤权，完整 release 门禁仍缺 |
 
 实际边界由[ADR 0011](decisions/0011-m1-bounded-snapshot-serving.md)、[ADR 0012](decisions/0012-bounded-p0-and-local-workers.md)与后续[ADR 0013](decisions/0013-local-p0-partitions-and-recovery.md)限定；后者推进了本地索引分片与恢复，不能把前一阶段的“ANN单节点”当当前唯一实现。
+
+### PG SQL 端口增量
+
+[ADR 0014](decisions/0014-bounded-pg-wire.md) 已将客户端 PostgreSQL 协议接入 Rust gateway，真实 psql/Psycopg 和 PG 组件子 driver 已本地通过；最终提交门禁以 task receipt 为准。当前范围和运行方式见 [PG 指南](design/pg-wire-running.md)。可选 `pg_listen` 与 HTTP 共享授权文件、单表只读规划、固定 manifest、查询执行与资源上限；它不是将客户端 SQL 代理到控制面 PostgreSQL。Describe 使用同一白名单规划获取类型，不预先扫描数据。
+
+首片限制为 loopback、非 TLS、固定 `guradb` 数据库、`principal_id`/token 认证、simple/extended query 与 int8/text/bool/NULL。真实 psql/Psycopg 3 和负例独立验收；SDK 采用 autocommit。事务、系统目录、会话设置、COPY、扩展、统一检索 SQL 与跨机接入不由连接成功推导。无持久格式或控制面迁移；关闭新端口即可退回原有 HTTP 接入。
 
 ### 目标逻辑架构
 

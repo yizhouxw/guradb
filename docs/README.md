@@ -14,6 +14,7 @@
 | [总体架构 v0.3](architecture.md) | 分阶段接入的验证栈、湖与物化层、发布、一致性与分布式 |
 | [格式兼容矩阵](compatibility/lake-formats.md) | 表格式、文件格式、训练数据集、兼容级别与验证 |
 | [查询和客户端](interfaces/query-and-clients.md) | PostgreSQL、SQL、HTTP、CLI 与 MCP |
+| [PG SQL 端口与 SDK](design/pg-wire-running.md) | 本机 PG wire 切片、psql/Psycopg 配置、支持与拒绝范围及验证状态 |
 | [路线图](roadmap.md) | 阶段目标、依赖与验收条件 |
 | [决策清单与 ADR](decisions/README.md) | 已确定方向、待决问题与记录模板 |
 | [模块地图](../modules/README.md) | 代码落位与责任边界 |
@@ -31,6 +32,8 @@ M0/M1、部分M2、本地worker与离线恢复的实际范围按上述复审及�
 文档状态采用：`需求基线`、`提案`、`推荐基线（待 POC）`、`已接受`、`已实现并验证`、`已替代`。ADR 的接受只代表设计决定，不能单独证明功能已经实现。
 
 M0 实施：[详细设计](design/m0-parquet-http.md)、[运行说明](design/m0-running.md)、[验收映射](design/m0-validation.md)、[任务计划](plans/m0-parquet-http.md)。
+
+PG wire 独立切片：[设计决定](decisions/0014-bounded-pg-wire.md)、[配置与客户端](design/pg-wire-running.md)、[变更计划与证据](design/pg-wire-change-plan.md)。它扩展 M0 的接入协议，不改变 M1/M2 控制面或检索作业范围。
 
 M1 实施：[详细设计](design/m1-snapshot-serving.md)、[运行说明](design/m1-running.md)、[验收映射](design/m1-validation.md)、[任务计划](plans/2026-10-17-m1-foundations.md)。
 

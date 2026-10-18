@@ -1,4 +1,5 @@
 mod auth;
+mod pg;
 mod routes;
 mod state;
 
@@ -21,6 +22,8 @@ use tokio::{
 struct Config {
     #[serde(default = "listen")]
     listen: String,
+    #[serde(default)]
+    pg_listen: Option<String>,
     manifests: Vec<ManifestRef>,
     auth_file: PathBuf,
     #[serde(default)]
@@ -72,6 +75,11 @@ async fn serve() -> Result<()> {
         ]
         .concat(),
     });
+    let pg_listener = match config.pg_listen {
+        Some(address) => Some(pg::bind(&address).await?),
+        None => None,
+    };
+    let pg_state = state.clone();
     let app = Router::new()
         .route("/healthz", get(|| async { "ok" }))
         .route("/v1/queries", post(routes::submit))
@@ -85,10 +93,20 @@ async fn serve() -> Result<()> {
     let listener = tokio::net::TcpListener::bind(&config.listen)
         .await
         .map_err(|_| Error::new("invalid_config", "cannot bind listener"))?;
-    axum::serve(listener, app)
-        .with_graceful_shutdown(async {
-            let _ = tokio::signal::ctrl_c().await;
-        })
-        .await
-        .map_err(|_| Error::new("service_failed", "HTTP service stopped"))
+    let http = async {
+        axum::serve(listener, app)
+            .with_graceful_shutdown(async {
+                let _ = tokio::signal::ctrl_c().await;
+            })
+            .await
+            .map_err(|_| Error::new("service_failed", "HTTP service stopped"))
+    };
+    if let Some(listener) = pg_listener {
+        tokio::select! {
+            result = http => result,
+            result = pg::serve(listener, pg_state) => result,
+        }
+    } else {
+        http.await
+    }
 }

@@ -1,6 +1,6 @@
 # 运行 M0 读取服务
 
-M0 是单进程、受控小文件读取 alpha。实际合同见[详细设计](m0-parquet-http.md)，测试入口见[验收映射](m0-validation.md)。仅支持 int8/text/bool、单表列投影/比较过滤/排序/LIMIT；JOIN、函数、CTE、事务、写入、wire、索引、Iceberg 和分布式均未实现。
+M0 是单进程、受控小文件读取 alpha。实际合同见[详细设计](m0-parquet-http.md)，测试入口见[验收映射](m0-validation.md)。仅支持 int8/text/bool、单表列投影/比较过滤/排序/LIMIT；JOIN、函数、CTE、事务、写入、索引、Iceberg 和分布式不属于此路径。PostgreSQL wire 在后续独立切片接入同一执行路径，当前状态、启用与 SDK 用法见 [PG SQL 端口](pg-wire-running.md)。
 
 ## 构建与本地示例
 

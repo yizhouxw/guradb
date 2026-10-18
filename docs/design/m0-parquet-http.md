@@ -1,5 +1,7 @@
 # M0 详细设计：固定 Parquet manifest 与只读 HTTP
 
+后续 PG 协议适配见 [ADR 0014](../decisions/0014-bounded-pg-wire.md) 与 [PG 运行说明](pg-wire-running.md)，共用本文的 SQL、数据与资源边界；不回写 M0 历史验收为 PG 客户端证据。
+
 状态：实现合同，先于运行时代码冻结；实际支持与测量以本轮验收记录为准。任务 `m0-parquet-http`，基点 `5596117798126153a7ed9cfef291824ff8096925`。
 
 ## 目标与边界

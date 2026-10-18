@@ -30,6 +30,7 @@ axum = "=0.8.6"
 uuid = { version = "=1.18.1", features = ["v4", "serde"] }
 hmac = "=0.12.1"
 base64 = "=0.22.1"
+pgwire = { version = "=0.41.1", default-features = false }
 
 [profile.dev]
 debug = 0

@@ -4,7 +4,7 @@
 
 M0 使用[SQL OpenAPI](../../api/http/openapi.json)，M1/M2 使用[作业 OpenAPI](../../api/http/m1-openapi.json)；两条执行路径尚未统一。本文后续草案中的目标语义不能扩大当前白名单；append/refresh/publish 仍为可信操作者入口。样本选择、接口/格式历史文字与能力发现的一致性将在下一阶段A0/A1继续收口。
 
-本轮审查将实现入口收敛到只读查询：M0 验证固定 manifest/Parquet 上的精确扫描；M1 增加 Snapshot 发布、BM25、精确向量与 RRF；ANN、Graph、增量同步和分布式扩展按后续依赖推进。SQL 以 PG18 的明确子集为比较基线，HTTP 优先，wire protocol 后续独立验收。批量写入与同步使用另行设计的作业契约，不进入当前查询 API。具体阶段见[路线图](../roadmap.md)。
+本轮审查将实现入口收敛到只读查询：M0 验证固定 manifest/Parquet 上的精确扫描；M1 增加 Snapshot 发布、BM25、精确向量与 RRF；ANN、Graph、增量同步和分布式扩展按后续依赖推进。SQL 以 PG18 的明确子集为比较基线；HTTP 已落地，PG wire 作为独立客户端切片实施，当前状态见 [PG 端口指南](../design/pg-wire-running.md)。批量写入与同步使用另行设计的作业契约，不进入当前查询 API。具体阶段见[路线图](../roadmap.md)。
 
 ## 1. 统一入口，统一语义
 
@@ -20,14 +20,37 @@ SQL 和 HTTP 应进入同一套身份认证、权限检查、目录解析、计�
 | --- | --- |
 | SQL 方言 | M0 从只读 SELECT、投影/过滤/排序/LIMIT、值参数与明确表达式开始；逐项验收类型、转换、NULL、排序和错误；连接/聚合及 DDL/DML 不因 parser 可解析就进入支持清单 |
 | 函数与操作符 | 内置函数、全文函数、JSON、数组等分别验收；不能因解析通过就视为语义一致 |
-| Wire protocol | 后续独立验收 protocol 版本、驱动和工具；PG18 SQL 基线不等于已实现 PG18 全协议 |
+| Wire protocol | 独立切片覆盖 PG 3.0 与 psql/Psycopg 真实客户端，见下方首片合同；PG18 SQL 基线不等于完整 PG18 协议 |
 | 系统目录与工具 | `pg_catalog`、`information_schema`、会话设置及驱动探测查询单列矩阵；`psql`/ORM/迁移工具需实际验证 |
 | 扩展 | pgvector 等扩展的 SQL 表面、二进制扩展加载及 PostgreSQL 扩展 ABI 是不同事项，均不自动继承 |
 | 事务与一致性 | 支持声明范围内的表快照/作业提交和读取视图；首版不支持业务多语句事务、行锁/触发器、跨外部湖 2PC |
 
-PostgreSQL 的 simple query 与 extended query 是不同协议路径；extended query 将解析、参数绑定和执行分开。若引入 wire protocol，需要覆盖启动认证、类型编码、prepared statements、事务状态、取消和错误响应，并明确 `COPY` 等后续范围。[官方协议说明](https://www.postgresql.org/docs/current/protocol-overview.html)
+PostgreSQL 的 simple query 与 extended query 是不同协议路径；extended query 将解析、参数绑定和执行分开。wire protocol 的验收需要覆盖启动认证、类型编码、prepared statements、事务状态、取消和错误响应，并明确 `COPY` 等后续范围。[官方协议说明](https://www.postgresql.org/docs/current/protocol-overview.html)
 
 HTTP 查询入口每次提交一个只读语句，不提供持久业务事务会话；M0/M1 拒绝 DDL、DML、`BEGIN/COMMIT`、`SELECT FOR UPDATE` 及副作用函数，不能解析后忽略。读取采用固定快照/发布视图；导入与同步独立定义作业提交语义，不从 PostgreSQL SQL 兼容推导其隔离级别和事务能力。[PG18 事务隔离参考](https://www.postgresql.org/docs/18/transaction-iso.html)
+
+### 2.1 PG SQL 端口首片合同
+
+此合同按 [ADR 0014](../decisions/0014-bounded-pg-wire.md) 实现；真实 psql 18/Psycopg 3.2.10 与 PG 组件子 driver 已本地通过，实际证据与限制见[复核记录](../reviews/2026-10-18-pg-wire.md)。最终提交的整项门禁与代码绑定仍以 harness/task receipt 为准；合同不扩大到未测工具或生产部署。
+
+| 项目 | 首片边界 |
+| --- | --- |
+| 地址/身份 | 可选 `pg_listen`，仅 loopback IP 字面量；database=`guradb`，user=`principal_id`，password=原始 token；与 HTTP 共享授权文件并在查询执行重验 |
+| 传输 | 非 TLS，仅本机受控使用，客户端 `sslmode=disable`；不提供公网/共享网络明文部署 |
+| 启动 | PG 3.0；较高 minor 协商回 3.0。允许 user/database/application_name、UTF8/UTF-8 client_encoding 和空 options；未知或不支持设置明确拒绝 |
+| 执行 | Simple Query 单一白名单语句；extended Parse/Bind/Describe/Execute/Sync/Flush/Close，命名/未命名 prepared statement；SDK 使用 autocommit |
+| 类型 | int8/text/bool/NULL；文本和二进制参数/结果，text 含 NUL 的参数/结果报错；输入 int2/int4/varchar OID 可归并到对应 M0 类型，不能据此宣称新增 SQL 列类型 |
+| 参数/元数据 | 参数类型通过同一 SQL 白名单和列上下文推断；无法推断返回 `42P18`；Describe 不扫描数据 |
+| 固定视图 | 复用 M0 manifest/数据集授权；不访问控制面 PG 或 M1/M2 检索作业；PG 行结果不包含 HTTP `read_context`，需要该证据时使用 HTTP |
+| 生命周期 | CancelRequest 与 backend key 绑定活动连接；执行期取消/超时返回 `57014`，发送途中取消/超时关闭连接；extended SQL 错误等待 Sync 恢复；Sync 清理 portal，prepared statement 可跨 Sync 保留 |
+| 限额 | 消息 64 KiB、SQL 16 KiB、参数 64、statement 32、portal 16、名称 128 字节；认证连接 64，另留启动/取消容量 8；接收队列 8 条，溢出关闭；启动 10 秒、空闲 300 秒、一次结果发送总预算 10 秒 |
+| 结果/执行 | 继承 M0 执行/扫描/解码/内存/行数与字节预算；Execute 可有界分批返回，最多保留一个暂停结果；总结果超限报错，不伪装完整成功 |
+
+首片错误映射为：认证 `28P01`、数据库 `3D000`、权限/不可见资源 `42501`、不支持 `0A000`、参数 `22023`、无法推断参数 `42P18`、协议 `08P01`、连接容量 `53300`、资源上限 `54000`、取消/超时 `57014`。这是一组已声明映射，不构成完整 PostgreSQL 错误细节兼容。
+
+portal 超过 `limits.retention_seconds`（默认 60 秒）后不可继续 Execute。`server_version=18.0` 只是客户端协议兼容标记，另有 `guradb_version=0.1.0`；驱动不能据此假定目录、事务或 PG18 全功能可用。
+
+目录/会话设置、`BEGIN/COMMIT/ROLLBACK`、SQL `PREPARE`、COPY、DDL/DML、扩展、ORM/迁移探测与未列类型仍拒绝。真实 psql 18 和 Psycopg 3.2.10 的本轮验证不能外推全部客户端、连接池、BI 工具或驱动版本。
 
 ## 3. 检索接口的语义先于新语法
 
@@ -132,7 +155,7 @@ Agent 需要拿到结构化错误、可发现的能力边界、有限结果、�
 
 ## 6. 后续需要决定与验证
 
-1. 固定 PG18 基线上的 SQL/类型/函数白名单与差异；wire 阶段再验证真实驱动。
+1. 固定 PG18 基线上的 SQL/类型/函数白名单与差异；当前 wire 首片独立验证 psql/Psycopg，后续扩展驱动、TLS 与目录矩阵。
 2. M0 前冻结 HTTP 参数/结果类型映射、错误码、保留期、分页快照、只读分类和资源预算；M1 固定 BM25/精确向量/RRF 的表达与结果语义。
 3. 后续 ANN、Graph、增量、data_committed 与 PG wire 分别验收，不把某个扩展的全部行为作为隐含要求。
 4. 在对应里程碑实现前完成导入/同步/发布/训练作业 API 详细设计：输入 pin、操作身份、对账、取消、保留、GC 与写入权威；不扩展为跨外部湖全局事务。

@@ -9,6 +9,25 @@ import time
 from modules.common.contracts import MAX_BYTES, Failure, decode_json, encoded, require
 
 
+def stop_group(process):
+    """Reap the leader and terminate its group, including surviving helpers."""
+    try:
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except PermissionError as denied:
+            # Darwin may remove the PID before waitpid reports its exit.
+            # A short cleanup-only grace resolves that transition; a genuinely
+            # live denied process or denied helper group still fails.
+            try:
+                process.wait(timeout=0.1)
+            except subprocess.TimeoutExpired:
+                raise denied from None
+            os.killpg(process.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    process.wait(timeout=5)
+
+
 def run_process(command, payload, budget):
     """Append private input/output paths to a trusted command; never accept user commands."""
     budget.check()
@@ -42,9 +61,4 @@ def run_process(command, payload, budget):
             return result['result']
         finally:
             if process is not None:
-                # Kill the session even after its leader exits to reap any surviving native helpers.
-                try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-                process.wait(timeout=5)
+                stop_group(process)

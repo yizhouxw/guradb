@@ -17,6 +17,7 @@ ADR 用来记录已经比较过的方案和取舍。编号只表示记录顺序�
 | [0011](0011-m1-bounded-snapshot-serving.md) | M1 有界 Snapshot 服务化 | 接受，仅限单节点alpha；完整P0待后续 |
 | [0012](0012-bounded-p0-and-local-workers.md) | 有界 P0 与本地 worker | 接受有界实现；后续分片范围由0013推进 |
 | [0013](0013-local-p0-partitions-and-recovery.md) | 本地分片、记录版本与恢复 | 有界实现；完整M2/M3与生产证据仍缺 |
+| [0014](0014-bounded-pg-wire.md) | 共用执行路径的有界 PostgreSQL SQL 端口 | 有界本机实现；真实 psql/Psycopg 及 PG 组件测试本地通过，最终提交门禁看 task receipt |
 | [模板](0000-template.md) | 后续决策的记录格式 | 模板 |
 
 ## 优先讨论的问题

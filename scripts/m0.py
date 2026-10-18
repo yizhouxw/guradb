@@ -14,6 +14,7 @@ from harnesslib.policy import load
 from harnesslib.runner import checkout_digest
 
 from m0lib.kit import ROOT, fixture, mapped, write
+from m0lib.pgwire import build_client
 
 
 def main():
@@ -42,6 +43,10 @@ def main():
     driver = runpy.run_path(str(ROOT/driver_paths[args.suite]))['run']
     try:
         result = driver(directory)
+        build_client()
+        pg_driver = runpy.run_path(str(ROOT / driver_paths[args.suite].replace('m0.py', 'pgwire.py')))['run']
+        result['pgwire'] = pg_driver(directory / 'pgwire')
+        result['pgwire']['trace_sha256'] = hashlib.sha256((directory / 'pgwire' / 'trace.json').read_bytes()).hexdigest()
         result.update(build_seconds=build_seconds, git_commit=subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip(),
                       dependency_lock_sha256=hashlib.sha256((ROOT/"Cargo.lock").read_bytes()).hexdigest(),
                       checkout_digest=checkout_digest(ROOT,load(ROOT)[0]))

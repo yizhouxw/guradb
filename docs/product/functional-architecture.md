@@ -109,7 +109,8 @@ P0 是多个可验收切片组成的目标集合，覆盖分布式、多种检�
 - HTTP 提供发现、查询句柄、分页、取消及后续作业/发布接口。小结果使用 JSON，大结果和训练数据使用批次/对象产物。
 - CLI 面向交互与自动化，提供结构化输出和稳定退出码；MCP 默认通过授权的发现/查询/状态工具服务 Agent。
 - M1 以 HTTP 闭环和一个薄 CLI/MCP 适配为验收，完整二者在 M3 集成；不将所有客户端设为首个 alpha 的共同前置。
-- PostgreSQL wire protocol 是 P1 兼容项目；在完成实际驱动验收前，不承诺 `psql`、ORM 或扩展二进制兼容。
+- PostgreSQL 客户端直连已实现独立有界切片：可选本机 SQL 端口，真实 `psql` 18 与 Psycopg 3.2.10 的只读 autocommit、值参数、prepared statement、取消及错误已通过 PG 本地子 driver。最终提交门禁看 task receipt；连接示例见 [PG 端口指南](../design/pg-wire-running.md)，范围由 [ADR 0014](../decisions/0014-bounded-pg-wire.md) 限定。
+- SQL 端口与内部 PostgreSQL 控制面分别部署与授权；不把内部 PG 数据库连接当作客户端 GuraDB 连接。首片不承诺所有 SDK、ORM、目录探测、TLS、业务事务或扩展二进制兼容。
 - 拒绝首版不支持的事务、锁、约束与扩展行为，不通过“解析但忽略”制造虚假的 PostgreSQL 兼容。
 
 PostgreSQL 18 是选定的参考主版本，不是对未来最新版的承诺。[官方版本政策](https://www.postgresql.org/support/versioning/)。当前有[M0只读SQL合同](../../api/http/openapi.json)和[M1/M2检索与训练作业合同](../../api/http/m1-openapi.json)，实际运行见[M1](../design/m1-running.md)/[M2](../design/m2-running.md)。append/refresh/publish 仍经可信操作者入口，不能据此推定已提供公开写入/同步 API。

@@ -10,6 +10,8 @@ GuraDB 的目标是在对象存储与开放湖上统一管理结构化数据、�
 
 M1 操作见 [Snapshot/检索/训练快速开始](docs/design/m1-running.md)。M0 SQL 服务见 [M0 快速开始](docs/design/m0-running.md)，支持边界见 [详细设计](docs/design/m0-parquet-http.md) 和 [验收映射](docs/design/m0-validation.md)。
 
+PostgreSQL 客户端直连已实现有界本机切片：可选 PG SQL 端口复用 M0 只读执行与身份，真实 `psql` 18、Psycopg 3.2.10 及 PG 组件功能/性能/故障测试已本地通过。配置、SDK 示例与拒绝边界见 [PG 端口指南](docs/design/pg-wire-running.md)；它与 M1/M2 的内部 PostgreSQL 控制面是不同入口。最终提交的整项门禁与代码绑定证据以 task receipt 为准，组件通过不代表生产可发布。
+
 ## 已确定的方向
 
 - 覆盖 AI 训练的数据准备与批量读取、推理的数据访问，以及 RAG、知识检索和 Agent 等应用场景。
@@ -17,9 +19,9 @@ M1 操作见 [Snapshot/检索/训练快速开始](docs/design/m1-running.md)。M
 - 面向海量数据的分布式架构，具备水平扩展方向。
 - 对象存储湖架构，放弃高并发 OLTP，不支持实时延迟敏感事务；保留交互式检索、快照原子发布与故障恢复。
 - 兼容主流开放数据湖与 AI 多模态数据格式；通过持续扩展的能力矩阵管理具体版本与读写边界。
-- PostgreSQL 语法兼容方向，提供 SQL 与 HTTP 接口，并便于扩展 CLI、MCP 客户端。
+- PostgreSQL 语法与客户端协议分别验收，提供 SQL 与 HTTP 接口，并便于扩展 CLI、MCP 客户端。
 
-推荐目标栈为 **Iceberg v2/Parquet 事实层 + 媒体对象 + Lance 检索物化层，Rust/Arrow/DataFusion 执行，Tantivy 全文与有界 Graph，小型 PostgreSQL 控制面**。当前 M0 SQL 与 Python/PyArrow 的 M1/M2 检索作业分别运行；新 bundle v2 使用全局统计 BM25，旧 v1 保留 Tantivy 路径，ANN/Graph/增量/托管 append 已有有界切片。真实多机与生产发布仍待验证；PG wire 后续单独验收。
+推荐目标栈为 **Iceberg v2/Parquet 事实层 + 媒体对象 + Lance 检索物化层，Rust/Arrow/DataFusion 执行，Tantivy 全文与有界 Graph，小型 PostgreSQL 控制面**。当前 M0 SQL 与 Python/PyArrow 的 M1/M2 检索作业分别运行；新 bundle v2 使用全局统计 BM25，旧 v1 保留 Tantivy 路径，ANN/Graph/增量/托管 append 已有有界切片。真实多机与生产发布仍待验证；PG wire 本机只读切片按 [ADR 0014](docs/decisions/0014-bounded-pg-wire.md) 独立实施与验收。
 
 2026-10-18 [功能与架构复审](docs/reviews/2026-10-18-capability-architecture.md)逐项核对12个能力域及当前主线证据。[下一阶段计划](docs/plans/2026-10-18-next-stage.md)优先补齐固定视图样本选择、按需分片读取、生命周期与质量测量，再进入跨机 POC。
 

@@ -4,12 +4,17 @@ use datafusion::{
     sql::sqlparser::{ast::*, dialect::PostgreSqlDialect, parser::Parser},
 };
 use guradb_catalog::{Catalog, Dataset};
-use guradb_common::{manifest::identifier, protocol::QueryRequest, Error, Result};
+use guradb_common::{
+    manifest::identifier,
+    protocol::{Column, QueryRequest},
+    Error, Result,
+};
 use serde_json::Value as Json;
 use std::{collections::HashSet, ops::Not, sync::Arc};
 
 pub struct Prepared {
     pub dataset: Arc<Dataset>,
+    pub columns: Vec<Column>,
     pub projection: Vec<Expr>,
     pub filter: Option<Expr>,
     pub order: Vec<SortExpr>,
@@ -139,6 +144,7 @@ pub fn prepare(request: &QueryRequest, catalog: &Catalog, allowed: &[String]) ->
         used: HashSet::new(),
     };
     let mut projection = Vec::new();
+    let mut columns = Vec::new();
     let mut names = HashSet::new();
     for item in &select.projection {
         match item {
@@ -148,6 +154,10 @@ pub fn prepare(request: &QueryRequest, catalog: &Catalog, allowed: &[String]) ->
                         return Err(unsupported());
                     }
                     projection.push(col(&field.name));
+                    columns.push(Column {
+                        name: field.name.clone(),
+                        r#type: field.data_type.clone(),
+                    });
                 }
             }
             _ => {
@@ -160,12 +170,16 @@ pub fn prepare(request: &QueryRequest, catalog: &Catalog, allowed: &[String]) ->
                     return Err(unsupported());
                 };
                 let name = ident(column)?;
-                compiler.column(&name)?;
+                let kind = compiler.column(&name)?;
                 let output = alias.unwrap_or_else(|| name.clone());
                 if !names.insert(output.clone()) {
                     return Err(unsupported());
                 }
-                projection.push(col(name).alias(output));
+                projection.push(col(name).alias(output.clone()));
+                columns.push(Column {
+                    name: output,
+                    r#type: kind,
+                });
             }
         }
     }
@@ -229,6 +243,7 @@ pub fn prepare(request: &QueryRequest, catalog: &Catalog, allowed: &[String]) ->
     }
     Ok(Prepared {
         dataset,
+        columns,
         projection,
         filter,
         order,

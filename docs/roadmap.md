@@ -99,12 +99,22 @@ M2-S 发现更新、删除、rewrite/压实、回滚/换分支、历史缺口、
 | 变更与处理 | Continuous 持续微批、更多增量变化子集、批式 UPDATE/DELETE/MERGE、内建 OCR/ASR/embedding、依赖刷新 |
 | 湖生态 | 外部 Lance、WebDataset 连接器/导出、Iceberg 更多版本与特性、Delta/Hudi、HF 布局、Zarr/HDF5/LeRobot 等逐版本推进；外部写回独立验证 |
 | 多模态 | 已版本化原始对象引用与外部片段/特征继续扩展；内建音视频/文档解码、抽帧、转码和 codec 白名单按需求认证 |
-| 查询与客户端 | 更多 PG18 类型/函数/查询、PG wire/驱动矩阵、Arrow IPC file/stream 对外接口、SDK、通用分布式 JOIN/聚合 |
+| 查询与客户端 | 更多 PG18 类型/函数/查询、PG wire 后续驱动/TLS/目录矩阵、Arrow IPC file/stream 对外接口、SDK、通用分布式 JOIN/聚合 |
 | 检索 | 中文/多语言分析器、更多 ANN/量化、重排、多向量、邻接优化、更复杂有界图与批量图分析 |
 | 训练 | WebDataset/领域格式导出、混洗/随机读取、框架适配、训练 checkpoint/epoch、样本去重与成本优化 |
 | 治理 | 行列策略、细粒度血缘、成本归因、共享与多集群管理 |
 
 每项“支持”需列版本、方向、特性、互操作测试和限制；外部 reader、内部物化、导出、原地提交不混为一类。所有格式的长期覆盖目标不要求各阶段同时实现所有格式。
+
+### 已开启：PG SQL 端口首片
+
+2026-10-18 按用户客户端直连需求开启独立兼容切片，实施/验证状态见 [PG 指南](design/pg-wire-running.md)，决策与完整验收计划见 [ADR 0014](decisions/0014-bounded-pg-wire.md) 和[变更计划](design/pg-wire-change-plan.md)。它依赖已实现的 M0 固定 manifest/只读 SQL/授权/预算，不等待 M1/M2 执行面统一，也不重新定义 M0 历史验收。
+
+当前有界实现和真实 psql/Psycopg 的 PG 功能/组件性能/组件故障子 driver 已本地通过；最终提交的整项 HTTP 回归、harness 代码指纹与任务结束记录以 task receipt 为准。
+
+范围为默认关闭、仅 loopback 的 PG 3.0 端口，认证、simple/extended 参数查询、prepared statement、int8/text/bool/NULL、取消与 SQLSTATE。首批真实工具为 psql 18 和 Psycopg 3.2.10 autocommit；拒绝写入、业务事务、目录/会话设置、COPY、扩展与跨机非 TLS 部署。
+
+退出条件为真实客户端与独立数据真值一致，认证/撤权/取消/畸形协议/资源超限负例通过，HTTP 不回归，适用 Rust、functional、performance-smoke、stability-component 门禁通过并绑定最终 commit。此片不承诺提速，不以 HTTP smoke 代替 PG 吞吐基线；更多 SDK/ORM、TLS、系统目录和生产发布留给独立后续验收。
 
 ## 8. 持续门槛与决策推进
 

@@ -55,7 +55,7 @@ P0 提供批量和显式小批作业，首条湖增量限于路线图指定的 I
 
 本轮推荐 Iceberg v2/Parquet 事实表、外置媒体对象、Lance 派生物化、Rust/Arrow/DataFusion 执行、Tantivy/邻接访问结构与 PostgreSQL 小型控制面。组件按里程碑接入：最小固定文件读取无需全部依赖同时到位；Lance 先服务内部 ANN 切片，外部 Lance 连接器另行验收。具体选择和可推翻条件见 [ADR 0003](decisions/0003-storage-and-execution-baseline.md)，发布不变量见 [ADR 0004](decisions/0004-snapshot-and-index-publication.md)。
 
-PostgreSQL 18 为 SQL/类型比较基线，按子集验收；wire protocol 为后续独立项目。全文 PostgreSQL 表面与 Tantivy 语义不能按同名推定，向量/Graph 最终 SQL 扩展另行细化。
+PostgreSQL 18 为 SQL/类型比较基线，按子集验收；客户端直连通过独立 [PG wire 切片](design/pg-wire-running.md) 推进，首片针对本机 psql/Psycopg 的只读 autocommit，不由语法兼容推导全部驱动、事务或扩展兼容。全文 PostgreSQL 表面与 Tantivy 语义不能按同名推定，向量/Graph 最终 SQL 扩展另行细化。
 
 首版不承担高并发 OLTP、交互式多语句业务事务、行锁/触发器、强制跨湖唯一/外键约束、PG 扩展 ABI、跨外部湖全局事务、完整 Cypher/GQL、无界图算法、模型 serving 与训练平台调度。
 
