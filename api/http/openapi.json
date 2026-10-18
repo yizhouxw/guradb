@@ -1,5 +1,10 @@
 {
   "openapi": "3.1.1",
+  "x-guradb-capability-manifest": {
+    "schema_version": 1,
+    "scope": "source-tree",
+    "path": "../capabilities/v1.json"
+  },
   "info": {
     "title": "GuraDB M0 HTTP read-only SQL",
     "version": "0.1.0-m0",

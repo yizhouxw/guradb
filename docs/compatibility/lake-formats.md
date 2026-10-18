@@ -1,10 +1,27 @@
-# 数据湖与多模态格式兼容规划
+# 数据湖与多模态格式：当前支持及后续规划
 
-状态：设计草案，供后续 RFC 细化。官方资料核验日期：**2026-10-17**。
+状态：当前实现按 **2026-10-18** 源码及[12域复审](../reviews/2026-10-18-capability-architecture.md)对账；后续生态规划仍待独立验收。外部规范资料沿用 **2026-10-17** 的调研记录。
 
-**M0 仅实测了受限 Parquet manifest 的只读路径（PyArrow22生成、int8/text/bool、Snappy、SeaweedFS3.97固定对象/版本）。** 具体白名单和证据见[M0设计](../design/m0-parquet-http.md)与[验收映射](../design/m0-validation.md)，不推导通用Parquet或其它表格式兼容。 本页的矩阵是方向与验收范围，不是产品支持清单；优先级可随首批用户场景调整。
+机器可读支持范围见[能力清单 v1](../../api/capabilities/v1.json)及其[schema](../../api/capabilities/v1.schema.json)。它随源码版本解释，是离线合同，不是 HTTP 发现端点，也不能证明某个部署已启用能力或通过本轮门禁。实际验收仍绑定对应 commit 的报告。
 
-v0.3 收敛：M0 固定 manifest/Parquet，M1 受限 Iceberg v2/Parquet Snapshot 只读；M2 单表托管 append 与内部 Lance ANN 分别过门禁。外部 Lance、WebDataset 和其余生态适配各自后续认证，不由内核使用某个库推导外部兼容。默认检索采用已发布 read view，具体提交/可见性见 [ADR 0004](../decisions/0004-snapshot-and-index-publication.md)。
+## 当前支持白名单
+
+M0 SQL 由 Rust/Arrow/DataFusion 执行；M1/M2 的 scan/search/graph/export 作业由独立 Python/PyArrow 服务执行，Snapshot 仍是可信操作者入口。二者不是统一 SQL 融合入口，客户端不能把 M1/M2 格式或检索能力套用到 M0 SQL。默认读取已发布 read view，源提交与视图发布分别处理，见[接口合同](../interfaces/query-and-clients.md)及 [ADR 0004](../decisions/0004-snapshot-and-index-publication.md)。
+
+| 路径 | 当前可用范围 | 明确不支持或未验证 | 实现与验收依据 |
+| --- | --- | --- | --- |
+| M0 Parquet manifest v1 → SQL | 操作者固定文件集合、schema、对象大小和 SHA-256；可固定 S3 version_id；`int8`（int64）/`text`/`bool` 与 NULL；有界全对象校验/解码后执行 SQL 白名单。已测 PyArrow 22/Snappy、SeaweedFS 3.97 与受信本地文件 | 通用湖表发现、Iceberg SQL、目录枚举、row group/page 裁剪、通用 Parquet 类型/codec 兼容；无业务写入 | [manifest 校验](../../crates/guradb-common/src/manifest.rs)、[reader](../../crates/guradb-connectors/src/lib.rs)、[M0设计](../design/m0-parquet-http.md)、[M0验收](../design/m0-validation.md) |
+| M1/M2 Iceberg v2 → 固定 Snapshot | 显式 metadata URI/SHA-256/snapshot ID；单 schema、单非分区 spec、空 sort order；平面 long/string/boolean 与 Parquet；逐文件核验 field ID/名称/顺序/类型/nullable；Avro 元数据仅 null/deflate codec | REST Catalog 自动发现、v1/v3、position/equality delete 文件、schema/分区演进、嵌套/default/加密、空快照；不忽略不支持的必需语义 | [reader](../../modules/connectors/iceberg.py)、[M1白名单](../design/m1-snapshot-serving.md)、[M1验收](../design/m1-validation.md) |
+| M2 显式 append 刷新 | 验证完整 append-only 历史、稳定键和旧源文件身份；从源读取新增 data files，复制已校验旧副本，继承旧记录版本；新视图索引全量重建后单独发布 | 通用 CDC、Continuous、更新/删除/压实、schema/布局变化、旧特征/模型/媒体变化；旧 bundle 缺不可变身份时须显式 Snapshot 建立基点 | [历史验证](../../modules/connectors/incremental.py)、[刷新](../../modules/query/incremental.py)、[正反例](../../tests/contracts/test_incremental.py)、[ADR 0013](../decisions/0013-local-p0-partitions-and-recovery.md) |
+| 内部 Lance IVF_FLAT | pylance 0.39.0 构建不可变派生 ANN；记录 dataset version、文件摘要和逻辑键/record_version 映射；全局及分片产物供本项目检索使用 | 外部 Lance 表连接器、LanceDB API、外部 Blob/版本/删除/compaction 兼容；ANN 产物不能独立接受业务写入 | [ANN](../../modules/index/ann.py)、[ANN合同测试](../../tests/contracts/test_ann.py)、[ADR 0012](../decisions/0012-bounded-p0-and-local-workers.md) |
+| 训练 manifest/Parquet 导出 | 固定 read view 的**全视图**样本；固定身份、record_version、seed/split、values_json、vector、media_json；Parquet 为 Snappy，int64 在 values_json 中为十进制字符串 | 筛选/列投影样本、任意 SQL/JOIN、框架/epoch/checkpoint 恢复、WebDataset 等训练格式；导出不等于源 Iceberg 写回 | [训练实现](../../modules/connectors/training.py)、[全视图合同测试](../../tests/contracts/test_capabilities.py)、[真实功能验收](../../tests/functional/m1.py) |
+| 单机托管 Iceberg append | 可信操作者管理本地 PyIceberg SQL catalog/warehouse；固定 `id/title/active` schema，PG 意图/generation 加贯穿源提交的本地 flock；未知结果先对账；最多32批、10000行，另受字节预算约束 | 公开 HTTP/CLI/MCP 写 API、外部湖原地写回、旁路 writer、跨机器源 fencing、update/delete；worker 不持有源提交权 | [writer](../../modules/connectors/writer.py)、[writer测试](../../tests/contracts/test_writer.py)、[操作入口](../design/m2-running.md) |
+
+当前本地 worker 通过进程或 loopback HTTP 读取共享绝对路径上的产物，不是外部格式连接器或跨机部署。协调器仍加载完整 bundle/rows 并校验产物，不能因已有 serving Parquet 或三个 worker 宣称按需列读取或海量扫描；M1/M2 的32文件/10000行等预算见[M1设计](../design/m1-snapshot-serving.md)。
+
+源文件增量不等于索引增量，也不等于零 I/O：旧 data GET 可省略，但仍有元数据读取、stat/S3 HEAD、旧副本复制与全索引重建。Snapshot reader 会排除 manifest 中标记删除的**数据文件**；这不表示支持 position/equality 行级删除文件，append 刷新会拒绝删除状态和非 append 历史。
+
+新 bundle v2 全文使用 `bm25-global-v2` 全局统计；旧 bundle v1 保持 Tantivy 路径。二者评分/分析器合同按索引版本区分，不能由内部存在 Tantivy 或 Lance 文件推导外部索引可复用。具体兼容见 [ADR 0013](../decisions/0013-local-p0-partitions-and-recovery.md)。本页不开放新的 reader/writer 特性，不改变数据布局或预算；后续支持必须先补正反例与独立互操作证据。
 
 ## 1. 目标与承诺方式
 
@@ -24,7 +41,7 @@ v0.3 收敛：M0 固定 manifest/Parquet，M1 受限 Iceberg v2/Parquet Snapshot
 
 | 层次 | 本页覆盖对象 | 后续需要定义的边界 |
 | --- | --- | --- |
-| Catalog 与发现协议 | Iceberg REST Catalog；其他 Catalog 连接器待设计 | 命名空间、表定位、鉴权、凭证传递、元数据刷新、提交协议 |
+| Catalog 与发现协议 | 当前显式 Iceberg metadata-location；REST Catalog 与其他连接器待设计 | 命名空间、表定位、鉴权、凭证传递、元数据刷新、提交协议 |
 | 事务表格式 | Apache Iceberg、Delta Lake、Apache Hudi、Lance table format | 源快照、提交、删除、schema 演进、并发与历史保留 |
 | 文件与交换格式 | Parquet、Arrow IPC；后续 ORC、Avro 等 | 类型、编码、列投影、范围读取、统计信息、批次交换 |
 | 训练分片与样本格式 | WebDataset、MDS、TFRecord | 分片枚举、样本边界、字段解释、恢复位置与分布式采样 |
@@ -34,9 +51,9 @@ v0.3 收敛：M0 固定 manifest/Parquet，M1 受限 Iceberg v2/Parquet Snapshot
 
 Hugging Face Datasets 是库及数据集访问生态，Hub 是分发与版本管理入口；它们接入多种底层格式，不能当成单一的通用“湖存储格式”。LeRobotDataset 是结合表格、视频和元数据的数据集规范。Lance 具有文件格式与表格式两层；LanceDB 是基于 Lance 的数据库产品，读取 Lance 不等于兼容 LanceDB 的服务接口或查询行为。[Hugging Face 加载文档](https://huggingface.co/docs/datasets/en/loading)、[LeRobotDataset v3 文档](https://huggingface.co/docs/lerobot/lerobot-dataset-v3)、[Lance 文件规范](https://lance.org/format/file/)、[LanceDB 官方说明](https://www.lancedb.com/blog/what-we-mean-by-multimodal)
 
-## 3. 方向性能力矩阵
+## 3. 后续方向性能力矩阵
 
-以下全部为**计划或候选设计**。阶段与[路线图](../roadmap.md)一致：M0 扫描骨架、M1 固定快照检索与训练 manifest、M2 独立能力门禁、M3 分布式、M4 发布；“后续”表示尚未进入首条实施链，不删减长期兼容目标。表内“绑定源版本”描述目标读取语义；“固定清单”表示需要由 GuraDB 记录不可变对象集合，不能据此宣称源格式拥有事务快照。
+以下保留**目标和候选设计**，各行包含尚未实现的能力，不能整体作为支持声明；当前可用部分仅以上方白名单为准。阶段与[路线图](../roadmap.md)一致：M0 有界 manifest SQL、M1 固定快照检索与训练导出、M2 独立能力门禁、M3 分布式、M4 发布；“后续”表示尚未进入首条实施链。表内“绑定源版本”描述目标读取语义；“固定清单”表示需要记录不可变对象集合，不能据此宣称源格式拥有事务快照。
 
 | 对象 | 首个接入门禁 | 只读目标与限制 | 写入方向与独立门禁 | 快照 / 可复现读取目标 | 谓词与列投影目标 | 训练读取目标 | 多模态引用目标 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -94,7 +111,7 @@ Iceberg 的稳定规范目前覆盖 v1–v3，v4 尚未正式采纳；v2 与 v3 
 
 ## 6. Catalog、存储与查询适配接口
 
-下面是需要设计的职责，不限定实现语言、现成引擎或内部原生存储格式。
+下面是完整目标的职责分解，不代表均已实现；当前使用显式元数据定位、受限 reader 与完整对象读取，不具备 REST Catalog、通用范围读取或媒体解码能力。
 
 1. **Catalog adapter**：发现 namespace / table，取得表身份、元数据位置与授权上下文。先评估 Iceberg REST Catalog；其他 Catalog 作为独立连接器扩展。
 2. **Table adapter**：协商格式版本与必需特性，解析已提交快照，生成可读文件 / 删除信息与 schema 的固定计划。
@@ -104,11 +121,11 @@ Iceberg 的稳定规范目前覆盖 v1–v3，v4 尚未正式采纳；v2 与 v3 
 
 需要保留逻辑样本 ID 与源物理位置的映射。全文、向量、Graph 索引都应声明来源表身份、源快照、schema 指纹、对象版本、提取 / 分块规则与模型版本。湖格式连接器只负责正确读取，并不自动提供这三类检索能力。
 
-身份唯一性、无稳定键的快照内身份及跨表版本集合遵循[数据与查询契约](../product/data-contracts.md)。M2 首条触发增量仅接受已验证稳定键的 Iceberg append-only 历史链；更新、删除、压实等非 append 变化明确拒绝，或按配置转 Snapshot 重建，不将文件增减解释为通用 CDC。
+身份唯一性、无稳定键的快照内身份及跨表版本集合遵循[数据与查询契约](../product/data-contracts.md)。当前触发增量仅接受已验证稳定键的 Iceberg append-only 历史链，更新、删除、压实等非 append 变化明确拒绝；没有配置式自动回退。操作者可另行请求受现有 reader 白名单约束的 Snapshot 重建，不将文件增减解释为通用 CDC。
 
 ## 7. 外部变更、索引刷新与权限
 
-本轮选择“固定快照读取 + 显式刷新 + 已发布视图”的最小闭环，再评估事件通知和持续增量同步。下列规则需在 ADR 0004 的状态机中落实：
+当前已实现“固定快照读取 + 显式刷新 + 已发布视图”的有界闭环。下面是继续扩展时须满足的设计约束，包含尚未实现的更新/删除、行列策略和 `data_committed`；它们不扩大页首白名单，事件通知与持续增量同步仍待实现：
 
 - **外部变更**：刷新时解析并固定源版本，默认查询只绑定已发布 read view 内的源版本，不重新解析源最新。显式 `data_committed` 也须固定目标并校验覆盖，不能无意混合提交。无事务格式要绑定对象清单；仅列目录不构成原子快照。
 - **索引新鲜度**：记录 `source_version` 与 `indexed_version`。候选策略包括等待刷新、回退扫描或明确请求旧快照；不能让旧索引结果悄悄冒充新快照结果。多源查询不预设跨源原子快照。
@@ -120,7 +137,7 @@ Iceberg 的稳定规范目前覆盖 v1–v3，v4 尚未正式采纳；v2 与 v3 
 
 ## 8. 后续兼容验收模板
 
-每个连接器落地前至少补齐以下证据，并把结果登记为“实验性”“已验证子集”或更高能力级别；这些状态当前均为空。
+新增连接器或扩大现有白名单前至少补齐以下证据，并分别登记实验范围、已验证子集和剩余缺口。已有受限 reader/导出的依据见页首；不能把它们扩写为完整格式认证。
 
 | 维度 | 需要补充的内容 |
 | --- | --- |
@@ -139,7 +156,3 @@ Iceberg 的稳定规范目前覆盖 v1–v3，v4 尚未正式采纳；v2 与 v3 
 - 外部引用与托管对象可共存，但保留等级和删除拥有者必须登记；哪些源能提供可执行的 upstream 保护协议？
 - 源端高频变更时，检索的新鲜度、训练可复现性和索引维护成本如何权衡？
 - 是否开放第三方连接器接口，以及扩展类型、字段约定、媒体解码和数据集布局的认证流程？
-
-## M1 当前实测切片
-
-Iceberg v2的显式metadata-location固定Snapshot读取已接入有界单节点服务；仅单schema、非分区、long/string/boolean/Parquet，拒绝position/equality delete及演进。PyIceberg独立互操作、真实S3/PG与失败路径见[M1验收](../design/m1-validation.md)。这是具体reader白名单，不将上表的长期目标整体升级为支持。训练Parquet导出为固定身份/向量/media_json合同，不是外部Iceberg写回。
