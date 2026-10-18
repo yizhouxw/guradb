@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GuraDB source-tree capability manifest v1",
+  "description": "Offline source-version contract, not a runtime negotiation endpoint or deployment certification. Unknown versions, fields and states fail validation; absence never grants support.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "schema_version", "scope", "maturity", "interpretation", "services", "discovery", "boundaries", "domains"],
+  "properties": {
+    "$schema": {"const": "v1.schema.json"},
+    "schema_version": {"const": 1},
+    "scope": {"const": "source-tree"},
+    "maturity": {"const": "bounded-alpha"},
+    "interpretation": {"type": "string", "minLength": 1},
+    "services": {
+      "type": "object", "additionalProperties": false,
+      "required": ["m0-sql", "m1-m2-jobs"],
+      "properties": {"m0-sql": {"$ref": "#/$defs/service"}, "m1-m2-jobs": {"$ref": "#/$defs/service"}}
+    },
+    "discovery": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "dataset_operation", "dataset_fields", "reports_global_capabilities"],
+      "properties": {
+        "mode": {"const": "offline-manifest"},
+        "dataset_operation": {"const": "describeDataset"},
+        "dataset_fields": {"$ref": "#/$defs/strings"},
+        "reports_global_capabilities": {"const": false}
+      }
+    },
+    "boundaries": {
+      "type": "object", "additionalProperties": false,
+      "required": ["unified_sql_jobs", "read_consistency", "pg_wire", "bm25", "training", "refresh", "lance", "writer", "workers", "limits"],
+      "properties": {
+        "unified_sql_jobs": {"const": false},
+        "read_consistency": {"const": ["published"]},
+        "pg_wire": {
+          "type": "object", "additionalProperties": false,
+          "required": ["status", "config_key", "enabled_by_default", "protocol", "listen_scope", "tls", "database", "authentication", "query_backend", "read_only", "autocommit_required", "verified_clients", "types", "query_protocols", "read_context_in_rows"],
+          "properties": {
+            "status": {"const": "bounded"}, "config_key": {"const": "pg_listen"},
+            "enabled_by_default": {"const": false}, "protocol": {"const": "3.0"},
+            "listen_scope": {"const": "loopback-ip-literal"}, "tls": {"const": false},
+            "database": {"const": "guradb"}, "authentication": {"const": "principal-id-and-token-password"},
+            "query_backend": {"const": "m0-fixed-manifest"}, "read_only": {"const": true},
+            "autocommit_required": {"const": true},
+            "verified_clients": {"const": ["psql18", "psycopg3.2.10"]},
+            "types": {"const": ["int8", "text", "bool", "null"]},
+            "query_protocols": {"const": ["simple", "extended"]},
+            "read_context_in_rows": {"const": false}
+          }
+        },
+        "bm25": {
+          "type": "object", "additionalProperties": false,
+          "required": ["bundle_v1", "bundle_v2", "analyzer", "v2_storage", "statistics"],
+          "properties": {
+            "bundle_v1": {"const": "tantivy"}, "bundle_v2": {"const": "bm25-global-v2"},
+            "analyzer": {"const": "ascii-alnum-lower-v1"},
+            "v2_storage": {"const": "three-document-json-posting-shards"},
+            "statistics": {"const": "global-before-filter"}
+          }
+        },
+        "training": {
+          "type": "object", "additionalProperties": false,
+          "required": ["selection", "query_fields", "outputs"],
+          "properties": {
+            "selection": {"const": "all-records-in-fixed-view"},
+            "query_fields": {"const": ["seed", "train_basis_points"]},
+            "outputs": {"const": ["manifest", "parquet"]}
+          }
+        },
+        "refresh": {
+          "type": "object", "additionalProperties": false,
+          "required": ["source", "indexes", "continuous"],
+          "properties": {
+            "source": {"const": "validated-append-only-new-data-files"},
+            "indexes": {"const": "full-rebuild"}, "continuous": {"const": false}
+          }
+        },
+        "lance": {
+          "type": "object", "additionalProperties": false,
+          "required": ["role", "algorithm", "external_connector"],
+          "properties": {
+            "role": {"const": "internal-derived-index"},
+            "algorithm": {"const": "IVF_FLAT"}, "external_connector": {"const": false}
+          }
+        },
+        "writer": {
+          "type": "object", "additionalProperties": false,
+          "required": ["access", "schema", "source_fencing", "public_api"],
+          "properties": {
+            "access": {"const": "trusted-local-operator"}, "schema": {"const": ["id", "title", "active"]},
+            "source_fencing": {"const": "single-host-flock-and-generation"}, "public_api": {"const": false}
+          }
+        },
+        "workers": {
+          "type": "object", "additionalProperties": false,
+          "required": ["counts", "http_host", "shared_filesystem", "cross_machine"],
+          "properties": {
+            "counts": {"const": [0, 3]}, "http_host": {"const": "127.0.0.1"},
+            "shared_filesystem": {"const": true}, "cross_machine": {"const": false}
+          }
+        },
+        "limits": {
+          "type": "object", "additionalProperties": false,
+          "required": ["m1_m2_rows", "source_files", "vector_dimensions", "search_candidates", "writer_batches", "catalog_runs"],
+          "properties": {
+            "m1_m2_rows": {"type": "integer", "minimum": 1}, "source_files": {"type": "integer", "minimum": 1},
+            "vector_dimensions": {"type": "integer", "minimum": 1}, "search_candidates": {"type": "integer", "minimum": 1},
+            "writer_batches": {"type": "integer", "minimum": 1}, "catalog_runs": {"type": "integer", "minimum": 1}
+          }
+        }
+      }
+    },
+    "domains": {
+      "type": "array", "minItems": 12, "maxItems": 12, "items": {"$ref": "#/$defs/domain"},
+      "allOf": [
+        {"contains": {"properties": {"id": {"const": "F01"}}}, "minContains": 1, "maxContains": 1},
+        {"contains": {"properties": {"id": {"const": "F02"}}}, "minContains": 1, "maxContains": 1},
+        {"contains": {"properties": {"id": {"const": "F03"}}}, "minContains": 1, "maxContains": 1},
+        {"contains": {"properties": {"id": {"const": "F04"}}}, "minContains": 1, "maxContains": 1},
+        {"contains": {"properties": {"id": {"const": "F05"}}}, "minContains": 1, "maxContains": 1},
+        {"contains": {"properties": {"id": {"const": "F06"}}}, "minContains": 1, "maxContains": 1},
+        {"contains": {"properties": {"id": {"const": "F07"}}}, "minContains": 1, "maxContains": 1},
+        {"contains": {"properties": {"id": {"const": "F08"}}}, "minContains": 1, "maxContains": 1},
+        {"contains": {"properties": {"id": {"const": "F09"}}}, "minContains": 1, "maxContains": 1},
+        {"contains": {"properties": {"id": {"const": "F10"}}}, "minContains": 1, "maxContains": 1},
+        {"contains": {"properties": {"id": {"const": "F11"}}}, "minContains": 1, "maxContains": 1},
+        {"contains": {"properties": {"id": {"const": "F12"}}}, "minContains": 1, "maxContains": 1}
+      ]
+    }
+  },
+  "$defs": {
+    "strings": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "paths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^(api|modules|crates|tests|scripts)/[A-Za-z0-9_./-]+$"}},
+    "service": {
+      "type": "object", "additionalProperties": false,
+      "required": ["openapi", "execution", "operations"],
+      "properties": {
+        "openapi": {"enum": ["api/http/openapi.json", "api/http/m1-openapi.json"]},
+        "execution": {"enum": ["rust-arrow-datafusion", "python-pyarrow"]},
+        "operations": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "domain": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "status", "supports", "rejects", "limitations", "source_paths", "verification_paths"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^F(0[1-9]|1[0-2])$"},
+        "name": {"type": "string", "pattern": "^[a-z][a-z0-9-]+$"},
+        "status": {"const": "bounded"},
+        "supports": {"$ref": "#/$defs/strings"}, "rejects": {"$ref": "#/$defs/strings"},
+        "limitations": {"$ref": "#/$defs/strings"},
+        "source_paths": {"$ref": "#/$defs/paths"}, "verification_paths": {"$ref": "#/$defs/paths"}
+      }
+    }
+  }
+}

@@ -12,8 +12,10 @@ CLIENT = 'guradb-pg-client:3.2.10'
 LISTEN = '127.0.0.1:5433'
 
 
-def build_client():
-    docker('build', '-q', '-t', CLIENT, '-f', 'tools/m0/pg-client.Dockerfile', str(ROOT))
+def build_client(log_path):
+    with log_path.open('xb') as log:
+        subprocess.run(['docker', 'build', '-q', '-t', CLIENT, '-f', 'tools/m0/pg-client.Dockerfile', str(ROOT)],
+                       cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=120)
 
 
 def publish_auth(lab):
@@ -30,14 +32,15 @@ def publish_auth(lab):
 class Client:
     def __init__(self, lab, password=None, **kwargs):
         self.lab = lab
-        self.name = lab.network + '-sdk-' + str(len(lab.names))
-        # The container is separately tracked so a failed test cannot leak it.
-        lab.names.append(self.name)
-        self.stderr = (lab.directory / (self.name + '-sdk.log')).open('w')
-        self.process = subprocess.Popen(['docker', 'run', '--rm', '-i', '--name', self.name,
-            '--network', 'container:' + lab.server, '-v', f'{ROOT}:/workspace:ro', CLIENT,
-            'python', '/workspace/scripts/m0lib/pg_client.py'], stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE, stderr=self.stderr, text=True, bufsize=1)
+        self.name = lab.client_container(CLIENT, 'python', '/workspace/scripts/m0lib/pg_client.py',
+                                         options=('-v', f'{ROOT}:/workspace:ro'))
+        self.stderr = (lab.directory / (self.name + '-sdk.log')).open('x')
+        try:
+            self.process = subprocess.Popen(['docker', 'start', '--attach', '--interactive', self.name],
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self.stderr, text=True, bufsize=1)
+        except Exception:
+            self.stderr.close()
+            raise
         try:
             self.connected = self.command('connect', password=password or lab.token, **kwargs)
         except Exception:
@@ -79,6 +82,7 @@ class Client:
         if not self.process.stdin.closed:
             self.process.stdin.close()
         self.stderr.close()
+        self.lab.remove(self.name)
 
 
 @contextmanager
@@ -92,12 +96,15 @@ def client(lab, **kwargs):
 
 def psql(lab, sql, **kwargs):
     env = dict(os.environ, PGPASSWORD=kwargs.pop('password', lab.token))
-    result = subprocess.run(['docker', 'run', '--rm', '-i', '--network', 'container:' + lab.server,
-        '-e', 'PGPASSWORD', '-e', 'PGSSLMODE=disable', PG, 'psql', '-XAt', '-h', '127.0.0.1', '-p', '5433',
+    name = lab.client_container(PG, 'psql', '-XAt', '-h', '127.0.0.1', '-p', '5433',
         '-U', kwargs.pop('user', 'reader'), '-d', kwargs.pop('database', 'guradb'), '-v', 'ON_ERROR_STOP=1',
-        '-F', '\t', '-P', 'null=<NULL>'], input=sql, capture_output=True, text=True, env=env, timeout=20)
-    assert not kwargs, kwargs
-    return result
+        '-F', '\t', '-P', 'null=<NULL>', options=('-e', 'PGPASSWORD', '-e', 'PGSSLMODE=disable'), env=env)
+    try:
+        assert not kwargs, kwargs
+        return subprocess.run(['docker', 'start', '--attach', '--interactive', name], input=sql,
+                              capture_output=True, text=True, timeout=20)
+    finally:
+        lab.remove(name)
 
 
 def expected(rows):

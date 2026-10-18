@@ -1,0 +1,151 @@
+{
+  "$schema": "v1.schema.json",
+  "schema_version": 1,
+  "scope": "source-tree",
+  "maturity": "bounded-alpha",
+  "interpretation": "Claims apply only to this source revision and their stated bounds. Unknown or absent capabilities do not imply support. Evidence paths are verification entrypoints, not proof that a deployment passed them.",
+  "services": {
+    "m0-sql": {
+      "openapi": "api/http/openapi.json",
+      "execution": "rust-arrow-datafusion",
+      "operations": ["submitQuery", "getQuery", "getQueryResults", "cancelQuery", "health"]
+    },
+    "m1-m2-jobs": {
+      "openapi": "api/http/m1-openapi.json",
+      "execution": "python-pyarrow",
+      "operations": ["submitSearch", "submitScan", "submitExport", "getJob", "cancelJob", "getResults", "downloadParquet", "releaseJob", "downloadObject", "describeDataset", "submitGraph"]
+    }
+  },
+  "discovery": {
+    "mode": "offline-manifest",
+    "dataset_operation": "describeDataset",
+    "dataset_fields": ["dataset_id", "name", "schema", "model", "read_context", "retention_mode"],
+    "reports_global_capabilities": false
+  },
+  "boundaries": {
+    "unified_sql_jobs": false,
+    "read_consistency": ["published"],
+    "pg_wire": {
+      "status": "bounded",
+      "config_key": "pg_listen",
+      "enabled_by_default": false,
+      "protocol": "3.0",
+      "listen_scope": "loopback-ip-literal",
+      "tls": false,
+      "database": "guradb",
+      "authentication": "principal-id-and-token-password",
+      "query_backend": "m0-fixed-manifest",
+      "read_only": true,
+      "autocommit_required": true,
+      "verified_clients": ["psql18", "psycopg3.2.10"],
+      "types": ["int8", "text", "bool", "null"],
+      "query_protocols": ["simple", "extended"],
+      "read_context_in_rows": false
+    },
+    "bm25": {"bundle_v1": "tantivy", "bundle_v2": "bm25-global-v2", "analyzer": "ascii-alnum-lower-v1", "v2_storage": "three-document-json-posting-shards", "statistics": "global-before-filter"},
+    "training": {"selection": "all-records-in-fixed-view", "query_fields": ["seed", "train_basis_points"], "outputs": ["manifest", "parquet"]},
+    "refresh": {"source": "validated-append-only-new-data-files", "indexes": "full-rebuild", "continuous": false},
+    "lance": {"role": "internal-derived-index", "algorithm": "IVF_FLAT", "external_connector": false},
+    "writer": {"access": "trusted-local-operator", "schema": ["id", "title", "active"], "source_fencing": "single-host-flock-and-generation", "public_api": false},
+    "workers": {"counts": [0, 3], "http_host": "127.0.0.1", "shared_filesystem": true, "cross_machine": false},
+    "limits": {"m1_m2_rows": 10000, "source_files": 32, "vector_dimensions": 256, "search_candidates": 1000, "writer_batches": 32, "catalog_runs": 128}
+  },
+  "domains": [
+    {
+      "id": "F01", "name": "catalog-and-namespaces", "status": "bounded",
+      "supports": ["pg-dataset-run-job-catalog", "dataset-authorization", "revision-view-pin", "generation-cas"],
+      "rejects": ["general-catalog-api", "branch-tag-api", "unbounded-run-history"],
+      "limitations": ["Catalog has a total 128-run admission limit; retirement does not remove history."],
+      "source_paths": ["modules/catalog/control.py", "modules/catalog/jobs.py"],
+      "verification_paths": ["tests/functional/m1.py", "tests/faults/component/m1.py"]
+    },
+    {
+      "id": "F02", "name": "lake-and-object-access", "status": "bounded",
+      "supports": ["m0-parquet-manifest-v1", "iceberg-v2-fixed-metadata-snapshot", "iceberg-unpartitioned-long-string-boolean-parquet"],
+      "rejects": ["iceberg-position-equality-deletes", "schema-partition-evolution", "iceberg-rest-catalog", "external-lance", "delta", "hudi"],
+      "limitations": ["Catalog protocol, file format, read direction and storage backend require separate acceptance; no directory-scan compatibility inference."],
+      "source_paths": ["crates/guradb-common/src/manifest.rs", "modules/connectors/iceberg.py"],
+      "verification_paths": ["tests/functional/m0.py", "tests/functional/m1.py", "tests/contracts/test_incremental.py"]
+    },
+    {
+      "id": "F03", "name": "multimodal-assets", "status": "bounded",
+      "supports": ["external-record-vectors", "media-uri-sha256-size", "authorized-managed-media-copy"],
+      "rejects": ["segment-time-space-model", "media-decoding", "ocr", "asr", "video-frame-extraction", "embedding-generation"],
+      "limitations": ["Media references and external features do not imply media processing or model execution."],
+      "source_paths": ["modules/index/retrieval.py", "modules/query/snapshot.py"],
+      "verification_paths": ["tests/functional/m1.py", "tests/contracts/test_capabilities.py"]
+    },
+    {
+      "id": "F04", "name": "ingestion-and-refresh", "status": "bounded",
+      "supports": ["operator-snapshot", "validated-source-append-incremental", "inherited-record-version", "local-managed-append"],
+      "rejects": ["index-incremental-update", "continuous-sync", "incremental-source-update-delete-rewrite", "public-write-api", "cross-host-writer"],
+      "limitations": ["Old copies are inherited and indexes fully rebuilt. Source commit and search-view publication are separate. Local writer requires exclusive ownership of its catalog."],
+      "source_paths": ["modules/query/incremental.py", "modules/connectors/incremental.py", "modules/connectors/writer.py"],
+      "verification_paths": ["tests/contracts/test_incremental.py", "tests/contracts/test_writer.py", "tests/functional/m2.py"]
+    },
+    {
+      "id": "F05", "name": "relational-query", "status": "bounded",
+      "supports": ["m0-parameterized-single-table-select", "m0-column-projection-filter-order-limit", "m1-m2-limit-only-scan", "pg-wire-loopback-read-only", "pg-wire-simple-extended-prepared"],
+      "rejects": ["unified-sql-search-plan", "scan-filter-projection", "joins", "aggregates", "udf", "ddl-dml", "business-transactions", "pg-wire-tls", "pg-wire-remote-listen", "pg-system-catalog", "pg-session-set", "pg-copy", "pg-orm-compatibility", "all-pg-client-sdk-compatibility"],
+      "limitations": ["M0 HTTP and optional PG wire use fixed manifests independently of the PG read-view job service. DataFusion/parser features are not an allowlist.", "PG wire is disabled by default and restricted to loopback without TLS. SDKs require autocommit; only psql 18 and Psycopg 3.2.10 were exercised. PG rows do not include HTTP read_context.", "PG statement, portal, connection, frame and result budgets are bounded; unsupported startup options, transactions, catalog queries, session settings and COPY fail explicitly."],
+      "source_paths": ["crates/guradb-query/src/sql.rs", "crates/guradb-query/src/describe.rs", "crates/guradb-gateway/src/pg/mod.rs", "crates/guradb-gateway/src/pg/session.rs", "crates/guradb-gateway/src/pg/types.rs", "crates/guradb-gateway/src/pg/wire.rs", "modules/query/service.py"],
+      "verification_paths": ["tests/functional/m0.py", "tests/contracts/test_capabilities.py", "tests/contracts/test_http_contract.py", "tests/functional/pgwire.py", "tests/functional/pgwire_protocol.py", "tests/faults/component/pgwire.py", "tests/performance/component/pgwire.py"]
+    },
+    {
+      "id": "F06", "name": "full-text", "status": "bounded",
+      "supports": ["ascii-alnum-lower-or-token", "v1-tantivy-bm25", "v2-global-statistics-bm25", "equality-filter-stable-order"],
+      "rejects": ["chinese-multilingual-tokenization", "phrase-query", "pg-full-text-functions"],
+      "limitations": ["v2 scans document-level JSON postings on three physical shards; it is not distributed Tantivy. v1/v2 scores can differ and index IDs remain versioned."],
+      "source_paths": ["modules/index/retrieval.py", "modules/index/bm25.py"],
+      "verification_paths": ["tests/contracts/test_bm25.py", "tests/contracts/test_distributed.py", "tests/contracts/test_capabilities.py"]
+    },
+    {
+      "id": "F07", "name": "vector", "status": "bounded",
+      "supports": ["exact-squared-l2", "internal-lance-ivf-flat", "equality-filter-source-vector-rerank", "three-shard-candidate-merge", "exact-small-shard-fallback"],
+      "rejects": ["arbitrary-vector-model-dimension", "external-lance-source", "pgvector-sql-abi"],
+      "limitations": ["Low-probe quality, skew, selectivity and larger-than-cache performance remain unproven; no general ANN speedup or recall guarantee."],
+      "source_paths": ["modules/index/ann.py", "modules/index/retrieval.py"],
+      "verification_paths": ["tests/contracts/test_ann.py", "tests/contracts/test_distributed.py", "tests/performance/component/m2.py"]
+    },
+    {
+      "id": "F08", "name": "graph", "status": "bounded",
+      "supports": ["fixed-edge-table-one-hop", "typed-in-out-both", "path-evidence-fanout-budget"],
+      "rejects": ["cross-dataset-node-version-resolution", "multi-hop", "adjacency-index", "cypher-gql-pgq"],
+      "limitations": ["Graph is a separate fixed-view job, not an integrated search expansion or general graph engine."],
+      "source_paths": ["modules/index/graph.py"],
+      "verification_paths": ["tests/contracts/test_graph.py", "tests/functional/graph.py"]
+    },
+    {
+      "id": "F09", "name": "hybrid-retrieval", "status": "bounded",
+      "supports": ["bm25-exact-or-ann-rrf-k60", "global-candidate-window-top-k"],
+      "rejects": ["unified-search-graph-rerank-plan", "sql-retrieval-fusion"],
+      "limitations": ["Each shard receives the original candidate window; graph remains a separate request."],
+      "source_paths": ["modules/index/retrieval.py", "modules/query/distributed.py"],
+      "verification_paths": ["tests/contracts/test_bm25.py", "tests/contracts/test_distributed.py"]
+    },
+    {
+      "id": "F10", "name": "training-datasets", "status": "bounded",
+      "supports": ["all-fixed-view-records", "deterministic-seed-split", "manifest-parquet-export", "training-retention-pin", "three-local-worker-conversion"],
+      "rejects": ["sample-filter", "column-projection", "sql-sample-selection", "framework-dataloader", "epoch-checkpoint-resume"],
+      "limitations": ["Coordinator collects all samples. train_basis_points assigns labels without filtering records; Parquet exports the fixed identity/vector/values_json/media_json schema."],
+      "source_paths": ["modules/connectors/training.py", "modules/query/distributed.py"],
+      "verification_paths": ["tests/contracts/test_capabilities.py", "tests/contracts/test_distributed.py", "tests/functional/m1.py"]
+    },
+    {
+      "id": "F11", "name": "jobs-and-index-build", "status": "bounded",
+      "supports": ["durable-job-status-cancel", "build-publish-reconciliation", "full-index-rebuild", "bounded-local-worker-execution"],
+      "rejects": ["general-long-lived-scheduler", "gpu-processing-dag", "multi-machine-execution", "transparent-query-restart"],
+      "limitations": ["Coordinator still loads all rows and validates all artifacts. Worker HTTP is loopback with shared absolute paths; interrupted queries can explicitly fail."],
+      "source_paths": ["modules/query/service.py", "modules/query/rebuild.py", "modules/cluster/transport.py"],
+      "verification_paths": ["tests/contracts/test_transport.py", "scripts/local_acceptance.py", "scripts/p0_acceptance.py"]
+    },
+    {
+      "id": "F12", "name": "governance-and-operations", "status": "bounded",
+      "supports": ["dataset-authorization-recheck", "budgets-pin-gc", "local-state-inspection", "offline-coordinated-recovery"],
+      "rejects": ["built-in-tls-remote-identity", "ha-pitr", "production-audit-alerting", "row-column-policy", "production-release"],
+      "limitations": ["Recovery requires frozen services/writers and post-backup revocation reconciliation. Full performance/stability/soak and multi-host evidence remain missing."],
+      "source_paths": ["modules/catalog/control.py", "modules/catalog/recovery.py", "modules/catalog/jobs.py"],
+      "verification_paths": ["tests/faults/component/m1.py", "scripts/local_acceptance.py"]
+    }
+  ]
+}

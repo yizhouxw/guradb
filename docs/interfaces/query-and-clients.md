@@ -1,33 +1,49 @@
 # SQL、HTTP 与客户端接口
 
-状态：M0 SQL 与 M1/M2 检索/训练作业各有有界实现，CLI/MCP 薄适配已接入；下文统一SQL检索语法及扩展接口仍为提案。实际支持见[M0详细设计](../design/m0-parquet-http.md)、[M1运行](../design/m1-running.md)、[M2运行](../design/m2-running.md)和[当前完成度复审](../reviews/2026-10-18-capability-architecture.md)。用户已确定 PostgreSQL 语法兼容方向、SQL 与 HTTP 接口，以及便于扩展 CLI、MCP 和 AI Agent 的目标。
+状态：当前源码提供 M0 只读 SQL 与 M1/M2 固定视图作业两条独立的有界 alpha 路径，尚未统一成检索 SQL 引擎。CLI/MCP 已有 M1/M2 HTTP 薄适配；完整 M2、多机 M3 与生产发布仍未完成。本文区分现有合同和文末历史提案；PG SQL 端口按独立切片接入 M0，下列合同不扩展未验收能力。
 
-M0 使用[SQL OpenAPI](../../api/http/openapi.json)，M1/M2 使用[作业 OpenAPI](../../api/http/m1-openapi.json)；两条执行路径尚未统一。本文后续草案中的目标语义不能扩大当前白名单；append/refresh/publish 仍为可信操作者入口。样本选择、接口/格式历史文字与能力发现的一致性将在下一阶段A0/A1继续收口。
+机器可读支持清单为 [api/capabilities/v1.json](../../api/capabilities/v1.json)，格式由 [v1.schema.json](../../api/capabilities/v1.schema.json) 定义；十二域来源见[完成度复审](../reviews/2026-10-18-capability-architecture.md)。清单随源码版本解释，是离线合同，**不是 HTTP endpoint，也不证明某个部署已启用能力**。缺失、未知条目或无法识别的清单版本不能推导为支持；部署授权、实际数据视图、索引和预算仍由服务端检查。[M0 OpenAPI](../../api/http/openapi.json) 与 [M1/M2 OpenAPI](../../api/http/m1-openapi.json) 的顶层 `x-guradb-capability-manifest` 指向这份清单，path 相对 OpenAPI 源文件解析，不是 HTTP 路径；请求/响应 schema 未因此扩展。
 
-本轮审查将实现入口收敛到只读查询：M0 验证固定 manifest/Parquet 上的精确扫描；M1 增加 Snapshot 发布、BM25、精确向量与 RRF；ANN、Graph、增量同步和分布式扩展按后续依赖推进。SQL 以 PG18 的明确子集为比较基线；HTTP 已落地，PG wire 作为独立客户端切片实施，当前状态见 [PG 端口指南](../design/pg-wire-running.md)。批量写入与同步使用另行设计的作业契约，不进入当前查询 API。具体阶段见[路线图](../roadmap.md)。
+离线 manifest 与 schema 必须取自同一 commit。PG 整合在 v1 合同中新增必填 `boundaries.pg_wire`；旧源码快照使用其对应 schema，不能用新版 schema 验证旧清单，也不承诺跨源码版本无条件兼容。
 
-## 1. 统一入口，统一语义
+## 1. 当前入口与执行边界
 
-SQL 和 HTTP 应进入同一套身份认证、权限检查、目录解析、计划生成与执行体系。全文、向量、Graph 与多模态检索应能够和关系过滤、连接、聚合组合，不为每种客户端建立独立的数据副本或查询规则。
+| 入口 | 已实现范围 | 明确不支持或不能推导 |
+| --- | --- | --- |
+| M0 `POST /v1/queries` | Rust/Arrow/DataFusion；受控固定 Parquet manifest 上的单表 SELECT 白名单；异步句柄和分页 | 不读取 M1/M2 PG published view；无 JOIN/聚合/检索 SQL、业务写入 |
+| 可选 `pg_listen` SQL 端口 | M0 固定 manifest 上的同一只读 SQL；PG 3.0 simple/extended、参数和 prepared statement；已测 psql 18/Psycopg 3.2.10 | 仅 loopback、非 TLS、SDK autocommit；无系统目录、会话 SET、事务、COPY、ORM 或全部驱动兼容承诺 |
+| M1/M2 `POST /v1/scan` | Python/PyArrow；固定 published view；仅 limit，按逻辑键返回行 | 无 WHERE、投影、SQL 或分页游标 |
+| M1/M2 `POST /v1/search` | 全文、精确向量或显式 ANN、等值过滤、全局候选与 RRF | 无任意谓词、通用 SQL、Graph 融合计划或任意模型/维度 |
+| M1/M2 `POST /v1/graph` | 同视图 typed-edge 一跳，in/out/both、路径证据与扇出限制 | 不跨数据集解析节点版本；无多跳、Cypher/GQL/PGQ 或邻接优化承诺 |
+| M1/M2 `POST /v1/exports` | 全固定视图样本、确定性 split、manifest/Parquet 与训练 pin | 无过滤、投影、SQL 选择、epoch/checkpoint 或训练框架适配 |
+| 可信操作者 `scripts/m1.py` | Snapshot、append-only refresh、索引重建、发布/保留管理和单机托管 append | 不属于上述 HTTP/CLI/MCP 的公开写 API；不开放外部湖写回、更新/删除或跨机器 writer |
 
-建议先实现一个受限、可验证的查询闭环，再增加协议和客户端覆盖面。CLI、MCP 是服务端 API 的适配层，不单独定义存储能力、一致性或权限语义。批量导入、训练数据导出与对象传输的接口需要另行设计，不通过无限增大 SQL 请求体或 JSON 结果集解决。
+M0 的数据视图来自启动时固定 manifest；M1/M2 的 job 在提交时绑定 PG 发布目录中的一个 view，选填 `read_view_id` 可选择仍可用且授权的 published view。两条路径都不能静默退回最新数据或忽略不支持行为；`data_committed` 不是当前可用读取模式。M1/M2 job 请求也不接受该字段。
 
-## 2. PostgreSQL 兼容边界
+M1/M2 的 `GET /v1/datasets/{dataset_id}`（CLI/MCP `describe`）返回 `dataset_id`、`name`、`schema`、`model`、`read_context` 和 `retention_mode`。它检查当前授权和已发布产物，未发布时失败；当前响应没有通用能力协商字段。`read_context.index_versions` 用于识别实际视图中的索引版本，不能由 schema/model 的存在推导 ANN、写入或训练选择已经可用。
 
-“PostgreSQL 兼容”需要按层记录，不应作为一个全兼容承诺。本轮选择 PostgreSQL 18 为 SQL/类型比较基线；首批函数/类型白名单和结果差异通过 POC 固定，驱动矩阵随 wire protocol 单独验收。
+## 2. M0 SQL 与类型白名单
 
-| 兼容层 | 目标与需要决定的边界 |
-| --- | --- |
-| SQL 方言 | M0 从只读 SELECT、投影/过滤/排序/LIMIT、值参数与明确表达式开始；逐项验收类型、转换、NULL、排序和错误；连接/聚合及 DDL/DML 不因 parser 可解析就进入支持清单 |
-| 函数与操作符 | 内置函数、全文函数、JSON、数组等分别验收；不能因解析通过就视为语义一致 |
-| Wire protocol | 独立切片覆盖 PG 3.0 与 psql/Psycopg 真实客户端，见下方首片合同；PG18 SQL 基线不等于完整 PG18 协议 |
-| 系统目录与工具 | `pg_catalog`、`information_schema`、会话设置及驱动探测查询单列矩阵；`psql`/ORM/迁移工具需实际验证 |
-| 扩展 | pgvector 等扩展的 SQL 表面、二进制扩展加载及 PostgreSQL 扩展 ABI 是不同事项，均不自动继承 |
-| 事务与一致性 | 支持声明范围内的表快照/作业提交和读取视图；首版不支持业务多语句事务、行锁/触发器、跨外部湖 2PC |
+只允许一条 SELECT，恰好一个已注册表：列投影/`*`/列别名、WHERE 比较/AND/OR/NOT/IS NULL、按列 ORDER BY 和非负常量 LIMIT。`$1..$n` 是值绑定，缺失、多余或非法参数拒绝；不能作为动态表名、列名或排序方向。实际 AST 白名单见 [sql.rs](../../crates/guradb-query/src/sql.rs)。
 
-PostgreSQL 的 simple query 与 extended query 是不同协议路径；extended query 将解析、参数绑定和执行分开。wire protocol 的验收需要覆盖启动认证、类型编码、prepared statements、事务状态、取消和错误响应，并明确 `COPY` 等后续范围。[官方协议说明](https://www.postgresql.org/docs/current/protocol-overview.html)
+以下是请求形态，表与字段需已由操作者注册：
 
-HTTP 查询入口每次提交一个只读语句，不提供持久业务事务会话；M0/M1 拒绝 DDL、DML、`BEGIN/COMMIT`、`SELECT FOR UPDATE` 及副作用函数，不能解析后忽略。读取采用固定快照/发布视图；导入与同步独立定义作业提交语义，不从 PostgreSQL SQL 兼容推导其隔离级别和事务能力。[PG18 事务隔离参考](https://www.postgresql.org/docs/18/transaction-iso.html)
+```json
+{
+  "sql": "SELECT id, title FROM documents WHERE id = $1 ORDER BY id LIMIT 20",
+  "parameters": [{"type": "int8", "value": "1"}],
+  "mode": "read_only",
+  "read_consistency": "published",
+  "timeout_ms": 5000,
+  "max_rows": 20
+}
+```
+
+当前类型只有 nullable `int8/text/bool`。HTTP 的 int8 输出为十进制 JSON 字符串；text/bool/NULL 分别为 string/boolean/null。HTTP 输入允许 JSON 安全整数、字符串、布尔、null，以及完整 int8 的类型化表示；PG 输入/输出使用下节的类型与编码合同。排序默认 ASC NULLS LAST / DESC NULLS FIRST，字符串按 UTF-8/C 对照。未覆盖类型与转换不自动继承 PostgreSQL 或 DataFusion 能力。
+
+CTE、JOIN、子查询、聚合、DISTINCT、集合运算、函数/表函数、文件读取、DDL/DML/COPY、锁、事务、多语句、OFFSET，以及无业务表的常量查询均在执行前拒绝。当前 HTTP 成功结果为 `result_kind=data`；HTTP 协议中的 metadata 语义不表示当前有可运行的常量/系统目录查询。完整边界、资源上限与错误见 [M0 详细设计](../design/m0-parquet-http.md)，可运行步骤见 [M0 运行说明](../design/m0-running.md)。
+
+PostgreSQL 18 是明确子集的比较基线。SQL 方言、类型/函数、wire、系统目录/驱动、扩展 ABI 和事务分别验收；PG18 方言解析不能证明 `psql`、ORM、pgvector 或 PostgreSQL 事务兼容。
 
 ### 2.1 PG SQL 端口首片合同
 
@@ -52,113 +68,76 @@ portal 超过 `limits.retention_seconds`（默认 60 秒）后不可继续 Execu
 
 目录/会话设置、`BEGIN/COMMIT/ROLLBACK`、SQL `PREPARE`、COPY、DDL/DML、扩展、ORM/迁移探测与未列类型仍拒绝。真实 psql 18 和 Psycopg 3.2.10 的本轮验证不能外推全部客户端、连接池、BI 工具或驱动版本。
 
-## 3. 检索接口的语义先于新语法
+## 3. M1/M2 检索、训练与源更新
 
-### 3.1 全文检索
+### 全文、向量与 Graph
 
-PG 全文兼容面后续评估 PostgreSQL 已有的 `tsvector`、`tsquery`、`@@` 与全文函数形态。M1 先通过独立定义的 BM25 检索语义验证闭环，不将以下 PG 语法列为 M1 前置条件。以下是**目标兼容性示例，不可在本仓库执行**，不是已实现功能：
+全文查询只接受 ASCII 字母数字和空格、小写归一化、OR token；没有中文/多语言分词、短语或 PostgreSQL 全文操作符承诺。实际评分由 view 的索引版本决定：
 
-本轮物理执行首选 Tantivy/BM25；它与 PG 全文词法、排名和操作符不自动等价。以下语法是否进入首批兼容白名单须单独验证，不能直接将 `ts_rank` 映射成 BM25 后宣称相同语义。
-
-```sql
-SELECT id, title
-FROM documents
-WHERE to_tsvector('english', body)
-      @@ plainto_tsquery('english', $1)
-ORDER BY id
-LIMIT 20;
-```
-
-这些函数及操作符来自 PostgreSQL。示例中的 `english` 只用于说明语法；中文及多语言分词、词典、停用词、相关性排序与索引刷新语义需要单独设计，不能由此推导支持范围。[官方全文函数与操作符](https://www.postgresql.org/docs/current/functions-textsearch.html)
-
-### 3.2 向量、Graph 与混合检索
-
-| 检索能力 | 应先定义的语义 | 语法状态 |
+| 视图/索引版本 | 当前执行 | 兼容边界 |
 | --- | --- | --- |
-| 向量 | M1 精确基线、固定向量空间/维度、距离、过滤与预算；Lance ANN 后续独立验收 | 最终 SQL 待决；pgvector 仅评估选定表面，不加载扩展 ABI |
-| Graph | 后续验证边表/邻接、有界方向/属性遍历、路径证据、环与扇出预算 | 关系表达/受限图算子优先；不作为 M0/M1 前置条件，不承诺完整 PGQ/Cypher/GQL |
-| 混合检索 | 每路全局候选、RRF 首选融合、重排与确定性排序 | 物理基线已选，具体 SQL 表达与参数待细化 |
-| 多模态 | 对象、片段、模态、派生特征与模型版本的关联，引用返回、访问授权、来源与快照 | 待决；模型调用与存储查询的边界需明确 |
+| bundle v1 | Tantivy BM25 | 新程序读取旧 bundle 保留旧路径；不静默换评分 |
+| bundle v2 / `bm25-global-v2` | Python 文档级 JSON postings 扫描；三份物理 postings 使用同一全局 df/长度统计；k1=1.2、b=0.75、float64；过滤在全库统计之后 | 与 Tantivy fieldnorm/f32 分数可能不同；不是已验证的高性能 Tantivy 分布式执行 |
 
-pgvector 是独立扩展，其 `vector` 类型、距离操作符与 ANN 能力不属于 PostgreSQL 核心自动具备的接口。兼容其 SQL 表面不等于加载其二进制扩展，也不决定 GuraDB 的索引实现。[pgvector 官方仓库](https://github.com/pgvector/pgvector)
+索引 ID 在 `read_context` 中版本化。旧 v1 reader 不读取 v2 bundle；降级前须排空相关任务、保留被 pin 的产物并选择兼容视图，不能仅回退代码。详见 [ADR 0013](../decisions/0013-local-p0-partitions-and-recovery.md)。
 
-PostgreSQL 的递归 CTE 可作为有界关系遍历的语法参考；它不能证明 GuraDB 已实现专门的 Graph 索引或分布式遍历优化。[官方 WITH/递归查询说明](https://www.postgresql.org/docs/current/queries-with.html)
+向量默认精确 squared-L2；模型名称与维数必须匹配已发布 features，维度最多256。`vector_index="ann"` 显式使用内部 Lance IVF_FLAT，要求视图已有索引；缺失/损坏不得当成成功 ANN。源向量用于候选精确重排，三片候选全局归并，小片可明确报告 `exact-small-shard`。ANN 的候选重排不使整个检索变成精确检索。`top_k <= candidate_limit <= 1000`，`nprobes` 仅用于 ANN 且受实际 partitions 限制；烟测质量不能外推成任意负载 recall 保证。
 
-所有检索结果应能够追溯到源记录、对象/片段与数据版本。近似检索不得被标为精确结果；索引新鲜度、湖表快照与原始数据可见性差异需要可解释。训练数据读取还需要可复现的快照和批次语义，不能仅依赖交互式 Top-K 查询接口。
+search 的 `filter` 仅为 `{"field":"字段名","equals":值}` 等值条件；text/vector 同时提供时使用全局窗口与 RRF k=60，最终按分数和逻辑键稳定排序。Graph 是独立 job，输入同一边表中的 source/target/type 字段与 seeds，超过路径/扇出预算失败。不能把 search 输出到 graph 的客户端串联描述为服务端统一查询计划。具体请求见 [检索合同](../design/m1-snapshot-serving.md)、[ANN](../design/m2-ann.md)、[Graph](../design/m2-graph.md)。
 
-## 4. HTTP 查询 API 草案
+Lance 在这里是从事实层构建的内部派生索引，固定版本并受摘要、view、pin/GC 约束；没有外部 Lance 数据集连接器，也不允许对已发布索引原地业务写入。媒体只包含受控引用、摘要、大小和副本；不意味着内建解码、OCR/ASR、抽帧或 embedding。
 
-机器可读草案见 [OpenAPI 文件](../../api/http/openapi.json)。下面的说明与该草案共同用于讨论，不构成稳定 API 承诺。
+### 全视图训练导出
 
-### 4.1 查询句柄与生命周期
-
-只读查询统一采用异步句柄。提交成功表示服务器接受了任务，不表示查询已执行成功。
-
-| 方法与路径 | 提案语义 |
-| --- | --- |
-| `POST /v1/queries` | 提交一个参数化只读 SQL 语句；接受后返回 `202` 和 `query_id` |
-| `GET /v1/queries/{query_id}` | 读取执行状态、最终错误及可用统计 |
-| `GET /v1/queries/{query_id}/results` | 通过 `cursor`、`page_size` 分页读取结果 |
-| `DELETE /v1/queries/{query_id}` | 请求取消任务；返回值不意味着取消已经完成 |
-
-状态为 `queued`、`running`、`succeeded`、`failed`、`cancel_requested`、`cancelled`。`cancel_requested` 是非终态；请求取消与任务完成可能竞争，服务端确认停止后才能报告 `cancelled`。`succeeded/failed/cancelled` 一旦成为终态就不可倒退；对终态执行 DELETE 返回 `200` 和原终态，不能重新改成 `cancel_requested`。句柄、结果保留期和过期后的响应需在 M0 实现前冻结。
-
-导入、同步、索引构建或导出需要独立的可观察任务契约；内部可以复用调度组件，但不能直接套用只读查询状态解释提交结果。本草案没有定义上传、批写、同步、发布或训练导出 API。启用可产生持久效果的作业前，必须定义持久 operation ID、请求匹配、提交结果未知时的对账及取消与提交竞争；不能仅靠重新提交 POST 恢复。
-
-### 4.2 请求、只读模式与参数
-
-请求包含 `sql`、按 `$1`、`$2` 顺序绑定的 `parameters`，以及 `mode`、`timeout_ms`、`max_rows`。`mode` 默认且仅允许 `read_only`；`read_write` 是无效请求，拥有写权限也不能经此入口写入。以下展示请求形态；运行时数据集、schema与值类型必须满足M0白名单，具体可运行示例见M0运行说明：
+export 的 `query` 只接受 `seed` 和 `train_basis_points`，默认分别为 `"0"` 与 `8000`。它遍历固定视图全部样本，根据 seed 与稳定样本身份分配 train/validation；比例参数不删除另一 split，也不是样本筛选。Parquet 固定列为 dataset_id/entity_kind/logical_key/record_version/split/values_json/vector/media_json；`read_context`、模型和 seed 等上下文记录在配套 manifest，Parquet 文件本身不携带这些上下文，复现时必须一并保留。成功导出持有 pin，直到显式 release。
 
 ```json
-{
-  "sql": "SELECT id, title FROM documents WHERE id = $1 LIMIT 20",
-  "parameters": ["doc-001"],
-  "mode": "read_only",
-  "timeout_ms": 5000,
-  "max_rows": 20
-}
+{"dataset_id":"已授权数据集 UUID","query":{"seed":"experiment-1","train_basis_points":8000}}
 ```
 
-`parameters` 是值绑定，不能通过字符串拼接代入 SQL。动态表名、列名和排序方向不属于值参数，应由调用方使用受控映射或经过正确引用的标识符构造。初版 JSON 值与 SQL 类型的映射、超出安全整数范围的数值、时间、二进制和向量编码均须在类型契约中明确；有歧义时不能静默猜测。
+加入 `filter`、`columns`、`sql` 等未知字段会失败，不能解析后忽略。scan 也只接受 `limit`；search 的过滤能力不延伸到 scan/export。三 worker 做样本转换，协调器仍聚合全样本并生成整份 Parquet，未实现流式训练选择。见 [training.py](../../modules/connectors/training.py) 与 [M1 训练合同](../design/m1-snapshot-serving.md)。
 
-`read_consistency` 默认 `published`，固定已发布完整视图。M0 的空索引视图绑定固定 Parquet manifest；M1 再按配置绑定已完成的检索产物。`read_view_id` 可以 pin 一个覆盖查询全部数据资源的已授权视图，资源范围不符或过期则拒绝。`data_committed` 保留为后续能力草案：需要显式绑定已提交 revision，索引缺口只能在预算内正确补偿、等待或失败，不能与 `read_view_id` 合用。M0/M1 尚未验收该能力时必须以结构化 unsupported 错误拒绝，不能静默退回 published。预算、保留期和能力发现方式在对应里程碑前冻结。
+### 源 append 与本地部署
 
-服务端不能通过 SQL 首词、有无结果行或客户端声明判断只读性。例如，写 CTE、带副作用的函数或带 `RETURNING` 的写入都必须在执行前拒绝。解析/规划及执行层共同实施支持白名单、只读约束和对象权限；拒绝未支持语句的测试不可只依赖 JSON schema。未来若增加 `INSERT … SELECT` 等批式 SQL 作业，须在作业契约中定义固定输入版本的 `input_read_context`、目标写入权威及结果对账；本查询请求不承担写作业语义。
+refresh 校验完整 append 历史、旧文件身份并继承旧记录版本，只向源读取新增数据文件；仍复制旧受控产物并**全量重建索引**。旧源 data GET 为零不代表总 I/O 为零，也不支持更新、删除、rewrite 或 Continuous。托管 writer 仅可信本机操作者、固定 id/title/active 三列、单批1–1000行、累计10000行/32批；源提交与检索发布分步，未知提交结果先按 operation 对账。见 [增量](../design/m2-incremental.md) 和 [writer](../design/m2-writer.md)。
 
-### 4.3 结果、分页与资源预算
+M1/M2 可单服务运行或使用本地三 worker；HTTP worker 仅 loopback，依赖共享绝对路径。协调器仍加载全量 rows 并校验产物，三 worker 数量不证明水平扩展或提速。单机 flock 与 PG 目录 CAS 分别约束源提交和 view 发布；不能推导跨机 fencing、HA、通用 shuffle/spill、TLS/远端身份或生产容量。运行步骤见 [M2 操作](../design/m2-running.md) 和 [本地 HTTP worker](../design/local-worker-http.md)。
 
-结果包含列名与类型元数据、行数据、`result_kind`、下一页游标和截断标记。查询句柄不返回 `affected_rows/write_outcome/search_ready` 等写作业字段。大图像、音视频等对象返回受权限控制的引用和元数据，避免默认内联为大块 JSON/Base64。
+## 4. 句柄、授权与客户端
 
-成功句柄与每页结果必须包含由服务端规划器判定的 `result_kind`，请求不接受客户端自报该字段。任何读取业务数据的查询都是 `data`，包括聚合、空结果和对数据表做常量投影；仅常量求值和不读取业务数据的目录查询可为 `metadata`。`metadata` 不承诺业务数据快照且不得伪造 `read_context`；需要目录快照一致性的能力后续单独定义。
+M0 `queries` 与 M1/M2 `jobs` 都是异步接受；HTTP 202 不表示任务成功。状态/错误/结果需继续读取，取消与完成可以竞争，终态不可倒退。两者有不同的生命周期，不能互换：
 
-`data` 的成功句柄及每一页必须带 `read_context`：包含实际 `read_consistency`、非空 `data_revision_id`、至少一个非空源版本和实际索引版本集合；`published` 还必须有非空 `read_view_id`。精确扫描的索引集合可以为空，源版本不能为空。revision/view 是封装查询全部源选择的 opaque 上下文标识，不是误用某张表的 snapshot ID；多数据集查询须先冻结完整版本集合再执行。所有分页继承相同上下文，不宣称多源版本来自同一原子时点。
+| 合同 | M0 queries | M1/M2 jobs |
+| --- | --- | --- |
+| 状态 | queued/running/cancel_requested/succeeded/failed/cancelled | queued/running/succeeded/failed/cancelled；取消请求不产生公开 cancel_requested 状态 |
+| 结果 | 内存固定结果集，HMAC 游标分页；max_rows 控制总结果、page_size 控制单页 | 有界完整 JSON 结果，export 另有 Parquet/媒体下载；没有分页参数 |
+| 保留/重启 | 默认最多60秒 TTL；重启后旧句柄/结果/游标失效 | PG 持久 job；重启把未终态 job 标为 failed/worker_restarted；终态可 release |
+| 固定视图 | manifest 派生的 published context，空 index_versions | 提交固定 published context；成功 export 持续 pin |
 
-游标应不透明，绑定租户、主体、查询与结果快照，并具有保留期；翻页不重新执行 SQL，不因数据变化产生重复或遗漏。未定义稳定排序的查询不承诺跨次执行顺序。确定性分页与同分 Top-K 的次序需通过显式排序规则定义。
+HTTP 数据结果包含实际 `read_context`，M0 翻页沿用同一结果集；PG 行结果不携带该字段，也不使用 HTTP 句柄或游标。结果为空或截断不允许伪造数据版本。`truncated` 必须按对应合同解释；超时/内存/读取/执行预算超限失败，不把部分执行当完整成功。HTTP 身份来自 Bearer token；PG 使用 principal_id 和 token 密码。数据集授权与句柄主体检查在服务端执行，状态/结果/取消/下载重新授权。当前 alpha 无内建生产 TLS/OIDC；部署须遵守可信网络边界。
 
-`page_size` 只控制单页大小，`max_rows` 控制可返回的总结果行数，不限制扫描行数。若结果因总行数上限截断，应显式标记截断，不能将其表现为完整结果。超出执行时间、扫描量、内存或已启用算子预算则报告对应失败/终止状态。服务端还应设最大响应字节数、并发与排队配额，客户端请求只能在授权上限内收紧预算。具体默认值和超限行为在对应里程碑实现前冻结。
+HTTP 错误使用 `code/message/retryable/request_id`，已受理任务的失败通过句柄 `status=failed` 披露。GET 可在保留期内重试；POST 断连可能已创建任务，当前公共查询接口无通用幂等键，重新提交可能绑定新 view。操作者源写入的持久 operation 对账不能由只读 POST 重试代替。
 
-### 4.4 身份、错误与重试
+当前 CLI 为 [clients/cli/m1.py](../../clients/cli/m1.py)，支持 scan/search/graph/export、describe/status/cancel/release；提交默认等待并取结果，`--no-wait` 返回句柄，`--view` 传入固定视图。它调用公共 HTTP，不访问本地 PG/事实层，不自动重试 POST。它不是 M0 SQL CLI，也不提供公开 append/refresh/publish 命令。
 
-认证机制的具体选型待决；所有传输需要受保护连接。租户和角色从认证后的身份解析，不能信任请求体自报的 `tenant_id`。查询状态、游标、结果、取消和对象引用均需重新授权；审计需要关联主体、租户、请求和查询句柄，敏感 SQL 参数不默认写入日志。
+MCP 为 [stdio 适配器](../../clients/mcp/README.md)，协议版本固定 `2025-03-26`；工具为 scan/search/graph/export、describe/status/results/cancel/release。提交返回 job handle，由调用方轮询；凭证只从进程环境读取。没有 resources/prompts/sampling、订阅或 notification cancellation。CLI/MCP 与 HTTP 共用授权、固定视图和预算，工具描述不扩大服务端能力，安装分发和完整客户端互操作仍需另行验收。
 
-统一错误字段 `code`、`message`、`retryable`、`request_id`，按需增加 `sqlstate` 与经过脱敏的 `details`。传输/认证/配额错误通过 HTTP 错误响应返回；已接受任务的执行失败必须通过 `status=failed` 和同一结构的 `error` 返回。`retryable` 表示可能具备重试条件，不承诺重新查询会得到相同版本或结果。若宣称 PostgreSQL 错误兼容，需另行明确 SQLSTATE 与协议字段的映射。[PostgreSQL 官方错误字段说明](https://www.postgresql.org/docs/current/protocol-error-fields.html)
+## 5. 历史提案与未实现目标
 
-GET 状态和结果可在保留期内重试，重试不重跑 SQL。只读 POST 发生网络中断时也可能留下未获取句柄的后台任务；客户端应限制重试次数和总预算。重新提交会创建新查询，未指定 view 时可能读取不同版本，不承诺去重或相同结果。批写/同步作业必须在独立契约中解决持久去重、提交对账、有效期和外部副作用；当前只读 API 不承诺通用 `Idempotency-Key` 或 exactly-once 执行。
+统一 SQL、全文、向量和 Graph 计划仍是设计方向。下例仅展示 PostgreSQL 全文语法参考，**GuraDB 当前拒绝执行**：
 
-## 5. CLI、MCP 与 Agent
+```sql
+SELECT id, title FROM documents
+WHERE to_tsvector('english', body) @@ plainto_tsquery('english', $1)
+ORDER BY id LIMIT 20;
+```
 
-CLI 建议封装 HTTP 的提交、等待、分页与取消，提供 JSON 输出和稳定退出码，并正确传播超时、查询句柄及服务端错误。命令名称和安装方式待实现阶段确定。PostgreSQL wire protocol 一旦具备经过验证的范围，可直接复用该范围内的 PostgreSQL 客户端；不能预先声称所有驱动可用。
+`tsvector/tsquery/@@` 与相关函数的含义见 [PG18 官方全文文档](https://www.postgresql.org/docs/18/functions-textsearch.html)；不能把其排名函数直接等同于 GuraDB BM25。向量 SQL 形式、[pgvector 表面兼容](https://github.com/pgvector/pgvector) 和 Graph SQL 均待独立决定与验收；兼容语法也不意味着加载扩展 ABI。
 
-MCP 建议提供元数据发现、查询提交、状态查询、受限结果读取与取消等工具。工具名称与 schema 留待详细设计。首批只读能力在 HTTP 合同稳定后接入；写入/同步工具等待独立作业 API 和授权设计。Agent 的工具描述或确认步骤不能代替数据库权限校验，工具权限、SQL 角色和租户边界共享服务端机制。
+PG wire 已在 A0 之外按 [ADR 0014](../decisions/0014-bounded-pg-wire.md) 实现并验证上述有界首片；运行步骤见 [PG 端口指南](../design/pg-wire-running.md)。TLS/远程监听、系统目录/ORM、业务事务、通用 SQL 融合、训练过滤/投影和公开写 API 仍未支持；不能从 OpenAPI 的可扩展结构、server_version 或历史目标推导已支持。
 
-Agent 需要拿到结构化错误、可发现的能力边界、有限结果、可取消任务及来源信息。SQL、对象内容与查询结果中的文本均是待处理数据，不能提升客户端工具权限。MCP 和 CLI 都不能通过本地模式绕开服务端配额、审计或身份边界。SDK 可在 HTTP 与类型契约稳定后补充。
+## 6. 验证与兼容边界
 
-## 6. 后续需要决定与验证
+支持清单和两份 OpenAPI 的结构/正反例由 contracts 门禁验证；M0 实际 AST/执行由 Rust 与真实 PG/Parquet/HTTP 功能测试验证，M1/M2 的 BM25、ANN、Graph、增量、writer、分片和 MCP 另有对应合同与功能测试。PG 真实客户端、协议负例、取消/断连与组件性能分别由 `tests/functional/pgwire.py`、`tests/functional/pgwire_protocol.py`、`tests/faults/component/pgwire.py` 和 `tests/performance/component/pgwire.py` 验证，证据边界见 [PG 独立复核](../reviews/2026-10-18-pg-wire.md)。入口映射见 [M0 验收](../design/m0-validation.md)、[M1 验收](../design/m1-validation.md) 和 [M2 操作](../design/m2-running.md)。
 
-1. 固定 PG18 基线上的 SQL/类型/函数白名单与差异；当前 wire 首片独立验证 psql/Psycopg，后续扩展驱动、TLS 与目录矩阵。
-2. M0 前冻结 HTTP 参数/结果类型映射、错误码、保留期、分页快照、只读分类和资源预算；M1 固定 BM25/精确向量/RRF 的表达与结果语义。
-3. 后续 ANN、Graph、增量、data_committed 与 PG wire 分别验收，不把某个扩展的全部行为作为隐含要求。
-4. 在对应里程碑实现前完成导入/同步/发布/训练作业 API 详细设计：输入 pin、操作身份、对账、取消、保留、GC 与写入权威；不扩展为跨外部湖全局事务。
-5. Agent 只读角色、租户隔离、预算和取消竞争；写入重试用例属于后续作业合同。
-
-后续运行时测试覆盖参数绑定、类型往返、只读绕过、跨租户句柄/游标访问、数据/目录结果分类、上下文不缺失、分页版本相同、错误稳定性、预算超限及取消终态不倒退；wire 阶段再测试真实 PostgreSQL 驱动。当前仓库检查仅验证草案结构与正反例，不证明解析器、执行器或状态转换已实现。
+A0 的文档/离线清单校正不修改 HTTP 字段、评分算法、持久布局、支持预算或数据；无运行时迁移。新增支持声明需同时具备正例和拒绝边界证据，schema 校验不能替代真实服务验收。完整 performance/stability/soak、跨机/HA 与生产发布仍须单独完成；本分支报告不能代替整个 A0 或主线集成报告。

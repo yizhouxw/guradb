@@ -84,16 +84,19 @@ def _locked(base):
             fcntl.flock(lock, fcntl.LOCK_UN)
 
 
-def archive_run(common, family, run_dir):
+def archive_run(common, family, run_dir, *, validator=None):
     """Reuse identical complete evidence; never repair or overwrite an old archive.
 
     Trace/log bytes and relative names are part of identity: equal result.json
     alone does not imply equal executions. Legacy result-keyed archives remain
     untouched. A driver may omit trace.json, but result.json is always required.
+    Optional family validation sees the exact byte snapshot being archived.
     """
     if not isinstance(family, str) or re.fullmatch(r'[a-z][a-z0-9-]*', family) is None:
         raise HarnessError('invalid acceptance archive family')
     content = _source(run_dir)
+    if validator is not None:
+        validator(content)
     manifest = {'schema_version': 2, 'result_sha256': _digest(content['result.json']),
                 'files': {name: _digest(raw) for name, raw in sorted(content.items())}}
     raw = (json.dumps(manifest, sort_keys=True, separators=(',', ':'))+'\n').encode()

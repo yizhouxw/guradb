@@ -15,14 +15,22 @@ def stop_group(process):
         try:
             os.killpg(process.pid, signal.SIGKILL)
         except PermissionError as denied:
-            # Darwin may remove the PID before waitpid reports its exit.
-            # A short cleanup-only grace resolves that transition; a genuinely
-            # live denied process or denied helper group still fails.
+            # Darwin may retain a zombie-only group after its leader exits.
+            # Share one cleanup grace between reaping and group disappearance;
+            # persistent permission denial must still fail.
+            deadline = time.monotonic() + 0.1
             try:
-                process.wait(timeout=0.1)
+                process.wait(timeout=max(0, deadline - time.monotonic()))
             except subprocess.TimeoutExpired:
                 raise denied from None
-            os.killpg(process.pid, signal.SIGKILL)
+            while True:
+                if time.monotonic() >= deadline:
+                    raise denied from None
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                    break
+                except PermissionError:
+                    time.sleep(min(0.005, max(0, deadline - time.monotonic())))
     except ProcessLookupError:
         pass
     process.wait(timeout=5)

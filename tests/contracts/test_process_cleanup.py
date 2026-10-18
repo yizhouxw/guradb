@@ -109,6 +109,61 @@ class ProcessCleanupTests(unittest.TestCase):
             with self.assertRaises(PermissionError):
                 executor.stop_group(process)
 
+    def test_reaped_leader_retries_transient_permission_error_until_group_disappears(self):
+        process = subprocess.Popen([sys.executable, '-c', 'pass'], start_new_session=True)
+        self.assertEqual(process.wait(timeout=3), 0)
+        kill_group = os.killpg
+        calls = []
+
+        def disappearing_group(pid, sig):
+            calls.append((pid, sig))
+            if len(calls) <= 2:
+                raise PermissionError('helper zombies still being reaped')
+            # The owned leader has really been reaped; delegate the final probe
+            # to the OS instead of mocking successful disappearance.
+            return kill_group(pid, sig)
+
+        with patch.object(executor.os, 'killpg', side_effect=disappearing_group):
+            executor.stop_group(process)
+        self.assertGreaterEqual(len(calls), 3)
+        self.assertEqual(calls, [(process.pid, signal.SIGKILL)] * len(calls))
+        self.assertEqual(process.returncode, 0)
+
+    def test_leader_wait_and_group_retries_share_one_cleanup_deadline(self):
+        process = subprocess.Popen([sys.executable, '-c', 'pass'], start_new_session=True)
+        self.assertEqual(process.wait(timeout=3), 0)
+        elapsed = [0.0]
+        waits, sleeps, signals = [], [], []
+        original = PermissionError('original permission failure')
+
+        def leader_wait(timeout=None):
+            waits.append(timeout)
+            if len(waits) == 1:
+                elapsed[0] += .08
+            return 0
+
+        def remaining_group(pid, sig):
+            signals.append((pid, sig))
+            raise original if len(signals) == 1 else PermissionError('remaining helper denied')
+
+        def sleep(seconds):
+            self.assertGreater(seconds, 0)
+            sleeps.append(seconds)
+            elapsed[0] += seconds
+
+        with patch.object(process, 'wait', side_effect=leader_wait), \
+                patch.object(executor.os, 'killpg', side_effect=remaining_group), \
+                patch.object(executor.time, 'monotonic', side_effect=lambda: elapsed[0]), \
+                patch.object(executor.time, 'sleep', side_effect=sleep):
+            with self.assertRaises(PermissionError) as caught:
+                executor.stop_group(process)
+        self.assertIs(caught.exception, original)
+        self.assertEqual(len(waits), 1)
+        self.assertAlmostEqual(waits[0], .1)
+        self.assertGreaterEqual(len(signals), 2)
+        self.assertAlmostEqual(sum(sleeps), .02)
+        self.assertAlmostEqual(elapsed[0], .1)
+
 
 if __name__ == '__main__':
     unittest.main()

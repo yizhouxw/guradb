@@ -50,9 +50,17 @@ Git：起始 commit `d95d1ada607fe40a6b1cf8eb19773b3a10f95bae`，分支 `codex/p
 
 停止盲目重跑后，独立前序测试实验确认 43 项前序用例没有泄漏 killpg/getpgid/Popen.poll patch；`artifacts/pg-wire-cleanup-exit-window-diagnosis.log` 在真实 owned-process 中测到首次 EPERM 后约 38.5 微秒时 poll 仍为 None，约 1.34 ms 后 wait 可回收，随后 killpg 为 ESRCH。根因是 Darwin 的 PID/组查找失效可早于 waitpid(WNOHANG) 可回收，不能用一次非阻塞 poll 判定仍存活。
 
-最终清理逻辑只在 EPERM 后允许至多 100 ms 的 cleanup wait，确认进程退出后重试组终止；等待仍超时就重新抛出原 PermissionError，重试仍无权限也继续失败，保留 helper 清理。新增确定性退出窗口回归，独立执行两处清理测试共 10 项通过；原失败/取消/后代清理 14 项针对性检查也通过，见[审查记录](../reviews/2026-10-18-pg-wire.md)。100 ms 仅属于失败后的有界清理等待，不放宽命令运行预算、门禁选择或 SQL 行为；最终完整门禁仍必须重新执行。
+第二轮后的清理逻辑只在 EPERM 后允许至多 100 ms 的 cleanup wait，确认进程退出后重试组终止；等待仍超时就重新抛出原 PermissionError，重试仍无权限也继续失败，保留 helper 清理。新增确定性退出窗口回归，独立执行两处清理测试共 10 项通过；原失败/取消/后代清理 14 项针对性检查也通过，见[审查记录](../reviews/2026-10-18-pg-wire.md)。100 ms 仅属于失败后的有界清理等待，不放宽命令运行预算、门禁选择或 SQL 行为；最终完整门禁仍必须重新执行。
 
 随后单独运行完整 contracts 68 项与 harness 67 项，均通过；原始输出在 `artifacts/pg-wire-cleanup-full-suites.log`。这是修复后的两个完整测试套件，不代表第三轮整项 pre-commit 或提交后 check 已经通过。
+
+### A0 合并门禁中断与残余进程组诊断
+
+A0 合并检查 `artifacts/harness/20261018T113925Z-5295b8e4/report.json` 只写入 contracts/functional 通过，随后父 runner 清理进程组返回 EPERM 而中断；其 `harness-tests-0.log` 实际为 82 项/7.727 秒全部 OK，report 尚无最终 `passed` 字段。不能把子进程测试通过视为完整门禁完成。保留合并工作树和日志，从 `checkpoints/20261018T113149Z-pg-wire-branch-verified-ae0d573e` 恢复至 `/Users/chad/dev/guradb-pg-merge-recovery`，恢复目录为干净的 `c48a585e4a79651bcba8178a825037b95a8130e7`。
+
+一次带观测的完整父 runner 和三类共 150 次固定采样没有重现 EPERM；随后受控真实 OS 实验确认：leader 已 wait/reaped，原进程组仍含一个同用户 zombie helper，killpg 连续 EPERM，helper 被其独立父进程回收后约 1.5 ms 转为 ESRCH。该实验定位已回收 leader 后残余进程组的处理缺口，但原 hook 的具体 PID/helper 拓扑没有被记录，仍未知，不能冒称已重现原现场。
+
+修复沿用首次 EPERM 起的同一个 100 ms cleanup deadline，leader wait 使用剩余时间，之后最多每 5 ms 重试 killpg；只有真实发送成功或 ESRCH 可结束，持续拒权到期仍抛原 PermissionError。未增加命令执行预算、总清理期限或门禁容错。独立审查两处补丁和确定性回归，未发现新阻断；父 runner 包装完整 harness 84 项、contracts 109 项均通过，最终 4 项定向回归也通过。报告与原始证据见[复核记录](../reviews/2026-10-18-pg-wire.md)；合并提交的完整 hook/check 仍须完成，不能以这些局部检查替代。
 
 ## 验证合同
 
@@ -65,6 +73,18 @@ Git：起始 commit `d95d1ada607fe40a6b1cf8eb19773b3a10f95bae`，分支 `codex/p
 ## 结果与审查
 
 独立源码复核与发现修复见 [PG SQL 端口独立复核](../reviews/2026-10-18-pg-wire.md)；真实回归与整项门禁状态在那里与最终报告分别记录。
+
+### 与主线 A0 的整合
+
+PG 切片提交 `c48a585` 后，主线 A0 已推进到 `23837bf`，两者从本任务原始基点分叉。依仓库流程将 A0 合入本 worktree，再完成合并代码的完整门禁和独立复核，最终回到 main；原始 task base 与恢复 checkpoint 不变。单片的提交后报告不能替代合并结果的代码绑定检查。
+
+接口冲突以 A0 的实际 HTTP/作业、训练、BM25 和本地 worker 合同为主体，加入已经实现的 PG 首片，区分 HTTP JSON/句柄/read_context 与 PG typed rows/会话。README 和文档导航保留两项独立交付；下一阶段计划保留历史排序并注明新增 PG 请求的独立范围，不改写 A0 的历史验收结论。
+
+机器清单 `api/capabilities/v1.json` 新增封闭的 `boundaries.pg_wire`，明确默认关闭、loopback IP、无 TLS、固定 database、token 身份、M0 固定 manifest、只读/autocommit、类型与已测客户端；F05 删除笼统的 PG wire 拒绝，保留 TLS/远程/目录/事务/COPY/ORM/全部 SDK 的拒绝范围。两个 HTTP services、OpenAPI 路由与请求响应字段保持原合同，PG 不伪装为 HTTP operation。相应 schema 与 contracts 负例约束这些声明；离线 source-tree 清单仍不代表部署已启用 PG。
+
+清单/schema 必须从同一 commit 配套读取。新增必填 `pg_wire` 会使旧 v1 清单不能通过新 schema；旧源码快照使用其自身 schema，不宣称跨源码版本无条件向后兼容，也不以此引入运行时能力协商。
+
+整合时 `scripts/m0.py` 同时保留 A0 原始证据/输入摘要和 PG 子 driver 的 trace 绑定，相关合并及回归由主任务另行复核。本文记录整合范围；最终合并提交、完整检查和 main 集成证据仍以本任务 receipt 为准，不提前宣称最终门禁通过。
 
 已执行拟议路径 `plan`，本轮独立 PG 子 driver 的实际报告位于 `artifacts/pgwire-final-target/{functional,stability-component,performance-smoke}/result.json`，三项均通过。功能 72 项断言、故障 19 个 trace 事件、性能 10 个样本；报告 SHA-256、实际运行命令和范围见上述独立复核。子 driver 结果只绑定 trace，不包含 commit/checkout 指纹，不能替代最终提交后 `harness.py check` 与 task-finish receipt 的整项证据。完整 performance/stability/soak 和远端 CI 仍未由本片证明；本地组件通过不等于生产可发布。
 

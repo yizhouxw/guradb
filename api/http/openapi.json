@@ -1,9 +1,14 @@
 {
   "openapi": "3.1.1",
+  "x-guradb-capability-manifest": {
+    "schema_version": 1,
+    "scope": "source-tree",
+    "path": "../capabilities/v1.json"
+  },
   "info": {
     "title": "GuraDB M0 HTTP read-only SQL",
     "version": "0.1.0-m0",
-    "description": "M0 single-process SELECT over pinned Parquet manifests. Only int8/text/bool, one registered table, column projection/filter/order/constant LIMIT. No writes, joins, functions, transactions or wire protocol. See docs/design/m0-parquet-http.md for hard caps and certified scope; this is not a distributed or release-ready database."
+    "description": "M0 single-process SELECT over pinned Parquet manifests. Only int8/text/bool, one registered table, column projection/filter/order/constant LIMIT. No writes, joins, functions or transactions. PostgreSQL wire is a separately configured bounded loopback interface; this OpenAPI describes HTTP only. See docs/design/m0-parquet-http.md for hard caps and certified scope; this is not a distributed or release-ready database."
   },
   "x-status": "m0-implemented-subset",
   "servers": [
