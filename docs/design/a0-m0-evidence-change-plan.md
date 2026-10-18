@@ -4,7 +4,7 @@
 
 ## 用户验收与范围
 
-M0 三类成功运行保存 result、trace、构建日志和全部已创建容器日志到共同 Git 目录的 `guradb/m0-evidence/v2/<内容摘要>/`，顶层命令输出可定位该归档。缺件、trace 摘要不符、损坏旧归档失败且保留现场；完全重复不覆盖，同结果不同 trace/log 为不同身份，并发只发布完整归档。旧 `4de2fde7` 三组证据与已归档顶层报告/命令日志核对后按原字节保全，原 artifacts 不删除；不将其计作当前 commit 的运行结果。
+M0 三类成功运行保存 result、trace、构建日志和全部已创建容器日志到共同 Git 目录的 `guradb/m0-evidence/v2/<内容摘要>/`，顶层命令输出可定位该归档。缺件、trace 摘要不符、损坏旧归档失败且保留现场；完全重复不覆盖，并发只发布完整归档。通用v2归档对同结果不同trace/log形成不同身份；M0额外拒绝与result已绑定摘要不符的内容。旧 `4de2fde7` 三组证据与已归档顶层报告/命令日志核对后按原字节保全，原 artifacts 不删除；不将其计作当前 commit 的运行结果。
 
 支持：现有 M0 functional/performance-smoke/stability-component，兼容旧结果没有 build 日志摘要的格式。拒绝不完整、symlink、摘要不符、已存在的运行目录（原子创建避免并发复用）以及运行中代码身份变化。fixture 保持原入口。非目标：能力扩展、A1–A6、阈值/依赖修改、业务数据迁移或清理、远端动作。
 
@@ -14,13 +14,13 @@ M0 三类成功运行保存 result、trace、构建日志和全部已创建容�
 
 ## 实现与验证合同
 
-先以独立 synthetic 字节验证缺 result/trace/容器日志、摘要不符、旧目标损坏、相同结果不同 trace/log、重复与跨进程竞争；驱动单测验证失败退出及现场。模拟证据不证明数据库质量。真实套件保持全部现有输入/断言/预算，串行在共同 Git 管理目录 `guradb/coordination/a0-heavy-gates.lock` 的 fcntl 锁内运行，包括 hook。各 worktree 独立 venv/输出，不共享可写 target。
+先以独立 synthetic 字节验证缺 result/trace/容器日志、摘要不符、旧目标损坏、重复与跨进程竞争；通用归档另覆盖相同结果不同trace/log，M0负例覆盖已绑定摘要不匹配。驱动单测验证失败退出及现场。模拟证据不证明数据库质量。真实套件保持全部现有输入/断言/预算，串行在共同 Git 管理目录 `guradb/coordination/a0-heavy-gates.lock` 的 fcntl 锁内运行，包括 hook。各 worktree 独立 venv/输出，不共享可写 target。
 
 归档只复制受控 result/trace/log，排除 auth、server 配置和数据。构建/执行/归档异常保留 failure 及已有输出，不伪造成功。失败现场保留；两次无新证据失败后定位根因。v2 新增 m0 family，旧归档不迁移或覆盖；代码恢复不删除新增归档，磁盘故障/异地备份仍未覆盖。
 
 ## 结果与复核
 
-最终实际报告、commit、复核、checkpoint 由 task receipt 记录；主线集成独立覆盖三个 A0 切片的原始范围。当前尚未宣称门禁通过。
+最终实际报告、commit、复核、checkpoint 由 task receipt 记录；主线集成独立覆盖三个 A0 切片的原始范围。分支最终 `f58e690` 的 `20261018T110340Z-d1e26c7b` 报告8 suites通过并已task-finish；不能用该分支报告代替组合代码验收。
 
 ## 独立复核发现与历史保全结果
 

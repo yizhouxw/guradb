@@ -1,7 +1,7 @@
 # 下一阶段行动计划：补齐数据准备与可扩展读取基础
 
 日期：2026-10-18。依据：[当前功能与架构复审](../reviews/2026-10-18-capability-architecture.md)。
-状态：建议执行顺序，尚未实现；不新增已接受的技术选型，不改变[路线图](../roadmap.md)的 M0–M4 退出条件。
+状态：A0 有界实现及切片验收已完成，主线最终 commit/报告/checkpoint 由 `a0-main-integration` receipt 绑定，见[A0集成复核](../reviews/2026-10-18-a0-integration.md)。A1–A6 仍待实施；不新增已接受的技术选型，不改变[路线图](../roadmap.md)的 M0–M4 退出条件。
 
 ## 1. 阶段目标与范围
 
@@ -20,7 +20,7 @@
 
 | 切片 | 优先级/依赖 | 交付物与主要归属 | 完成后的判断 |
 | --- | --- | --- | --- |
-| A0 支持矩阵、证据保全与负载合同 | 立即；无前置 | 矩阵落到能力发现/接口与格式清单；M0原始证据归档；固定数据、真值、环境和预算；gateway/query、验收 harness | 首个对外可用 alpha 的范围清楚，测量可比较且可复核 |
+| A0 支持矩阵、证据保全与负载合同 | 有界实现完成；见集成证据 | 离线能力清单及接口/格式对账；M0原始证据归档；synthetic固定输入、独立真值、窗口更新与预算 | alpha白名单可核对；新负载可重放，完整受控性能和生产验收仍未通过 |
 | A1 固定视图样本选择 | A0；可与 A2 设计并行 | 过滤/投影→manifest/Parquet；query/connectors.training、HTTP/CLI/MCP | 补齐数据准备的最小用户闭环 |
 | A2 视图描述符与按需执行 | A0；在冻结合同上实施 | bundle 描述符、校验/缓存生命周期、worker 局部读取、有界归并/分片导出；storage/index/query/cluster | 协调器不再按全数据量装载，才允许扩大规模 |
 | A3 历史保留与作业对账 | A0；长周期测试前完成 | run/job/operation 生命周期、保留与容量拒绝、恢复工具；catalog/query/connectors | 跨128 run生命周期验证，写入仍受明确白名单保护 |
@@ -34,6 +34,16 @@ A0→A2→A4→A5 是规模化主路径；A1 提供用户价值，A3 防止长�
 
 ### A0：把实际支持与测试负载冻结下来
 
+本次落地范围：
+
+- [能力清单 v1](../../api/capabilities/v1.json)及schema覆盖12域，两个OpenAPI引用同一源码合同；dataset describe仍只提供schema/model/read_context/retention，不把它当全局能力协商。
+- M0 functional/performance-smoke/stability-component接入不可覆盖v2原始归档。新运行先停止容器、采集日志和摘要，再删除容器；缺件/摘要损坏/采集失败拒绝归档。旧 `4de2fde7` 的result/trace/现存日志按原身份保全；14份旧容器日志不可恢复，不能宣称历史日志齐全。
+- [synthetic合同](../design/a0-workload-contract.md)冻结seed17/16维、初始256行、每批16行及原查询；BM25/L2/RRF/训练manifest采用独立源输入真值，保留原始请求/响应。60秒窗口8次更新，四个四分位均要求读、append和publish，增长至384行；这是新负载版本，不与旧两次append当同负载比较。
+- JSON持久向量键固定字符串，使归档数据集摘要可重算；旧整数键摘要不一致的归档保留原字节，新证据绑定新commit。10000行/32批及128 run上限、查询延迟/RSS/recall门槛未放宽。
+- 当前没有业务数据集；媒体负载为0，OS缓存未受控，远端GET/HEAD、native完整峰值RSS、协调器训练I/O、五次受控重复及独立Parquet逐值真值仍缺。A0完成仅指上述有界合同与证据设施，不能推导完整M2、跨机或release通过。
+
+以下保留原验收要求；其中未测成本须由后续切片补齐，不能从状态文字推定已有证据：
+
 - 首个有限实现提交将M0 driver接入已有原始证据归档，保存当前仍在artifacts的结果/trace/容器日志并核对原commit/digest；新运行生成新证据，不把旧证据改绑新commit。覆盖缺件/损坏/同结果不同trace/重复运行；在保全完成前不清理当前artifacts。
 - 对账功能/架构/接口/格式文档和实际 schema/服务发现：M0 SQL 与 M1/M2 job 分开、v1/v2 BM25 分开、源增量与索引全重建分开、内部 Lance 与外部连接器分开。API 导航的旧“无服务”文字不能作为新支持声明。
 - 固定一个允许使用的数据清单及可复现 synthetic 对照，记录 seed、维度/距离、文本/媒体大小、重复/空值、过滤选择性、倾斜、append 频率和查询/训练并发。synthetic 仅为组件输入，不冒充业务 baseline。
@@ -43,12 +53,16 @@ A0→A2→A4→A5 是规模化主路径；A1 提供用户价值，A3 防止长�
 
 ### A1：让训练样本选择成为可用能力
 
+进入条件：复用A0冻结的全视图输入、ID/version/split和预算作为对照；先补独立PyArrow读取实际导出Parquet的逐值真值，再扩展选择语义。A0只独立核验训练manifest，不替代此义务。
+
 - 最小 API 在固定 view 上表达现有类型的等值过滤与列投影，先拒绝 JOIN、聚合、UDF 和任意 SQL。共用服务端选择语义，客户端仅转发；将来接 SQL 也走同一合同。
 - manifest 记录选择规则/版本、实际 view、样本身份/record_version、投影 schema、seed/split、媒体与模型来源；空集合、NULL、int8无损传输、非法字段和超预算行为明确。
 - 独立 PyArrow/关系真值比对样本集合、字段和 split；单 worker/三 worker/HTTP/CLI/MCP 同结果。已接受任务遭遇新发布、撤权、GC、取消或服务重启时，不漂移、不泄露、不留下无主 pin。
 - 同负载记录选择前后扫描/导出量和RSS；不得用减少样本数与旧全量导出直接比较来声称执行器提速。通过后才更新 F05/F10 支持范围。
 
 ### A2：去掉协调器全量 rows 和全产物逐请求读取
+
+进入条件：先冻结版本化描述符、不可变对象身份/摘要、缓存与pin/GC合同；在相同A0输入和质量门槛下补齐总RSS、真实I/O及缓存状态证据，然后才讨论扩大上限。
 
 - 先定义版本化视图描述符：schema/model、逻辑分片集合、不可变对象身份/摘要、索引版本、记录映射及统计。协调器只传任务描述，worker 只读本片并按需回表；阶段性可保留 Python 控制面。
 - 校验从“每请求全读”演进为有明确可信边界的产物准入/缓存校验和读取验证；持久层和本地缓存损坏/替换必须检测，认证与撤权不因缓存而省略。依赖闭包、pin 和 retiring 排他保持。
@@ -57,6 +71,8 @@ A0→A2→A4→A5 是规模化主路径；A1 提供用户价值，A3 防止长�
 - 持久协议升级前备份，声明旧reader/writer、历史v1/v2、在途任务和pin支持窗口；提供新目录重建/回滚路径。去掉重复Tantivy/全局ANN产物须证明旧视图/rebuild/恢复仍成立。
 
 ### A3：长期运行的历史、幂等与容量边界
+
+进入条件：先设计history/operation保留、tombstone及未知提交对账，再构造合法跨128 run的独立场景；保留32批/10000行writer保护，不能以提高常量代替生命周期验证。
 
 - 设计 runs/jobs/history 和 operation 指纹的保留期限、归档/tombstone、容量告警和受控清理；不删除尚需对账、被pin或当前发布引用的记录。
 - 在跨128 run的独立场景验证构建→发布→retire/GC，重放旧operation不得产生新提交或倒退发布；用重建/多数据集等合法输入触发目录生命周期，不能绕过writer的32批限制。
@@ -89,4 +105,4 @@ M4仍独立排队：完整performance/stability/soak、PG HA/PITR、对象/目�
 
 每片启动独立task，冻结基点、支持/拒绝、性能预算和故障断言；先局部真值再按plan运行功能/语言/组件性能/故障门禁。高风险的描述符、发布、GC、保留或门禁变更做独立复核；不通过删测试、改阈值、扩大缓存或缩小数据来消除回归。提交后对原始base检查并task-finish，归档原始测量与trace。两次无新证据失败时停止盲试、定位根因。
 
-本次任务 `capability-architecture-review` 只完成评审、状态校正与本计划，不实施A1–A6。起点 `4de2fde7faf04b640ae8dbe02022e78e94db59ee`；恢复点 `checkpoints/20261018T100510Z-before-capability-architecture-review-d8d5d2aa`。没有运行时/持久数据迁移，最终提交、实际门禁、复核与完成checkpoint由task receipt记录。文档门禁通过不能计作上述行动完成。
+原文档任务 `capability-architecture-review` 只完成评审、状态校正与本计划。其起点 `4de2fde7faf04b640ae8dbe02022e78e94db59ee`；恢复点 `checkpoints/20261018T100510Z-before-capability-architecture-review-d8d5d2aa`。后续A0由独立切片和 `a0-main-integration` 完成，主线基点 `d95d1ada607fe40a6b1cf8eb19773b3a10f95bae`；报告覆盖该基点以来的全部A0变更。A1–A6未实施，无生产数据迁移，未推送或部署。

@@ -21,7 +21,7 @@ M1 操作见 [Snapshot/检索/训练快速开始](docs/design/m1-running.md)。M
 
 推荐目标栈为 **Iceberg v2/Parquet 事实层 + 媒体对象 + Lance 检索物化层，Rust/Arrow/DataFusion 执行，Tantivy 全文与有界 Graph，小型 PostgreSQL 控制面**。当前 M0 SQL 与 Python/PyArrow 的 M1/M2 检索作业分别运行；新 bundle v2 使用全局统计 BM25，旧 v1 保留 Tantivy 路径，ANN/Graph/增量/托管 append 已有有界切片。真实多机与生产发布仍待验证；PG wire 后续单独验收。
 
-2026-10-18 [功能与架构复审](docs/reviews/2026-10-18-capability-architecture.md)逐项核对12个能力域及当前主线证据。[下一阶段计划](docs/plans/2026-10-18-next-stage.md)优先补齐固定视图样本选择、按需分片读取、生命周期与质量测量，再进入跨机 POC。
+2026-10-18 [功能与架构复审](docs/reviews/2026-10-18-capability-architecture.md)逐项核对12个能力域。[A0 集成复核](docs/reviews/2026-10-18-a0-integration.md)补齐[源码能力清单](api/capabilities/v1.json)、M0 原始证据归档和[独立真值负载合同](docs/design/a0-workload-contract.md)；清单是离线合同，尚无全局在线能力协商接口。[下一阶段计划](docs/plans/2026-10-18-next-stage.md)继续按 A1 样本选择、A2 按需读取、A3 生命周期及后续质量验收推进。
 
 ## 从这里开始
 
