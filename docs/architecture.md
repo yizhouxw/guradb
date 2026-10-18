@@ -1,6 +1,8 @@
 # GuraDB 技术架构 v0.3
 
-状态：长期推荐技术基线；M0受限单进程实现见[详细设计](design/m0-parquet-http.md)，其它组件待验证。日期：2026-10-17。
+状态：长期推荐技术基线与当前实现分列；M0/M1 有界 alpha、部分 M2/本地 worker 及离线恢复切片已落地，完整 M2/M3/M4 未完成。状态复审：2026-10-18。
+
+当前代码与证据结论见[功能与架构复审](reviews/2026-10-18-capability-architecture.md)，近期实施顺序见[下一阶段计划](plans/2026-10-18-next-stage.md)。除下面的现状说明外，本文中的计算池、统一计划、缓存、REST Catalog、HA 等均按目标架构解读。
 
 用户已确定采用对象存储湖架构，放弃高并发 OLTP，不支持实时延迟敏感事务，见 [ADR 0002](decisions/0002-object-store-lake-boundary.md)。本版依据[产品功能架构](product/functional-architecture.md)与[技术调研](research/README.md)，为后续详细设计选择默认路径；不再将所有技术选项并列悬置，也不把选型建议当作已经验证的功能。
 
@@ -24,6 +26,21 @@
 按[路线图](roadmap.md)逐切片接入：M0 固定清单扫描，M1 固定 Iceberg 快照与 BM25/精确向量融合，M2 分别验证 ANN、Graph、受限增量和单表写入，M3 真实多 worker，M4 发布验收。每个实验产出可复用内核代码；Lance、Graph、分布式和 writer 不是首个可运行服务的共同前置依赖。
 
 ## 2. 逻辑与部署架构
+
+### 当前有界实现
+
+| 路径 | 实际执行与存储 | 尚未跨越的边界 |
+| --- | --- | --- |
+| M0 SQL | Rust/Arrow/DataFusion，固定 Parquet manifest，全文件有界读取与 MemTable | 未统一接入 M1 PG read view；无通用 JOIN/聚合、流式 provider 或 spill |
+| M1/M2 服务 | Python/PyArrow 编排及 scan/search/graph/export，PG 持久目录/作业/权限/pin | scan 仅 limit；训练全视图导出；不是统一 DataFusion 检索计划 |
+| 全文/向量 | 旧 v1 Tantivy；新 v2 自定义全局统计 BM25/三份 JSON postings；精确 L2、Lance IVF_FLAT 与分片重排 | 当前同时保留多份索引产物，低 probe/冷热/规模成本未完整验收 |
+| worker | 单机三个真实子进程，或 loopback HTTP 服务；物理 serving/BM25/ANN 分片 | 共享绝对路径；协调器仍全量载入 rows/校验全部产物；不是跨机分布式 |
+| 同步/托管写 | 新源文件 append 增量、稳定版本继承，索引全重建；本机 SQLite catalog + PG 意图 + flock 的托管 append | writer 固定 schema/规模；无跨机源 fencing、Continuous 或公开写 API |
+| 恢复 | 冻结服务/源写入后的本地 PG、对象、目录与 pin 联合备份恢复 | 不是 HA/PITR/异地 DR；恢复后需补撤权，完整 release 门禁仍缺 |
+
+实际边界由[ADR 0011](decisions/0011-m1-bounded-snapshot-serving.md)、[ADR 0012](decisions/0012-bounded-p0-and-local-workers.md)与后续[ADR 0013](decisions/0013-local-p0-partitions-and-recovery.md)限定；后者推进了本地索引分片与恢复，不能把前一阶段的“ANN单节点”当当前唯一实现。
+
+### 目标逻辑架构
 
 ```mermaid
 flowchart TB
@@ -224,4 +241,4 @@ OCR、ASR、抽帧与 embedding 为可插拔后台作业，首版允许外部完
 
 原有 [modules](../modules/README.md) 保留，新增职责通过模块内部子组件表达：gateway 增加 PG 兼容/结果接口；query 增加 DataFusion 扩展与融合；catalog 增加 revision/read view 发布；storage 管理对象/缓存；index 管理 Lance/Tantivy/邻接产物；cluster 管理任务与资源池；connectors 隔离各格式与 catalog。
 
-下一步建立 M0 固定 manifest/Parquet 与只读 HTTP 的可运行内核，再随切片验证 Iceberg 固定快照、BM25/精确向量、发布恢复和训练 manifest。Lance ANN、Graph、append-only 同步和单表 writer 各自过门禁后接入；真实分布式与发布质量分别在 M3/M4 验收，详见[路线图](roadmap.md)。
+下一步先冻结负载和证据合同，补齐固定视图的样本选择，分离视图描述符与worker局部数据读取，并完善run/operation历史保留与对账。保持身份、评分、pin/GC、源提交和目录发布合同；用相同结果质量比较资源成本后再决定原生算子迁移与多机运行时，不以整体改写为前置。具体依赖和验收见[行动计划](plans/2026-10-18-next-stage.md)；真实分布式与生产质量仍分别在 M3/M4 验收。

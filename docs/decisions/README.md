@@ -15,6 +15,8 @@ ADR 用来记录已经比较过的方案和取舍。编号只表示记录顺序�
 | [0009](0009-task-evidence-and-actions-workflow.md) | 任务范围、证据与 GitHub Actions | bootstrap Actions已通过，M0 Actions待推送验证；CD待环境 |
 | [0010](0010-m0-bounded-manifest-reader.md) | M0 有界 manifest 读取服务 | 接受，仅限单进程读取alpha |
 | [0011](0011-m1-bounded-snapshot-serving.md) | M1 有界 Snapshot 服务化 | 接受，仅限单节点alpha；完整P0待后续 |
+| [0012](0012-bounded-p0-and-local-workers.md) | 有界 P0 与本地 worker | 接受有界实现；后续分片范围由0013推进 |
+| [0013](0013-local-p0-partitions-and-recovery.md) | 本地分片、记录版本与恢复 | 有界实现；完整M2/M3与生产证据仍缺 |
 | [模板](0000-template.md) | 后续决策的记录格式 | 模板 |
 
 ## 优先讨论的问题
@@ -34,6 +36,4 @@ ADR 用来记录已经比较过的方案和取舍。编号只表示记录顺序�
 
 新增记录可复制 `0000-template.md`，采用下一个可用编号。尚待讨论的内容保持“提案”，决定后补齐依据和影响，再标“已接受”；被替代时链接新 ADR。
 
-- [ADR 0012：有界 P0 与本地 worker](0012-bounded-p0-and-local-workers.md)
-
-- [ADR 0013：本地 P0 分片、记录版本与恢复](0013-local-p0-partitions-and-recovery.md)
+2026-10-18 的[功能与架构复审](../reviews/2026-10-18-capability-architecture.md)和[行动计划](../plans/2026-10-18-next-stage.md)不替代上述历史决定。后续执行面、持久布局或跨机运行时的选型经实测后再形成新ADR。

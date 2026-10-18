@@ -1,6 +1,8 @@
 # SQL、HTTP 与客户端接口
 
-状态：**M0查询子集已实现，其余为提案**。实际支持见[M0详细设计](../design/m0-parquet-http.md)和[运行说明](../design/m0-running.md)；全文/向量/Graph/CLI/MCP示例尚不可执行。用户已确定 PostgreSQL 语法兼容方向、SQL 与 HTTP 接口，以及便于扩展 CLI、MCP 和 AI Agent 的目标。
+状态：M0 SQL 与 M1/M2 检索/训练作业各有有界实现，CLI/MCP 薄适配已接入；下文统一SQL检索语法及扩展接口仍为提案。实际支持见[M0详细设计](../design/m0-parquet-http.md)、[M1运行](../design/m1-running.md)、[M2运行](../design/m2-running.md)和[当前完成度复审](../reviews/2026-10-18-capability-architecture.md)。用户已确定 PostgreSQL 语法兼容方向、SQL 与 HTTP 接口，以及便于扩展 CLI、MCP 和 AI Agent 的目标。
+
+M0 使用[SQL OpenAPI](../../api/http/openapi.json)，M1/M2 使用[作业 OpenAPI](../../api/http/m1-openapi.json)；两条执行路径尚未统一。本文后续草案中的目标语义不能扩大当前白名单；append/refresh/publish 仍为可信操作者入口。样本选择、接口/格式历史文字与能力发现的一致性将在下一阶段A0/A1继续收口。
 
 本轮审查将实现入口收敛到只读查询：M0 验证固定 manifest/Parquet 上的精确扫描；M1 增加 Snapshot 发布、BM25、精确向量与 RRF；ANN、Graph、增量同步和分布式扩展按后续依赖推进。SQL 以 PG18 的明确子集为比较基线，HTTP 优先，wire protocol 后续独立验收。批量写入与同步使用另行设计的作业契约，不进入当前查询 API。具体阶段见[路线图](../roadmap.md)。
 
@@ -82,7 +84,7 @@ PostgreSQL 的递归 CTE 可作为有界关系遍历的语法参考；它不能�
 
 ### 4.2 请求、只读模式与参数
 
-请求包含 `sql`、按 `$1`、`$2` 顺序绑定的 `parameters`，以及 `mode`、`timeout_ms`、`max_rows`。`mode` 默认且仅允许 `read_only`；`read_write` 是无效请求，拥有写权限也不能经此入口写入。以下请求是**接口提案示例，没有可连接服务**：
+请求包含 `sql`、按 `$1`、`$2` 顺序绑定的 `parameters`，以及 `mode`、`timeout_ms`、`max_rows`。`mode` 默认且仅允许 `read_only`；`read_write` 是无效请求，拥有写权限也不能经此入口写入。以下展示请求形态；运行时数据集、schema与值类型必须满足M0白名单，具体可运行示例见M0运行说明：
 
 ```json
 {

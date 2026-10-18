@@ -19,7 +19,9 @@ M1 操作见 [Snapshot/检索/训练快速开始](docs/design/m1-running.md)。M
 - 兼容主流开放数据湖与 AI 多模态数据格式；通过持续扩展的能力矩阵管理具体版本与读写边界。
 - PostgreSQL 语法兼容方向，提供 SQL 与 HTTP 接口，并便于扩展 CLI、MCP 客户端。
 
-推荐目标栈为 **Iceberg v2/Parquet 事实层 + 媒体对象 + Lance 检索物化层，Rust/Arrow/DataFusion 执行，Tantivy 全文与有界 Graph，小型 PostgreSQL 控制面**。按[路线图](docs/roadmap.md)逐片接入：先固定 Parquet 文件读取，再做一个 Iceberg 源的 Snapshot、BM25/精确向量与训练闭环，随后加入 ANN、Graph、受限增量、托管 append 和真实多节点。M0 已验证有界 Parquet 读取与 PG18 SELECT 子集，M1通过Python编排/PG和Tantivy Rust binding提供下述有界闭环，其余能力待验证；PG18 SQL 子集优先，wire protocol 后续单独验收。
+推荐目标栈为 **Iceberg v2/Parquet 事实层 + 媒体对象 + Lance 检索物化层，Rust/Arrow/DataFusion 执行，Tantivy 全文与有界 Graph，小型 PostgreSQL 控制面**。当前 M0 SQL 与 Python/PyArrow 的 M1/M2 检索作业分别运行；新 bundle v2 使用全局统计 BM25，旧 v1 保留 Tantivy 路径，ANN/Graph/增量/托管 append 已有有界切片。真实多机与生产发布仍待验证；PG wire 后续单独验收。
+
+2026-10-18 [功能与架构复审](docs/reviews/2026-10-18-capability-architecture.md)逐项核对12个能力域及当前主线证据。[下一阶段计划](docs/plans/2026-10-18-next-stage.md)优先补齐固定视图样本选择、按需分片读取、生命周期与质量测量，再进入跨机 POC。
 
 ## 从这里开始
 
