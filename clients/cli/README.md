@@ -1,9 +1,7 @@
 # CLI
 
-状态：客户端职责提案，未实现。
+状态：已实现M1/M2的Python HTTP薄适配，入口[m1.py](m1.py)，运行示例见[M1指南](../../docs/design/m1-running.md)。支持scan/search/export/graph、describe、status/cancel/release及JSON输出；查询参数原样转发公共HTTP合同。
 
-面向开发者与 Agent，提供连接配置、参数化查询、异步状态、分页、取消及机器可读输出。命令名称、实现语言与分发方式待决定。
+连接由`--url`指定，token从`--token-env`（默认GURADB_TOKEN）读取。提交默认有界等待，`--no-wait`仅返回句柄；超时/KeyboardInterrupt请求取消，POST不自动重试。成功退出0，已处理的配置/HTTP/JSON错误退出1；服务端继续负责授权、固定视图和预算。
 
-复用 [HTTP 接口](../../docs/interfaces/query-and-clients.md)，不另建查询和权限语义。约定稳定退出码与 JSON 错误输出；密钥由环境或安全凭证机制读取，避免记录在历史与日志中。
-
-后续验收包括非交互模式、输出截断提示、超时、取消、认证失败及写请求重试的不确定结果。
+它不提供M0 SQL CLI、通用PG客户端、任意SQL/分页或公开写入。M0可使用[psql/Psycopg](../../docs/design/pg-wire-running.md)；训练选择、SDK/安装分发和完整互操作仍后续验收。单元边界见[测试说明](../../tests/README.md)，真实服务验收仍由M1/M2 driver完成。

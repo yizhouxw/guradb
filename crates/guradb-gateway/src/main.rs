@@ -34,13 +34,12 @@ fn listen() -> String {
 }
 #[tokio::main]
 async fn main() {
-    if let Err(error) = serve().await {
+    if let Err(error) = serve(std::env::args().collect()).await {
         eprintln!("{error}");
         std::process::exit(1);
     }
 }
-async fn serve() -> Result<()> {
-    let args: Vec<_> = std::env::args().collect();
+async fn serve(args: Vec<String>) -> Result<()> {
     if args.len() != 3 || args[1] != "--config" {
         return Err(Error::new(
             "invalid_config",
@@ -110,3 +109,10 @@ async fn serve() -> Result<()> {
         http.await
     }
 }
+
+#[cfg(test)]
+#[path = "../../../tests/rust_fixture.rs"]
+mod fixture;
+#[cfg(test)]
+#[path = "../tests/unit/gateway.rs"]
+mod gateway_tests;

@@ -4,6 +4,8 @@
 
 | 文档 | 内容 |
 | --- | --- |
+| [用户手册](user/README.md) | 对客功能、架构、安装部署、使用、运维、开发、诊断及验证范围 |
+| [最新实现与测试复审](reviews/2026-10-18-implementation-and-tests.md) | 主线PG入口、模块/客户端状态对账、双接口场景与严格覆盖率缺口 |
 | [2026-10-18 功能与架构复审](reviews/2026-10-18-capability-architecture.md) | 当前主线证据、12个功能域完成度、执行/生命周期/多机风险 |
 | [A0 集成复核](reviews/2026-10-18-a0-integration.md) | 能力合同、M0证据保全、独立真值与窗口负载；完成边界及后续准入条件 |
 | [源码能力清单 v1](../api/capabilities/v1.json) | 12个功能域的机器可读离线合同；不代表在线部署协商 |
@@ -23,7 +25,7 @@
 | [模块地图](../modules/README.md) | 代码落位与责任边界 |
 | [HTTP 契约](../api/http/README.md) | 机器可读草案及其当前限制 |
 | [示例说明](../examples/README.md) | 可讨论的 SQL 数据模型和请求样例 |
-| [测试规划](../tests/README.md) | 未来兼容性、故障与性能验收要求 |
+| [测试规划](../tests/README.md) | 现有单元/双接口场景、严格覆盖率与兼容性/故障/性能缺口 |
 | [Agent Harness](../harness/README.md) | 工作闭环、模块约束、变更门禁、性能/故障证据与 CI |
 | [Git 追溯与恢复](../harness/version-control.md) | 起始/最终 commit、检查点、提交前门禁与安全回滚 |
 | [开发流程](../harness/development-workflow.md) | 任务起止、验收/复核、失败与交接、证据归档 |

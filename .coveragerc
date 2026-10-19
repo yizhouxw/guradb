@@ -1,0 +1,9 @@
+[run]
+source = modules, clients
+
+[report]
+include_namespace_packages = True
+exclude_lines =
+precision = 6
+fail_under = 100
+show_missing = True

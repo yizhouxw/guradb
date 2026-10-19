@@ -6,6 +6,7 @@ from urllib.parse import quote
 from jsonschema import Draft202012Validator
 import pyarrow.parquet as pq
 
+from m0lib.pgwire import publish_auth
 from m0lib.kit import DATASET, ROOT, laboratory, truth, write
 
 API = json.loads((ROOT / 'api/http/openapi.json').read_text())
@@ -125,14 +126,14 @@ def run(directory):
         assert lab.http('GET', '/v1/queries/' + another['query_id'] + '/results?cursor=' + quote(cursor))[0] == 400
         assert lab.http('DELETE', path)[1]['status'] == 'succeeded'
         lab.principals[0]['datasets'] = []
-        write(lab.auth, {'principals': lab.principals})
+        publish_auth(lab)
         assert lab.http('GET', path + '/results')[0] == 404
         assert lab.http('POST', '/v1/queries', {'sql': 'SELECT * FROM documents'})[0] == 404
         lab.principals[0]['datasets'] = [DATASET]
-        write(lab.auth, {'principals': lab.principals})
+        publish_auth(lab)
         lab.auth.write_text('{invalid')
         assert lab.http('GET', path)[0] == 503
-        write(lab.auth, {'principals': lab.principals})
+        publish_auth(lab)
         checks += 16
         # Real application budgets fail without publishing partial rows.
         for limits in [{'scan_bytes': 1}, {'decoded_bytes': 1}, {'result_bytes': 1}]:

@@ -1,6 +1,6 @@
 # M0 实施与验收计划
 
-状态：进行中。Task `m0-parquet-http`，基点 `5596117798126153a7ed9cfef291824ff8096925`，checkpoint 见 task-status。工作区开始干净，main，原始用户改动为无。详细设计见 [M0 合同](../design/m0-parquet-http.md)。
+状态：历史计划，M0任务已完成并归档；完成commit `0e216895db06edf36dcdb91e540a80a3869d0bd9`，checkpoint `checkpoints/20261017T094408Z-m0-parquet-http-done-84dc28b9`（本地receipt已核对）。后续实现范围见[当前复审](../reviews/2026-10-18-implementation-and-tests.md)，以下保留原任务计划。Task `m0-parquet-http`，基点 `5596117798126153a7ed9cfef291824ff8096925`，checkpoint 见 task-status。工作区开始干净，main，原始用户改动为无。详细设计见 [M0 合同](../design/m0-parquet-http.md)。
 
 ## 切片
 

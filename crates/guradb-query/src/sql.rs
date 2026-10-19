@@ -410,3 +410,7 @@ impl Compiler<'_> {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/compiler.rs"]
+mod tests;

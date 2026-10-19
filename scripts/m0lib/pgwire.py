@@ -18,9 +18,9 @@ def build_client(log_path):
                        cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=120)
 
 
-def publish_auth(lab):
+def publish_auth(lab, principals=None):
     temporary = lab.auth.with_suffix('.next.json')
-    write(temporary, {'principals': lab.principals})
+    write(temporary, {'principals': lab.principals if principals is None else principals})
     temporary.replace(lab.auth)
     expected_hash = hashlib.sha256(lab.auth.read_bytes()).hexdigest()
     # Make the administrative publication visible inside Docker before asking a

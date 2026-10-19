@@ -1,7 +1,7 @@
 # 下一阶段行动计划：补齐数据准备与可扩展读取基础
 
 日期：2026-10-18。依据：[当前功能与架构复审](../reviews/2026-10-18-capability-architecture.md)。
-状态：A0 有界实现及切片验收已完成，主线最终 commit/报告/checkpoint 由 `a0-main-integration` receipt 绑定，见[A0集成复核](../reviews/2026-10-18-a0-integration.md)。A1–A6 仍待实施；不新增已接受的技术选型，不改变[路线图](../roadmap.md)的 M0–M4 退出条件。
+状态：A0 有界实现及切片验收已完成，主线最终 commit/报告/checkpoint 由 `a0-main-integration` receipt 绑定，见[A0集成复核](../reviews/2026-10-18-a0-integration.md)。A1–A6 仍待实施；PG wire 首片已独立合入 main，未改变 A1–A6 的执行面缺口；不新增已接受的技术选型，不改变[路线图](../roadmap.md)的 M0–M4 退出条件。
 
 ## 1. 阶段目标与范围
 
@@ -97,9 +97,9 @@ A0→A2→A4→A5 是规模化主路径；A1 提供用户价值，A3 防止长�
 
 ## 4. 暂缓项与生产发布队列
 
-本阶段暂缓新湖格式、PG wire、内建OCR/ASR/embedding、复杂图语言、通用分布式JOIN/聚合、更多ANN算法及大规模Rust重写；若实际首批负载证明它们必要，先更新范围/依赖与ADR。
+本阶段暂缓新湖格式、PG wire 后续 TLS/系统目录/更多驱动、内建OCR/ASR/embedding、复杂图语言、通用分布式JOIN/聚合、更多ANN算法及大规模Rust重写；若实际首批负载证明它们必要，先更新范围/依赖与ADR。
 
-后续范围注记：上句保留本计划制定时的 A0–A6 排序。用户随后另行要求 PG 客户端接入，已按 [ADR 0014](../decisions/0014-bounded-pg-wire.md) 在独立 worktree 实现本机、非 TLS、只读、autocommit 的 PG wire 首片，真实 psql 18/Psycopg 3.2.10 已有组件证据；当前支持边界见 [运行指南](../design/pg-wire-running.md)及[源码能力清单](../../api/capabilities/v1.json)。这不追溯扩大 A0 的验收范围，不表示远程 TLS、目录、事务或所有 SDK 已支持。
+当前实现更新：PG 客户端接入已按 [ADR 0014](../decisions/0014-bounded-pg-wire.md) 实现并合入 main（`0702991`）的本机、非 TLS、只读、autocommit PG wire 首片，真实 psql 18/Psycopg 3.2.10 已有组件证据；当前支持边界见 [运行指南](../design/pg-wire-running.md)及[源码能力清单](../../api/capabilities/v1.json)。这不追溯扩大 A0 的验收范围，不表示远程 TLS、目录、事务或所有 SDK 已支持。
 
 M4仍独立排队：完整performance/stability/soak、PG HA/PITR、对象/目录/pin联合恢复与撤权补偿、RPO/RTO、升级/回滚、审计/监控告警、镜像SBOM/许可证与发布环境。远端CI可在获准推送后尽早核验，阻断对外发布，但不阻断本地A0–A4开发；外部主机/服务/发布动作按实际授权执行。本计划不授权推送或部署。
 
@@ -108,3 +108,7 @@ M4仍独立排队：完整performance/stability/soak、PG HA/PITR、对象/目�
 每片启动独立task，冻结基点、支持/拒绝、性能预算和故障断言；先局部真值再按plan运行功能/语言/组件性能/故障门禁。高风险的描述符、发布、GC、保留或门禁变更做独立复核；不通过删测试、改阈值、扩大缓存或缩小数据来消除回归。提交后对原始base检查并task-finish，归档原始测量与trace。两次无新证据失败时停止盲试、定位根因。
 
 原文档任务 `capability-architecture-review` 只完成评审、状态校正与本计划。其起点 `4de2fde7faf04b640ae8dbe02022e78e94db59ee`；恢复点 `checkpoints/20261018T100510Z-before-capability-architecture-review-d8d5d2aa`。后续A0由独立切片和 `a0-main-integration` 完成，主线基点 `d95d1ada607fe40a6b1cf8eb19773b3a10f95bae`；报告覆盖该基点以来的全部A0变更。A1–A6未实施，无生产数据迁移，未推送或部署。
+
+## 5. 测试补强前置要求
+
+按新的用户要求，先执行[覆盖率变更计划](../design/test-coverage-change-plan.md)：对全部 Python modules/clients 与 Rust 生产源测量单元测试行覆盖率，目标为适用源码行严格100%，Rust按ADR0015逐行审查排除并保留原始值，未达到时明确失败并逐文件列缺口。HTTP与Psycopg SQL使用同一M0场景及PG18真值，包含参数/空值/完整int8/拒绝/撤权；M1/M2检索、Graph、训练仍按现有HTTP场景验收，不虚构SQL入口。覆盖率不替代A4质量、成本和故障验收，也不将完整performance/stability/soak改为ready。最新结果见[实现与测试复审](../reviews/2026-10-18-implementation-and-tests.md)。

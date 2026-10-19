@@ -67,3 +67,7 @@ pub fn load(references: &[ManifestRef]) -> Result<Catalog> {
     }
     Ok(catalog)
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/catalog.rs"]
+mod tests;

@@ -104,14 +104,14 @@ impl Limits {
     }
 }
 
+fn key_length(length: usize, message: &str) -> Result<u32> {
+    u32::try_from(length).map_err(|_| Error::new("invalid_key", message))
+}
+
 /// Versioned, typed, length-prefixed identity encoding; never delimiter joins.
 pub fn encode_key(parts: &[(&str, &[u8])]) -> Result<Vec<u8>> {
     let mut out = vec![1];
-    out.extend_from_slice(
-        &(u32::try_from(parts.len())
-            .map_err(|_| Error::new("invalid_key", "too many key parts"))?)
-        .to_be_bytes(),
-    );
+    out.extend_from_slice(&key_length(parts.len(), "too many key parts")?.to_be_bytes());
     for (kind, bytes) in parts {
         let tag = match *kind {
             "text" => 1,
@@ -123,33 +123,16 @@ pub fn encode_key(parts: &[(&str, &[u8])]) -> Result<Vec<u8>> {
             return Err(Error::new("invalid_key", "text key must be UTF-8"));
         }
         out.push(tag);
-        out.extend_from_slice(
-            &(u32::try_from(bytes.len())
-                .map_err(|_| Error::new("invalid_key", "key part too long"))?)
-            .to_be_bytes(),
-        );
+        out.extend_from_slice(&key_length(bytes.len(), "key part too long")?.to_be_bytes());
         out.extend_from_slice(bytes);
     }
     Ok(out)
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn key_vectors_are_typed_and_unambiguous() {
-        assert_eq!(
-            hex::encode(encode_key(&[("text", b"ab")]).unwrap()),
-            "010000000101000000026162"
-        );
-        assert_ne!(
-            encode_key(&[("text", b"a|b"), ("text", b"c")]).unwrap(),
-            encode_key(&[("text", b"a"), ("text", b"b|c")]).unwrap()
-        );
-        assert_ne!(
-            encode_key(&[("text", b"1")]).unwrap(),
-            encode_key(&[("int8", &1_i64.to_be_bytes())]).unwrap()
-        );
-        assert!(encode_key(&[("int8", b"1")]).is_err());
-    }
-}
+#[path = "../tests/unit/lib_existing.rs"]
+mod tests;
+
+#[cfg(test)]
+#[path = "../tests/unit/contracts.rs"]
+mod contract_tests;

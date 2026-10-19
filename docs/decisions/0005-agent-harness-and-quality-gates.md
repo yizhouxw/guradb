@@ -1,6 +1,6 @@
 # ADR 0005：Agent Harness 与质量门禁
 
-- 状态：已采用的工程约定（用户要求初始化；当前仅 harness 层已实现）
+- 状态：已采用的工程约定（初始bootstrap范围为历史记录；当前运行时和测试范围见harness入口）
 - 日期：2026-10-17
 - 关联：[架构](../architecture.md)、[harness](../../harness/README.md)
 
@@ -27,3 +27,7 @@
 ## 验证
 
 harness 测试覆盖真实 Git 临时仓库、重命名/未跟踪、初次 push、Cargo workspace/别名/dev/build/target 依赖、超时/子进程清理、缺失 suite、运行中源码变化、性能质量/噪声/上下文和故障证据拒绝。具体结果以本次 run 报告为准。
+
+## 2026-10-18 当前状态更新
+
+M0/M1及部分M2已有真实运行时门禁；本文第3项的planned是初始bootstrap状态，当前以[policy](../../harness/policy.toml)为准。新增严格生产源行覆盖率及HTTP/Psycopg双接口测试按[ADR0015](0015-unit-coverage-and-dual-interface-scenarios.md)执行，适用行100%与逐项排除分别报告；工具ready不能冒充无豁免全覆盖或数据库可发布。

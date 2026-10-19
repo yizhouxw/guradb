@@ -1,0 +1,224 @@
+{
+  "schema_version": 1,
+  "rust": [
+    {
+      "path": "crates/guradb-connectors/src/lib.rs",
+      "source_sha256": "d61417efa4045d50a2322ce233420c38e4d203074f0971c501bb0b8ff35ad494",
+      "category": "library-invariant",
+      "reason": "当前Parquet reader已校验actual.fields()==expected.fields()；required列无definition-level空值，额外null检查用于底层库异常防御。构造不安全Arrow数组或替换reader不属于有效输入单元验证。",
+      "evidence": "crates/guradb-connectors/tests/unit/parquet.rs: parquet_truth_schema_cancellation_and_budgets验证真实读回、nullable NULL、schema不符及损坏列拒绝；Cargo.lock固定Arrow/Parquet。",
+      "lines": [
+        {
+          "number": 71,
+          "text": "                return Err(invalid());"
+        }
+      ]
+    },
+    {
+      "path": "crates/guradb-gateway/src/pg/mod.rs",
+      "source_sha256": "138b6ffe8c7d75300e9d4875b0a9b6eeab7a9d2728c329161ae7bc2bce4fe0c4",
+      "category": "platform-boundary",
+      "reason": "63位随机backend key碰撞时的重试回边；不能依靠制造随机碰撞达成稳定单元覆盖，未为覆盖率向生产注入随机数替代器。",
+      "evidence": "crates/guradb-gateway/tests/unit/startup.rs: accept_loop_assigns_backend_key_and_runs_session验证真实backend key和会话；现有Psycopg/raw场景验证取消secret隔离。",
+      "lines": [
+        {
+          "number": 91,
+          "text": "                            }"
+        }
+      ]
+    },
+    {
+      "path": "crates/guradb-gateway/src/pg/mod.rs",
+      "source_sha256": "138b6ffe8c7d75300e9d4875b0a9b6eeab7a9d2728c329161ae7bc2bce4fe0c4",
+      "category": "llvm-mapping",
+      "reason": "LLVM把async会话await的控制流映射到if闭括号；分支体调用和会话正常退出已执行。",
+      "evidence": "crates/guradb-gateway/tests/unit/startup.rs: accept_loop_assigns_backend_key_and_runs_session；原始rust.lcov/JSON同时保留。",
+      "lines": [
+        {
+          "number": 103,
+          "text": "                    }"
+        }
+      ]
+    },
+    {
+      "path": "crates/guradb-gateway/src/pg/mod.rs",
+      "source_sha256": "138b6ffe8c7d75300e9d4875b0a9b6eeab7a9d2728c329161ae7bc2bce4fe0c4",
+      "category": "library-invariant",
+      "reason": "会话正常返回前每条message均take active；serve保留额外残留token取消作为防御。外部cancel注册表仅取消token，不会写入新的active。",
+      "evidence": "crates/guradb-gateway/tests/unit/session.rs: session_loop_sync_error_recovery_and_disconnect及bind_values_capacity_and_delivery_cancellation_errors；tests/faults/component/pgwire.py验证断线取消。",
+      "lines": [
+        {
+          "number": 105,
+          "text": "                        token.cancel();"
+        }
+      ]
+    },
+    {
+      "path": "crates/guradb-gateway/src/pg/mod.rs",
+      "source_sha256": "138b6ffe8c7d75300e9d4875b0a9b6eeab7a9d2728c329161ae7bc2bce4fe0c4",
+      "category": "platform-boundary",
+      "reason": "无限accept服务仅在操作系统accept失败时从该闭括号返回；安全Rust无法稳定制造已持有listener的内核accept错误。",
+      "evidence": "crates/guradb-gateway/tests/unit/startup.rs验证bind失败、容量、超时、正常退出会话；不排除连接拒绝/授权/执行错误。",
+      "lines": [
+        {
+          "number": 126,
+          "text": "}"
+        }
+      ]
+    },
+    {
+      "path": "crates/guradb-gateway/src/pg/mod.rs",
+      "source_sha256": "138b6ffe8c7d75300e9d4875b0a9b6eeab7a9d2728c329161ae7bc2bce4fe0c4",
+      "category": "llvm-mapping",
+      "reason": "CancelRequest的secret_key.as_i32条件结束映射；当前仅解码PROTOCOL3_0的i32 secret，未来协议类型仍保持防御。",
+      "evidence": "crates/guradb-gateway/tests/unit/startup.rs: startup_negotiation_authentication_and_explicit_rejections覆盖有效、错误secret、未知PID和无active取消。",
+      "lines": [
+        {
+          "number": 157,
+          "text": "                }"
+        }
+      ]
+    },
+    {
+      "path": "crates/guradb-gateway/src/pg/mod.rs",
+      "source_sha256": "138b6ffe8c7d75300e9d4875b0a9b6eeab7a9d2728c329161ae7bc2bce4fe0c4",
+      "category": "parser-invariant",
+      "reason": "启动完整帧校验只放行Startup/CancelRequest；SSL/GSS在此前单独处理。当前解码器不会在此生成其他Frontend枚举。",
+      "evidence": "crates/guradb-gateway/tests/unit/startup.rs及pg_wire_existing.rs覆盖启动协商、畸形/截断与错误消息；协议变更需因文件SHA变化重新复核。",
+      "lines": [
+        {
+          "number": 160,
+          "text": "            _ => return Err(wire::protocol()),"
+        }
+      ]
+    },
+    {
+      "path": "crates/guradb-gateway/src/pg/session.rs",
+      "source_sha256": "b23bd50ab6f26f96df0fee34903580da9adc5c9440f00b472271295bc39e4aa4",
+      "category": "platform-boundary",
+      "reason": "会话结果发送中发生socket写失败后立即退出的适配层；可靠制造内核部分写/断开时序不适合稳定单元测试。直接发送错误、超时和取消仍有单元断言，真实断线由协议故障场景验证。",
+      "evidence": "crates/guradb-gateway/tests/unit/pg_wire_existing.rs: frames_and_error_responses_are_bounded、idle_read_write_timeouts_and_encoding_failure；tests/faults/component/pgwire.py。",
+      "lines": [
+        {
+          "number": 112,
+          "text": "                    return Err(error);"
+        }
+      ]
+    },
+    {
+      "path": "crates/guradb-gateway/src/pg/types.rs",
+      "source_sha256": "aa377d5f97d475b77ef69824bdce69dd4ba153d11b81c7cd8c04f3e471307c0e",
+      "category": "library-invariant",
+      "reason": "外层matches!(oid,20|21|23)与内层三个整型解码臂已穷尽；wildcard保留未来类型变更防御。",
+      "evidence": "crates/guradb-gateway/tests/unit/pg_types_existing.rs覆盖text/binary int2/int4/int8、错误宽度、溢出和未知OID。",
+      "lines": [
+        {
+          "number": 46,
+          "text": "                _ => return Err(invalid()),"
+        }
+      ]
+    },
+    {
+      "path": "crates/guradb-gateway/src/pg/wire.rs",
+      "source_sha256": "5d1cf4c878f8f1f842dfc6346e5cff8e5487f88d2f5690654e882963862d19dd",
+      "category": "library-invariant",
+      "reason": "完整frame经本地字段消费校验后再交给固定pgwire解码器；尾部残留只在底层codec违背已验证消息长度时出现。",
+      "evidence": "crates/guradb-gateway/tests/unit/pg_wire_existing.rs: every_truncation_is_rejected及rejects_malformed_packets_before_upstream_decode验证尾部/字段截断拒绝。",
+      "lines": [
+        {
+          "number": 58,
+          "text": "        return Err(protocol());"
+        }
+      ]
+    },
+    {
+      "path": "crates/guradb-gateway/src/pg/wire.rs",
+      "source_sha256": "5d1cf4c878f8f1f842dfc6346e5cff8e5487f88d2f5690654e882963862d19dd",
+      "category": "llvm-mapping",
+      "reason": "Bind参数/Execute行数分支闭括号的LLVM控制流映射；正常非空参数及负行数拒绝的实际语句均已执行。",
+      "evidence": "crates/guradb-gateway/tests/unit/pg_wire_existing.rs: every_truncation_is_rejected、complete_message_validators_reject_malformed_fields；保留原始映射报告。",
+      "lines": [
+        {
+          "number": 148,
+          "text": "                    }"
+        },
+        {
+          "number": 162,
+          "text": "                }"
+        }
+      ]
+    },
+    {
+      "path": "crates/guradb-gateway/src/state.rs",
+      "source_sha256": "aa5b2d02b863584fdc3b0b8c3694d025bf1fa64656b9f7fe90541ba6c3cda64c",
+      "category": "llvm-mapping",
+      "reason": "异步任务块和select!出口闭括号映射；闭合符不包含业务语句，执行成功、executor关闭、排队超时与取消均有直接断言。",
+      "evidence": "crates/guradb-gateway/tests/unit/gateway.rs: execution_reauthorizes_and_reports_failures、handle_capacity_queued_timeout_and_signed_invalid_cursor。",
+      "lines": [
+        {
+          "number": 128,
+          "text": "                    }"
+        },
+        {
+          "number": 171,
+          "text": "            }"
+        }
+      ]
+    },
+    {
+      "path": "crates/guradb-query/src/sql.rs",
+      "source_sha256": "7d6753f135345af9470778973129b1df4859892e20a053f1fb4581311ce04f6b",
+      "category": "parser-invariant",
+      "reason": "固定PostgreSqlDialect不生成标识符函数、ORDER BY INTERPOLATE/ALL/WITH FILL AST；这些其他dialect防御不会被当前SQL字符串入口触发。禁止为覆盖率扩大语法白名单。",
+      "evidence": "Cargo.lock sqlparser 0.58.0；其parser/mod.rs parse_object_name/parse_optional_order_by/parse_order_by_expr的dialect guards；tests/unit/compiler.rs拒绝ORDER BY ALL。",
+      "lines": [
+        {
+          "number": 123,
+          "text": "        return Err(unsupported());"
+        },
+        {
+          "number": 201,
+          "text": "            return Err(unsupported());"
+        },
+        {
+          "number": 204,
+          "text": "            return Err(unsupported());"
+        },
+        {
+          "number": 216,
+          "text": "                return Err(unsupported());"
+        }
+      ]
+    },
+    {
+      "path": "crates/guradb-query/src/sql.rs",
+      "source_sha256": "7d6753f135345af9470778973129b1df4859892e20a053f1fb4581311ce04f6b",
+      "category": "parser-invariant",
+      "reason": "当前parser要求非空SELECT投影，catalog验证schema非空，因此合法入口不能得到空projection。保留失效上游合同的防御。",
+      "evidence": "crates/guradb-common/tests/unit/contracts.rs验证manifest空schema拒绝；crates/guradb-query/tests/unit/compiler.rs验证投影白名单及重复列拒绝。",
+      "lines": [
+        {
+          "number": 187,
+          "text": "        return Err(unsupported());"
+        }
+      ]
+    },
+    {
+      "path": "crates/guradb-storage/src/lib.rs",
+      "source_sha256": "fd04ded1513bff015d2322868d7c5792c66d0b197c66bd7b055fb65c454514af",
+      "category": "library-invariant",
+      "reason": "S3 builder已显式设置bucket/region/endpoint/静态凭据且不开放自定义HTTP/TLS构造选项；当前SDK把endpoint连接错误延后到GET。build错误保留作上游SDK配置变化防御。",
+      "evidence": "crates/guradb-storage/tests/unit/storage.rs: s3_configuration在子进程覆盖凭据缺失、会话token和格式异常endpoint；stream.rs及真实S3故障场景覆盖GET失败/取消。",
+      "lines": [
+        {
+          "number": 50,
+          "text": "                    Error::new(\"invalid_config\", \"invalid S3 backend\")"
+        },
+        {
+          "number": 51,
+          "text": "                })?)))"
+        }
+      ]
+    }
+  ]
+}

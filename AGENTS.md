@@ -29,7 +29,7 @@
 
 ## 每次变更的闭环
 
-1. 运行 `.venv/bin/python scripts/harness.py plan`；对拟议文件可用 `--path` 预判风险。
+1. 用户可见开发先更新 [用户手册](docs/user/README.md)，写明场景、操作、预期、支持/拒绝、权限/预算及兼容/恢复，新增部分先标待实现，再修改行为代码。按[场景模板](harness/templates/user-scenario.md)保存先行合同与验证映射；完成时复核成功/负例和实际证据，缺失验证不得标支持。纯内部改动记录无用户行为影响的依据，纯文字修订可轻量验证；详见 [ADR 0016](docs/decisions/0016-user-documentation-first.md)。运行 `.venv/bin/python scripts/harness.py plan`；对拟议文件可用 `--path` 预判风险。
 2. 跨模块、热点、持久化/发布/GC、基线变化使用 [变更计划](harness/templates/change-plan.md)，写清不变量、最小切片、功能真值、性能预算及故障断言；小型文档修改不强制填表。
 3. 实现相关行为与负向测试，避免捎带重构。改变公开接口/布局时同步文档、示例、兼容与迁移说明。
 4. 运行 `.venv/bin/python scripts/harness.py check`，根据实际变更选择门禁。缺失命令/证据、超时或失败不能跳过成绿。

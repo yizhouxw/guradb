@@ -14,6 +14,7 @@ def run(directory):
     with laboratory(directory) as lab:
         lab.postgres()
         lab.start(pg_listen=LISTEN)
+        parity = runpy.run_path(str(ROOT / 'tests/functional/interface_scenarios.py'))['run'](lab)
         simple = psql(lab, 'SELECT id, title, active FROM documents ORDER BY id;')
         assert simple.returncode == 0, simple.stderr
         lines = ['\t'.join('<NULL>' if v is None else ('t' if v else 'f') if isinstance(v, bool) else str(v)
@@ -117,5 +118,5 @@ def run(directory):
                 denied(sdk.query(), '54000')
                 checks += 1
         lab.event('pgwire_functional_passed', assertions=checks, clients=['psql18', 'psycopg3.2.10'])
-        return {'passed': True, 'assertions': checks, 'clients': ['psql18', 'psycopg3.2.10'],
+        return {'passed': True, 'interface_scenarios': parity, 'assertions': checks, 'clients': ['psql18', 'psycopg3.2.10'],
                 'oracle': 'independent Python fixture + PostgreSQL 18', 'transport': 'container namespace loopback; no exposed port'}

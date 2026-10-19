@@ -2,11 +2,11 @@
 
 M0 当前实现见对应 `crates/guradb-connectors`，仅限[有界读取设计](../../docs/design/m0-parquet-http.md)与[实际验收映射](../../docs/design/m0-validation.md)，下述长期职责不等于已支持。
 
-状态：长期职责基线；M0 有界读取子集已实现，其余推荐能力待验证。
+状态：已实现M0固定Parquet、M1 Iceberg v2固定Snapshot、M2稳定键append-only校验/新增源文件读取、全视图训练Parquet导出及本机三列托管append；见[格式矩阵](../../docs/compatibility/lake-formats.md)和[M2操作](../../docs/design/m2-running.md)。源delete/schema演进、REST Catalog及外部Lance/Delta/Hudi仍不支持；下文为长期职责。
 
 分别适配湖表事务/快照、文件扫描、训练样本组织与外部 catalog。M0 先固定 Parquet manifest，M1 验证 Iceberg v2/Parquet 受限 Snapshot reader，M2 单表 writer 独立验收；REST Catalog 通过适配隔离具体服务。依赖与删除/schema 特性按当前切片白名单验证，不要求 writer 和全格式作为首个 reader 的前置。
 
-外部湖和 AI 数据格式是持续扩展的兼容目标，当前没有已验证支持列表。外部 Lance、Delta 等数据保留原生事实来源；直接读取、导入、导出、原地写回分别声明，不要求先全部转成 Iceberg。
+外部湖和 AI 数据格式是持续扩展的兼容目标，当前支持和拒绝白名单以[格式矩阵](../../docs/compatibility/lake-formats.md)为准，不能从长期目标推导兼容。外部 Lance、Delta 等数据保留原生事实来源；直接读取、导入、导出、原地写回分别声明，不要求先全部转成 Iceberg。
 
 每个适配器声明格式/版本、schema/类型映射、投影/过滤下推、固定快照、删除、演进、增量、批量读取与写回能力；必需语义不支持时明确失败。读取文件成功不等于正确处理表快照、position/equality delete 或更新合并。
 

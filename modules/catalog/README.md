@@ -2,7 +2,7 @@
 
 M0 当前实现见对应 `crates/guradb-catalog`，仅限[有界读取设计](../../docs/design/m0-parquet-http.md)与[实际验收映射](../../docs/design/m0-validation.md)，下述长期职责不等于已支持。
 
-状态：技术架构 v0.2 的职责基线，推荐方案待 POC，未实现。
+状态：M0 固定manifest目录及M1/M2有界PG控制面已实现，包括generation/epoch发布、授权、job/pin、源提交意图和离线联合恢复；范围见[目录实现](control.py)、[恢复](recovery.py)及[M2操作](../../docs/design/m2-running.md)。下文为长期职责，通用catalog、HA/PITR和历史生命周期仍待实现/验收。
 
 推荐 PostgreSQL 作为强一致的小型控制元数据库，保存资源/schema、权限、作业/租约、版本引用、发布指针与恢复状态；不存放业务逐行数据、所有候选或逐条图边。
 

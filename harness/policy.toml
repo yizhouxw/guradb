@@ -4,7 +4,7 @@ non_runtime_prefixes = ["scripts/", "tests/", "examples/", "benchmarks/"]
 ignored_directories = [".git", ".venv", "node_modules", "target", "build", "dist", "__pycache__", ".pytest_cache", "artifacts/", "data/", "tmp/"]
 max_source_lines = 600
 bootstrap_suites = ["repository", "policy", "contracts", "harness-tests"]
-release_suites = ["repository", "policy", "contracts", "harness-tests", "python", "rust", "functional", "performance-smoke", "stability-component", "performance", "stability", "soak"]
+release_suites = ["unit-coverage", "repository", "policy", "contracts", "harness-tests", "python", "rust", "functional", "performance-smoke", "stability-component", "performance", "stability", "soak"]
 
 [suites.repository]
 state = "ready"
@@ -68,3 +68,8 @@ commands = []
 state = "ready"
 timeout_seconds = 60
 commands = [["{python}", "-m", "compileall", "-q", "modules", "clients", "scripts/m1.py", "scripts/m1_acceptance.py", "scripts/m2_acceptance.py", "scripts/p0_acceptance.py", "scripts/local_acceptance.py", "scripts/m4.py", "scripts/worker.py", "scripts/inspect_state.py", "scripts/sbom.py", "scripts/m1lib", "scripts/m2lib", "scripts/p0lib"], ["{python}", "-m", "pip", "check"]]
+
+[suites.unit-coverage]
+state = "ready"
+timeout_seconds = 480
+commands = [["{python}", "scripts/unit_coverage.py", "--language", "all", "--run-dir", "{run_dir}/unit-coverage"]]

@@ -220,46 +220,5 @@ pub async fn error<W: AsyncWrite + Unpin>(
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    fn packet(tag: u8, body: &[u8]) -> BytesMut {
-        let mut bytes = BytesMut::from(&[tag][..]);
-        bytes.extend_from_slice(&((body.len() + 4) as i32).to_be_bytes());
-        bytes.extend_from_slice(body);
-        bytes
-    }
-    #[test]
-    fn rejects_malformed_packets_before_upstream_decode() {
-        for (tag, body) in [
-            (b'P', &b"\0SELECT\0\0\x01"[..]),
-            (b'B', &b"\0\0\0\0\0\x01\xff\xff\xff\xfe\0\0"[..]),
-            (b'Q', &b"SELECT"[..]),
-            (b'Q', &b"\xff\0"[..]),
-            (b'X', &b"trailing"[..]),
-            (b'E', &b"\0\xff\xff\xff\xff"[..]),
-        ] {
-            assert!(decode(packet(tag, body), false).is_err());
-        }
-    }
-    #[test]
-    fn every_truncation_is_rejected() {
-        let bodies = [
-            (b'P', &b"s\0select id from documents\0\0\x01\0\0\0\x14"[..]),
-            (
-                b'B',
-                &b"p\0s\0\0\x01\0\x01\0\x01\0\0\0\x08\0\0\0\0\0\0\0\x01\0\x01\0\x01"[..],
-            ),
-        ];
-        for (tag, body) in bodies {
-            assert!(decode(packet(tag, body), false).is_ok());
-            for n in 0..body.len() {
-                assert!(decode(packet(tag, &body[..n]), false).is_err());
-            }
-        }
-    }
-    #[tokio::test]
-    async fn refuses_oversized_header_without_reading_body() {
-        let mut input = &b"Q\x7f\xff\xff\xff"[..];
-        assert!(frame(&mut input, false).await.is_err());
-    }
-}
+#[path = "../../tests/unit/pg_wire_existing.rs"]
+mod tests;

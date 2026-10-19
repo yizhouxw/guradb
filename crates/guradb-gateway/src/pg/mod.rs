@@ -240,3 +240,7 @@ pub(super) async fn authorize(state: &State, original: &Principal) -> Result<Pri
         })
         .ok_or_else(|| Error::new("forbidden", "PostgreSQL session authorization revoked"))
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/startup.rs"]
+mod tests;

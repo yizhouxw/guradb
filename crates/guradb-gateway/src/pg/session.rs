@@ -486,3 +486,11 @@ fn request(sql: &str, parameters: Vec<serde_json::Value>) -> QueryRequest {
         read_view_id: None,
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/session.rs"]
+mod tests;
+
+#[cfg(test)]
+#[path = "../../tests/unit/session_boundaries.rs"]
+mod boundary_tests;

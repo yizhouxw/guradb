@@ -155,18 +155,5 @@ pub fn row(columns: &[Column], values: &[Value], formats: &[i16]) -> Result<Data
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn integers_keep_full_width_and_check_lengths() {
-        assert_eq!(
-            parameter(Some(&i64::MIN.to_be_bytes()), 20, true).unwrap(),
-            json!({"type":"int8", "value":"-9223372036854775808"})
-        );
-        assert!(parameter(Some(&[0; 7]), 20, true).is_err());
-        assert!(parameter(Some(b"32768"), 21, false).is_err());
-        assert!(parameter(Some(&[2]), 16, true).is_err());
-        assert!(parameter(Some(b"x\0y"), 25, true).is_err());
-        assert_eq!(parameter(None, 20, true).unwrap(), Value::Null);
-    }
-}
+#[path = "../../tests/unit/pg_types_existing.rs"]
+mod tests;

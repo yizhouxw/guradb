@@ -2,7 +2,8 @@
 import time
 import hashlib
 import secrets
-from m0lib.kit import laboratory, truth, docker, write
+from m0lib.pgwire import publish_auth
+from m0lib.kit import laboratory, truth, docker
 
 
 def run(directory):
@@ -30,12 +31,13 @@ def run(directory):
         assert lab.query()[1]['rows'] == truth(lab.rows)
         lab.event('recover_delete')
         lab.principals[0]['datasets'] = []
-        write(lab.auth, {'principals': lab.principals})
+        publish_auth(lab)
         assert lab.http('GET', path+'/results')[0] == 404
         lab.event('inject_revoke', result='cached result denied')
         lab.principals[0]['datasets'] = [lab.manifest['dataset_id']]
-        write(lab.auth, {'principals': lab.principals})
-        assert lab.http('GET', path+'/results')[0] == 200
+        publish_auth(lab)
+        code, restored = lab.http('GET', path+'/results')
+        assert code == 200, (code, restored)
         # Hold actual remote I/O. Two workers consume the semaphore; third is queued.
         docker('pause', lab.store)
         lab.event('inject_remote_pause')
@@ -64,7 +66,7 @@ def run(directory):
             lab.wait(lambda: all(lab.http('GET','/v1/queries/'+q['query_id'])[1]['status']=='running' for q in held))
             revoke_task = lab.submit()
             lab.principals[0]['datasets'] = []
-            write(lab.auth, {'principals':[*lab.principals,auditor]})
+            publish_auth(lab, [*lab.principals, auditor])
             for q in held:
                 lab.http('DELETE','/v1/queries/'+q['query_id'],token=audit_token)
             def revoked_done():
@@ -74,7 +76,7 @@ def run(directory):
             denied = lab.wait(revoked_done)
             assert denied['error']['code'] == 'forbidden', denied
             lab.principals[0]['datasets'] = [lab.manifest['dataset_id']]
-            write(lab.auth, {'principals':lab.principals})
+            publish_auth(lab)
             lab.event('queued_execution_reauthorization', result='forbidden before source read')
             timed = lab.terminal(lab.submit(timeout_ms=100))
             assert timed['status'] == 'failed' and timed['error']['code'] == 'timeout', timed

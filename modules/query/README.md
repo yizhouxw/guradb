@@ -2,7 +2,7 @@
 
 M0 当前实现见对应 `crates/guradb-query`，仅限[有界读取设计](../../docs/design/m0-parquet-http.md)与[实际验收映射](../../docs/design/m0-validation.md)，下述长期职责不等于已支持。
 
-状态：技术架构 v0.2 的职责基线，推荐方案待 POC，未实现。
+状态：M0 Rust只读SQL/DataFusion与M1/M2 Python固定视图job执行已实现；后者有search/scan/graph/export、本地三worker、append refresh和索引rebuild。两条执行面尚未统一SQL，协调器仍全量加载bundle；见[service](service.py)、[本地worker](../../docs/design/m3-local-workers.md)及[后续计划](../../docs/plans/2026-10-18-next-stage.md)。下文为长期职责。
 
 推荐以 Rust + Arrow + DataFusion 作为查询基础，复用向量化关系执行，自行补齐 PostgreSQL 18 SQL 子集的解析/绑定/类型与错误映射、检索扩展节点及分布式计划。依赖版本须通过联编 POC 后固定。
 

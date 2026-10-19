@@ -199,6 +199,10 @@ def plan(root: Path, paths: list[str], policy: dict, architecture: dict,
             gates.update({"rust", "functional", "performance-smoke", "stability-component"})
         if path.startswith("api/") and has_runtime:
             gates.update({"functional", "performance-smoke", "stability-component"})
+        if has_runtime and not documentation and (production_source(path, policy)
+                or dependency_change or path.startswith(("tests/unit/", "tests/contracts/", "crates/", "tools/test-coverage/"))
+                or path in {".coveragerc", "scripts/unit_coverage.py", "scripts/coverage_policy.py", "harness/coverage-exclusions.json", "requirements-dev.lock", "requirements-dev.txt", "harness/policy.toml"}):
+            gates.add("unit-coverage")
         if gates:
             reasons[path] = sorted(gates)
             required.update(gates)

@@ -4,7 +4,7 @@
 
 GuraDB 的目标是在对象存储与开放湖上统一管理结构化数据、文本、图像、音频、视频、向量及关系数据，在同一查询体系内组合 SQL、全文检索、向量检索与 Graph 检索，并服务数据准备与可复现训练读取。
 
-> 后续实现：新增 append 源文件增量与稳定版本、物理 BM25/ANN 三分片、同机 HTTP worker、P0 并发负载和离线联合恢复，见 [M2 操作](docs/design/m2-running.md) 与 [实现范围](docs/decisions/0012-bounded-p0-and-local-workers.md)。完整 M2/M3 与生产发布仍有明确缺口；最终验证以本轮 commit 报告为准。
+> M2 有界实现：append 源文件增量与稳定版本、物理 BM25/ANN 三分片、同机 HTTP worker、P0 并发负载和离线联合恢复，见 [M2 操作](docs/design/m2-running.md) 与 [实现范围](docs/decisions/0012-bounded-p0-and-local-workers.md)。完整 M2/M3 与生产发布仍有明确缺口；最终验证以本轮 commit 报告为准。
 
 > M0/M1 基线阶段：单节点 alpha。M0 提供固定 Parquet manifest → Arrow/DataFusion → HTTP 只读 SQL；M1 增加有界 Iceberg v2 Snapshot → PG 发布目录 → BM25/精确向量/RRF → HTTP/CLI → 同视图训练导出。完整范围和最终本地证据见 [M1 设计与验收](docs/design/m1-validation.md)；后续能力见上述 M2 操作，尚不可生产发布。
 
@@ -23,7 +23,11 @@ PostgreSQL 客户端直连已实现有界本机切片：可选 PG SQL 端口复�
 
 推荐目标栈为 **Iceberg v2/Parquet 事实层 + 媒体对象 + Lance 检索物化层，Rust/Arrow/DataFusion 执行，Tantivy 全文与有界 Graph，小型 PostgreSQL 控制面**。当前 M0 SQL 与 Python/PyArrow 的 M1/M2 检索作业分别运行；新 bundle v2 使用全局统计 BM25，旧 v1 保留 Tantivy 路径，ANN/Graph/增量/托管 append 已有有界切片。真实多机与生产发布仍待验证；PG wire 本机只读切片按 [ADR 0014](docs/decisions/0014-bounded-pg-wire.md) 独立实施与验收。
 
-2026-10-18 [功能与架构复审](docs/reviews/2026-10-18-capability-architecture.md)逐项核对12个能力域。[A0 集成复核](docs/reviews/2026-10-18-a0-integration.md)补齐[源码能力清单](api/capabilities/v1.json)、M0 原始证据归档和[独立真值负载合同](docs/design/a0-workload-contract.md)；清单是离线合同，尚无全局在线能力协商接口。[下一阶段计划](docs/plans/2026-10-18-next-stage.md)继续按 A1 样本选择、A2 按需读取、A3 生命周期及后续质量验收推进。
+2026-10-18 [功能与架构复审](docs/reviews/2026-10-18-capability-architecture.md)逐项核对12个能力域。[A0 集成复核](docs/reviews/2026-10-18-a0-integration.md)补齐[源码能力清单](api/capabilities/v1.json)、M0 原始证据归档和[独立真值负载合同](docs/design/a0-workload-contract.md)；清单是离线合同，尚无全局在线能力协商接口。[下一阶段计划](docs/plans/2026-10-18-next-stage.md)继续按 A1 样本选择、A2 按需读取、A3 生命周期及后续质量验收推进。最新[实现与测试复审](docs/reviews/2026-10-18-implementation-and-tests.md)对账了已合入主线的 PG 端口、双接口场景与单元测试覆盖率要求。
+
+## 用户文档
+
+[用户手册](docs/user/README.md)提供产品功能、技术架构、安装部署、使用、运维管理、开发和诊断入口，按当前有界 alpha 白名单说明。后续用户可见开发先更新手册合同，再实现并验证，见[开发指南](docs/user/development.md)。
 
 ## 从这里开始
 

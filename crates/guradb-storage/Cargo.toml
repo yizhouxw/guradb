@@ -12,3 +12,6 @@ tokio.workspace = true
 tokio-util.workspace = true
 futures.workspace = true
 object_store.workspace = true
+
+[dev-dependencies]
+async-trait = "=0.1.92"

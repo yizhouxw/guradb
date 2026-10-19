@@ -7,7 +7,8 @@
 1. 阅读 [项目说明](README.md)、[架构](docs/architecture.md) 和相关模块说明。
 2. 确定本次修改属于文档完善、待讨论提案，还是已接受方案的实现。
 3. 对影响长期边界的选型，在 [ADR 目录](docs/decisions/README.md) 新增提案并解释备选方案与代价。
-4. 按 [harness](harness/README.md) 运行 plan，更新文档、示例和契约，执行 `.venv/bin/python scripts/harness.py check`（或 `make check`）。
+4. 先更新[用户手册](docs/user/README.md)的行为合同和[场景验证表](harness/templates/user-scenario.md)，新能力先标待实现，再修改行为代码；完成时按文档跑成功/负例，记录实际证据并复核一致性。纯内部改动解释无用户行为影响，纯文字修订轻量检查。
+5. 按 [harness](harness/README.md) 运行 plan，更新文档、示例和契约，执行 `.venv/bin/python scripts/harness.py check`（或 `make check`）。
 
 非小型需求按[开发流程](harness/development-workflow.md)先冻结验收/边界并 task-start，自动保留原始范围；依赖升级、持久迁移、失败定位与交接遵循同一规范。提交后重验并 task-finish 归档证据。小型文字修改可用轻量提交说明和显式 base。
 

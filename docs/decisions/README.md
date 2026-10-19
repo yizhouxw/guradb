@@ -18,6 +18,7 @@ ADR 用来记录已经比较过的方案和取舍。编号只表示记录顺序�
 | [0012](0012-bounded-p0-and-local-workers.md) | 有界 P0 与本地 worker | 接受有界实现；后续分片范围由0013推进 |
 | [0013](0013-local-p0-partitions-and-recovery.md) | 本地分片、记录版本与恢复 | 有界实现；完整M2/M3与生产证据仍缺 |
 | [0014](0014-bounded-pg-wire.md) | 共用执行路径的有界 PostgreSQL SQL 端口 | 有界本机实现；真实 psql/Psycopg 及 PG 组件测试本地通过，最终提交门禁看 task receipt |
+| [0016](0016-user-documentation-first.md) | 用户文档先行与场景验证 | 已接受工程约定；自动文件/链接检查与人工时序/语义复核分开 |
 | [模板](0000-template.md) | 后续决策的记录格式 | 模板 |
 
 ## 优先讨论的问题
@@ -38,3 +39,5 @@ ADR 用来记录已经比较过的方案和取舍。编号只表示记录顺序�
 新增记录可复制 `0000-template.md`，采用下一个可用编号。尚待讨论的内容保持“提案”，决定后补齐依据和影响，再标“已接受”；被替代时链接新 ADR。
 
 2026-10-18 的[功能与架构复审](../reviews/2026-10-18-capability-architecture.md)和[行动计划](../plans/2026-10-18-next-stage.md)不替代上述历史决定。后续执行面、持久布局或跨机运行时的选型经实测后再形成新ADR。
+
+- [ADR 0015：严格生产源行覆盖与双接口场景](0015-unit-coverage-and-dual-interface-scenarios.md)：已采用测试门禁，覆盖率目标仍需实际证据达标；不扩展SQL产品白名单。

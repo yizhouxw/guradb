@@ -190,3 +190,10 @@ pub async fn execute(
         stats,
     })
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/execution.rs"]
+mod execution_tests;
+#[cfg(test)]
+#[path = "../../../tests/rust_fixture.rs"]
+mod fixture;

@@ -85,3 +85,7 @@ pub async fn decode(
     }
     Ok((output, used))
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/parquet.rs"]
+mod tests;

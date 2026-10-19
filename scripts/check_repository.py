@@ -139,6 +139,11 @@ def main() -> int:
         "scripts/harnesslib/check_evidence.py", "tests/harness/test_workflow.py",
         "tests/harness/test_ci_workflow.py", "docs/decisions/0009-task-evidence-and-actions-workflow.md",
     ]
+    required += [f"docs/user/{name}.md" for name in
+                 ("README", "features", "architecture", "installation", "usage",
+                  "operations", "development", "diagnostics", "validation")]
+    required += ["harness/templates/user-scenario.md",
+                 "docs/decisions/0016-user-documentation-first.md"]
     required += [f"modules/{name}/README.md" for name in
                  ("gateway", "query", "catalog", "storage", "index", "cluster", "connectors")]
     required += [f"clients/{name}/README.md" for name in ("cli", "mcp")]

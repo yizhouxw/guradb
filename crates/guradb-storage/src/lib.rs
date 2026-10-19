@@ -54,6 +54,9 @@ impl Source {
     }
 
     pub async fn read(&self, file: &Fragment, cancel: &CancellationToken) -> Result<Bytes> {
+        if cancel.is_cancelled() {
+            return Err(Error::new("cancelled", "query cancelled"));
+        }
         let unavailable = || Error::new("source_unavailable", "fixed source object is unavailable");
         let invalid = || {
             Error::new(
@@ -130,3 +133,11 @@ impl Source {
         Ok(bytes)
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/storage.rs"]
+mod tests;
+
+#[cfg(test)]
+#[path = "../tests/unit/stream.rs"]
+mod stream_tests;
