@@ -26,6 +26,8 @@ PG 常用 SQLSTATE：28P01 认证、3D000 数据库、42501 权限/不可见资�
 
 ## 取证和复现
 
+普通使用者先保留上表相关ID、错误、实际版本和脱敏日志，按服务配置检查。下面harness/验收命令供源码alpha维护者复现，不是产品运行前提，也不是生产监控/诊断API。
+
 ```sh
 .venv/bin/python scripts/harness.py task-status
 .venv/bin/python scripts/harness.py git-status

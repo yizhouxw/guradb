@@ -1,5 +1,7 @@
 # 使用指南
 
+本页是当前alpha命令速查。完整概念与任务分别见[接入](ingestion.md)、[混合检索](retrieval.md)、[训练数据](training.md)和[接口参考](reference.md)；这些指南会明确标注尚待实现的产品流程。
+
 ## SQL 与接口选择
 
 M0 HTTP SQL 使用固定 manifest。请求有 sql、parameters，返回异步 query_id，随后查询状态、取分页结果或 DELETE 请求取消。结果和 read_context 绑定启动视图，游标不能跨查询/身份使用。入门请求见[安装部署](installation.md)，完整字段见[M0 OpenAPI](../../api/http/openapi.json)。业务参数使用绑定值；int8 超出客户端安全整数范围时使用 `{"type":"int8","value":"9223372036854775807"}`。

@@ -1,5 +1,7 @@
 # SQL、HTTP 与客户端接口
 
+2026-10-19产品纠偏：下文的两条alpha路径是现状，不是长期接口架构。[产品合同](../product/product-contract.md)和[架构v0.4](../architecture.md)要求共同目录/身份/视图/查询语义；具体公共管理API、DDL和统一查询扩展仍待版本化设计，本文不新增可执行语法。
+
 状态：当前源码提供 M0 只读 SQL 与 M1/M2 固定视图作业两条独立的有界 alpha 路径，尚未统一成检索 SQL 引擎。CLI/MCP 已有 M1/M2 HTTP 薄适配；完整 M2、多机 M3 与生产发布仍未完成。本文区分现有合同和文末历史提案；PG SQL 端口按独立切片接入 M0，下列合同不扩展未验收能力。
 
 机器可读支持清单为 [api/capabilities/v1.json](../../api/capabilities/v1.json)，格式由 [v1.schema.json](../../api/capabilities/v1.schema.json) 定义；十二域来源见[完成度复审](../reviews/2026-10-18-capability-architecture.md)。清单随源码版本解释，是离线合同，**不是 HTTP endpoint，也不证明某个部署已启用能力**。缺失、未知条目或无法识别的清单版本不能推导为支持；部署授权、实际数据视图、索引和预算仍由服务端检查。[M0 OpenAPI](../../api/http/openapi.json) 与 [M1/M2 OpenAPI](../../api/http/m1-openapi.json) 的顶层 `x-guradb-capability-manifest` 指向这份清单，path 相对 OpenAPI 源文件解析，不是 HTTP 路径；请求/响应 schema 未因此扩展。

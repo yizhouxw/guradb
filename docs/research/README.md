@@ -1,5 +1,7 @@
 # 产品与技术调研结论
 
+最新补充：[2026-10-19已发布数据库的产品架构与用户手册调研](2026-10-19-database-products.md)，覆盖Milvus/Qdrant/Weaviate/LanceDB/Vespa/Infinity/PostgreSQL/ClickHouse，包含官方来源、版别边界、限定目录统计与任务页深度。其[方向复审](../reviews/2026-10-19-product-direction.md)和[产品合同](../product/product-contract.md)已修正执行主线。下文保留2026-10-17的技术选择背景，不能当作当前实现状态或最新任务顺序。
+
 状态：基于官方资料的研究与推荐基线，未部署竞品、未进行性能或兼容性实测。日期：2026-10-17。
 
 本轮将用户的新约束落实为：**对象存储作为业务持久层，面向 AI 数据准备、训练读取与交互式检索，不承担高并发 OLTP 和实时延迟敏感事务。** 明确约束见 [ADR 0002](../decisions/0002-object-store-lake-boundary.md)。
@@ -72,7 +74,7 @@
 ## 7. 本轮形成的架构文档
 
 - [产品功能架构](../product/functional-architecture.md)：12 个能力域、优先级、用户流程和非目标。
-- [技术架构 v0.2](../architecture.md)：存储/物化、写入与发布、读取、执行、分布式及故障。
+- [技术架构 v0.4](../architecture.md)：本轮纠偏与历次存储/物化、发布、查询及故障基线。
 - [技术基线 ADR](../decisions/0003-storage-and-execution-baseline.md)：选项与选择理由。
 - [快照与索引发布 ADR](../decisions/0004-snapshot-and-index-publication.md)：最关键的一致性不变量。
 - [路线图与 POC](../roadmap.md)：验证顺序、失败时的调整及首版范围。

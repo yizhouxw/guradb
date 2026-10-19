@@ -1,6 +1,6 @@
 # 手册验证与场景映射
 
-本手册于 2026-10-19 初始化，描述当前源码有界合同。下表是复现入口和验收要求，**不是已通过清单**。当前轮次实际结果见 `artifacts/user-docs/` 与 harness 输出报告；每份报告独立绑定执行时的源码/配置，文档后续编辑会改变工作区指纹。
+手册于2026-10-19从alpha操作说明扩展为产品指南主干。完整产品流程仍待实现；下表是既有alpha的复现入口和验收要求，**不是本轮已通过清单**。产品目标与当前操作按页标注。
 
 | 场景 | 用户验收断言 | 正向/负向验证入口 |
 | --- | --- | --- |
@@ -13,20 +13,26 @@
 | U07 worker | 同机三端点、共享 root；HMAC/owner/过期/越界/取消拒绝 | [HTTP worker](../design/local-worker-http.md)；`tests/contracts/test_transport.py`、`scripts/p0_acceptance.py --transport http` |
 | U08 文档与开发 | 必备页、相对链接、契约；先行用户合同与案例在复核时可查 | `scripts/check_repository.py`、`scripts/harness.py check`；[场景表](../../harness/templates/user-scenario.md) |
 
-## 执行与证据规则
+## 产品旅程的新增验收责任
+
+[产品合同](../product/product-contract.md)的J1–J6覆盖数据管理、多模态检索、SQL准备、训练、生命周期和部署恢复。对象/公共API、共同目录/查询、自有图文教程、实际训练reader、多机/生产等缺口均为待实现，不由上表U01–U08替代。
+
+每条旅程需要完整前置/操作/预期、独立真值和负例、权限/预算、版本/迁移/恢复；完整手册责任见[建设合同](manual-plan.md)。新页不含虚构建库/上传/查询扩展语法，目标示例不可作为已运行证据。
+
+## 本轮执行与证据规则
 
 先做文档存在/链接检查，再按涉及的用户行为执行合成示例、成功/负例及对应门禁。结构检查不证明命令正确，--help 不证明服务启动，组件 smoke 不证明完整性能/稳定性；完整 release 仍缺 performance/stability/soak。
 
-本次仅新增手册、开发约定和 repository 必备页清单，不扩展数据库行为。已有 `docs-test-coverage` active task 和未提交运行时代码保持原样；默认 harness check 将覆盖该原任务整项差异，可能包含其覆盖率缺口。不能用 bootstrap 成功代替该门禁，更不能在脏树上创建已完成 checkpoint 或冒充 commit 绑定的完成证据。
+本次任务`product-direction-correction`仅改研究、方案与文档，无运行时、契约或依赖变化。门禁按任务原始base选择；独立研究/源码审计和最终只读复核记录见[方向复审](../reviews/2026-10-19-product-direction.md)。最终报告绑定本轮commit，不复用历史数据库性能/稳定性结果。
 
 初始化时对运行说明、能力清单和实际入口做交叉复核；例如 CLI 用 `--url` 配置服务地址，而 MCP 使用 `GURADB_URL`，两者不能混用。示例中的 QUERY_ID/JOB_UUID/DATASET/RUN 和自有 snapshot/摘要需由实际输出或用户数据替换，手册不包含真实凭据。
 
-## 初始化实际执行
+## 历史初始化证据
 
 - M0 安装示例已真实构建和启动，通过独立 PyArrow 对照得到预期 5 行，3 页 read_context 一致；错误 token 返回 401，JOIN 返回 400，容器正常清理。原始记录：`artifacts/user-docs/quickstart-f89a9c410e/result.json`。为保护现有服务，使用唯一目录/容器名及临时宿主 loopback 端口，其余参数和请求与安装页一致。
-- 仓库检查通过：122 个 Markdown、10 个 JSON、5 个 M0 API 操作；九个必备页面逐个模拟缺失均拒绝（`document-guard-negative.log`），10 个 shell 命令块语法检查通过（`shell-examples.log`），两份日志均位于 `artifacts/user-docs/`。
+- 初始化时的文档/缺页负例和shell语法记录位于`artifacts/user-docs/`，它们不覆盖本轮新增内容，不能替代当前文档检查。
 - 首轮 change 报告 `artifacts/harness/20261019T000051Z-39146695/report.json` **未通过**：恢复、M1 性能 smoke 及最终指纹检查检测到并发源码修改，证据失效；不作为当前版本通过依据。
-- 另一任务暂停后重新执行整项 change 门禁；最终结果以 `artifacts/user-docs/harness-final.log` 指向的报告为准，复核记录在 `artifacts/user-docs/review.md`。不复用首轮局部通过来代替稳定工作区重验。
+- 初始化最终重验及复核在`artifacts/user-docs/harness-final.log`与`review.md`；此前`docs-test-coverage`任务已完成，是历史上下文，不是本轮active任务。
 
 ## 后续维护
 
