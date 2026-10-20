@@ -20,6 +20,7 @@ ADR 用来记录已经比较过的方案和取舍。编号只表示记录顺序�
 | [0014](0014-bounded-pg-wire.md) | 共用执行路径的有界 PostgreSQL SQL 端口 | 有界本机实现；真实 psql/Psycopg 及 PG 组件测试本地通过，最终提交门禁看 task receipt |
 | [0016](0016-user-documentation-first.md) | 用户文档先行与场景验证 | 已接受工程约定；自动文件/链接检查与人工时序/语义复核分开 |
 | [0017](0017-product-database-and-user-manual.md) | 产品级数据库交付与用户手册纠偏 | 接受产品组织原则；共同对象/目录/查询、用户旅程与手册深度待逐片实现验收 |
+| [0019](0019-pr-parallel-development.md) | GitHub PR 与多分支并行开发 | 已采用工程约定；远端保护设置待另行授权和核验 |
 | [模板](0000-template.md) | 后续决策的记录格式 | 模板 |
 
 ## 优先讨论的问题

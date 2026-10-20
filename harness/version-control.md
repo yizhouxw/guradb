@@ -1,15 +1,16 @@
 # Git 追溯、检查点与恢复
 
-状态：已接入本地 Git/harness 和私有远端；用户已授权后续开发提交经验证后直接推送现有 `origin`；异地可恢复性仍需独立验证。
+状态：已接入本地 Git/harness 和私有远端；用户已授权验证后的任务分支推送与 PR 合入；异地可恢复性仍需独立验证。
 
 ## 日常开发
 
 1. 开始/恢复任务先执行 `git status --short --branch` 和 `harness.py git-status`，记录起始 commit、分支、现有改动和检查点。已有未提交的用户改动先保持原样，辨明归属并避免混入任务；不自动 stage、stash、reset 或覆盖。
-2. 当前项目按单人开发，普通任务默认直接在 `main` 开发；已有工作分支完成后合回 `main`。干净基点创建 checkpoint，非小型任务记录目标、验证与恢复步骤。只有并行开发同一大需求时才引入多分支，每个分支使用独立 worktree，例如 `git worktree add -b codex/<slice> <new-directory> <base>`；不在同一工作目录切换多个开发分支，不强行切换有改动的工作区。
-3. 完成有限切片，运行 plan/check，审查 `git diff`；只 stage 本任务文件，检查 `git diff --cached --check` 及 staged 差异，提交具体变更和验证说明。未完成/失败实验保留现场与日志，不当成质量合格基点；并行任务已有分支时可保存明确标记的 WIP 提交，未经门禁不得合入主线。
-4. 提交后执行 `harness.py check --base <任务起始commit>`，使报告精确绑定新 commit/checkout 指纹，且仍覆盖整项任务差异；不能省略 base 后只检查空差异。再用 `harness.py checkpoint --label <label> --report <report.json>` 建立带证据的检查点。报告中的 scope 只是实际运行范围，bootstrap/change 不能冒充数据库 release。
-5. 已有工作分支完成后，将通过门禁和复核的代码合入干净的 `main`；能快进时使用 `git merge --ff-only <branch>`，历史已分叉时保留历史并正常合并，冲突先分析再解决。合并后从合并前的 `main` 基点检查完整范围，生成绑定主线最终 commit 的报告和 checkpoint；不能只验证新增文档或空差异。普通任务在 `main` 完成同样闭环。
-6. 结束报告起始/最终 `main` commit、检查点、实际验证和剩余改动。常规本地提交及完成后的合入 `main` 属于开发闭环；用户已授权后续开发提交在门禁、复核和提交后验证完成后直接推送现有 `origin`，普通任务推送 `main`，不再逐次询问；远端设置与部署仍另行授权。推送前 fetch 并核对远端；发生分叉时先保留现场并分析，不覆盖远端新提交。不强推、重写共享历史或自动删除旧分支/检查点。
+2. 所有开发任务默认从核对后的 `origin/main`（合同冻结任务可记录显式已提交基点）创建 `codex/<task>` 分支与独立 worktree，不在 dirty 工作区切分支。按 [GitHub PR 并行流程](parallel-development.md) 划定 owner、依赖和文件范围；不直接向 main 提交/推送。开始时创建 checkpoint，非小型任务 task-start 固定原始 base。
+3. 有限切片运行 plan/check 并单独复核，只 stage 本任务文件，检查 staged diff 后提交；禁止绕过 hook。未经门禁的 WIP 只能保留在任务分支，不得合入主线。
+4. 提交后对任务原始 base 执行 `harness.py check --base <task-base>`，报告须绑定当前 commit/checkout；完成分支任务时 task-finish 归档并创建 checkpoint。更新分支后旧报告失效，重新验证；原始 base 不得随同步主线缩短。
+5. fetch 核对远端后正常推送任务分支，在 GitHub 创建以 main 为目标的 PR；复核与两个 PR quality job 通过、依赖已合入且当前分支包含最新主线后，由集成者使用 merge commit 串行合入。禁止本地 merge 后直接 push main 绕开 PR；具体操作和主线竞争处理见并行流程。
+6. 合并后在独立干净 worktree 对合并前 main 到最终 merge commit 的完整范围运行 check，建立主线 checkpoint，核对主线 push CI；最终交付关联分支和主线两组证据。失败停止下一 PR，保留现场，通过修复或 revert PR 恢复。
+7. 用户已授权验证后的任务分支推送、PR 创建与满足门禁后的 PR 合入，不再逐次询问。不得强推、覆盖远端新提交或自动删除旧分支/检查点；远端权限/保护设置、发布和部署仍需另行授权。结束报告基点/最终 commit、PR、报告、checkpoint 和剩余改动。
 
 非小型任务由 [task-start/status/finish](development-workflow.md) 将原始 base 和完成证据持久化；本地 auto 检查沿用 active task 基点。`task-finish` 对 change/release 报告重算整项变更和门禁、校验日志并归档，再结束任务；不支持用 bootstrap 或提交后的空差异报告结项。
 
@@ -37,7 +38,7 @@
   --destination /absolute/new/path/guradb-recovery
 ```
 
-命令只解析显式 checkpoint tag，创建 detached worktree，拒绝已存在或位于当前 checkout 内的目的路径。进入恢复目录后按其版本安装依赖，再运行检查；恢复目录用于保留和验证现场。恢复后的修复按上述单人/并行约定整合到 `main`，不把新分支设为所有恢复工作的默认前置条件。旧版本可能没有新 harness 命令，应使用该版本自己的检查入口。Git worktree 共享同一个对象库，**不是异地备份**。
+命令只解析显式 checkpoint tag，创建 detached worktree，拒绝已存在或位于当前 checkout 内的目的路径。进入恢复目录后按其版本安装依赖，再运行检查；恢复目录用于保留和验证现场。恢复后的修复按上述 PR 并行约定整合到 `main`，仅验证恢复现场时可保持 detached；需要提交修复时从恢复点建立任务分支并走 PR。旧版本可能没有新 harness 命令，应使用该版本自己的检查入口。Git worktree 共享同一个对象库，**不是异地备份**。
 
 恢复命令不加载当前 policy，策略损坏仍可恢复。若 Python 工具本身已损坏，先用 `git tag --list 'checkpoints/*'` 确认恢复点，再使用原生 `git worktree add --detach <全新外部目录> refs/tags/<checkpoint>`；不要在原目录强制覆盖。
 

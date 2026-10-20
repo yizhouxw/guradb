@@ -16,10 +16,16 @@ GitHub Actions 作为本项目 CI/CD 的推荐执行平台。当前已有[质量
 
 ## 建立远端后的接入
 
-1. 已建立私有仓库和远端；2026-10-20用户已授权后续开发提交经本地验证后直接推送现有origin，普通任务推送main，无需逐次确认。推送后核对对应commit的Actions状态；远端设置与部署仍另行授权。
+1. 已建立私有仓库和远端；2026-10-20用户已授权后续开发提交经本地验证后直接推送现有origin，推送任务分支并创建PR，满足[并行流程](parallel-development.md)后通过GitHub合入main，无需逐次确认；不直接推送主线。推送后核对对应commit的Actions状态；远端设置与部署仍另行授权。
 2. bootstrap push运行已通过；M0需在推送后验证运行及失败日志上传。配置所需检查为两个 Python quality job，限制主分支写入/合并权限；根据平台方案可用性设置对应保护，不把仓库内 YAML 当成远端权限已生效。
 3. 为 harness、CI、依赖基线、格式/提交协议建立审查责任；真实内核落地后逐项将 planned 变成真实 gate。性能/故障 runner 的网络、配额、对象前缀和清理预算先冻结，外部 PR 不直接运行有凭据或持久访问权的 self-hosted runner。
 4. 明确证据长期保存位置与保留期。当前 Actions artifacts 14 天只是诊断保留；候选发布和性能基线到期前归档到授权的持久位置，不能只保留 URL/摘要。
+
+## PR 合入门禁
+
+所有开发通过 PR 合入 `main`，工作分支 push 的成功不能代替 PR 测试合并树通过。必需检查精确对应 `quality (Python 3.11)` 和 `quality (Python 3.14)`，核对当前 head/base、两个 job 的结论及未解决审查；主线更新后先 merge 最新 `origin/main` 并重验，再串行合并。当前不启用 merge queue/auto-merge；若以后启用 queue，须先补 `merge_group` 事件、其基点选择和真实测试，不能只更改远端设置。
+
+远端保护的具体设置、单人审查边界与核验表见[PR并行流程](parallel-development.md)。本轮仅落地仓库约定和模板，不声明保护已生效，不修改仓库权限或保护设置。
 
 ## 后续 CD 接入合同
 
