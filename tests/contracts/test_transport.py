@@ -1,6 +1,6 @@
 """Three real loopback services authenticate fixed workers and persist task ownership."""
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager, closing
+from contextlib import contextmanager, closing, ExitStack
 import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import threading
@@ -300,16 +300,17 @@ class TransportContract(unittest.TestCase):
             root = Path(directory).resolve()
             with service(root/'one', root) as (one,server):
                 host, port = endpoint(one)
-                clients = [socket.create_connection((host,port), timeout=1) for _ in range(10)]
-                try:
-                    for client in clients:
+                with ExitStack() as clients:
+                    open_count = 0
+                    for _ in range(10):
+                        client = clients.enter_context(socket.create_connection((host,port), timeout=1))
                         try:
                             client.sendall(b'POST /v1/tasks HTTP/1.1\r\n')
                         except OSError:
                             pass
-                    # Kernel peer shutdown makes excess admission visible without sending headers.
-                    open_count = 0
-                    for client in clients:
+                        # Observe admission before connecting again: a burst can fill
+                        # Linux's listen backlog before the worker accepts any peers.
+                        # Retain admitted sockets so all ten attempts test the cap.
                         client.settimeout(.03)
                         try:
                             if client.recv(1):
@@ -319,9 +320,6 @@ class TransportContract(unittest.TestCase):
                         except OSError:
                             pass
                     self.assertLessEqual(open_count, 4)
-                finally:
-                    for client in clients:
-                        client.close()
 
     def test_transport_whitelist_and_response_budget(self):
         for url in ('https://127.0.0.1:1', 'http://localhost:1', 'http://192.0.2.1:1',
