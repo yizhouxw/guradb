@@ -1,5 +1,7 @@
 # 产品与技术调研结论
 
+2026-10-20新增[概要设计官方证据矩阵](2026-10-20-outline-design-evidence.md)，以稳定R编号记录业务场景、产品/edition事实、设计推论、目标和反证验证，支撑[概要设计v0.5](../design/outline-design.md)与[并行实施计划](../plans/2026-10-20-parallel-delivery.md)。本轮仍为文档研究，无竞品部署或性能对跑；云与安全控制不代表适配/认证已完成。
+
 最新补充：[2026-10-19已发布数据库的产品架构与用户手册调研](2026-10-19-database-products.md)，覆盖Milvus/Qdrant/Weaviate/LanceDB/Vespa/Infinity/PostgreSQL/ClickHouse，包含官方来源、版别边界、限定目录统计与任务页深度。其[方向复审](../reviews/2026-10-19-product-direction.md)和[产品合同](../product/product-contract.md)已修正执行主线。下文保留2026-10-17的技术选择背景，不能当作当前实现状态或最新任务顺序。
 
 状态：基于官方资料的研究与推荐基线，未部署竞品、未进行性能或兼容性实测。日期：2026-10-17。
