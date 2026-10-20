@@ -1,0 +1,119 @@
+[
+  {
+    "asset_id": "asset-a",
+    "asset_version": "1",
+    "media_type": "image/svg+xml",
+    "relative_path": "assets/a.svg",
+    "size_bytes": 282,
+    "sha256": "0c0a13c9059ff4c1042e4f50db82ee848d64359373101998ac626a885cf4e775",
+    "license": "CC0-1.0"
+  },
+  {
+    "asset_id": "asset-a1-v1",
+    "asset_version": "1",
+    "media_type": "text/plain; charset=utf-8",
+    "relative_path": "assets/a1-v1.txt",
+    "size_bytes": 61,
+    "sha256": "fba2642c05f418a2e58adb1dfaee99aba093c882e1f84a8f710e43e05121bcdf",
+    "license": "CC0-1.0"
+  },
+  {
+    "asset_id": "asset-a1-v2",
+    "asset_version": "1",
+    "media_type": "text/plain; charset=utf-8",
+    "relative_path": "assets/a1-v2.txt",
+    "size_bytes": 58,
+    "sha256": "828f04db43fc4a16d76e95837f940c53fe053fe5b5cb9a4b2177358eeb32574e",
+    "license": "CC0-1.0"
+  },
+  {
+    "asset_id": "asset-a2",
+    "asset_version": "1",
+    "media_type": "text/plain; charset=utf-8",
+    "relative_path": "assets/a2.txt",
+    "size_bytes": 58,
+    "sha256": "b93dabacc2e7e7507655462a5188064e8427c16235e145a6049d08805d0deb3a",
+    "license": "CC0-1.0"
+  },
+  {
+    "asset_id": "asset-a3",
+    "asset_version": "1",
+    "media_type": "text/plain; charset=utf-8",
+    "relative_path": "assets/a3.txt",
+    "size_bytes": 61,
+    "sha256": "542d9f56f8a3d425b749613f0558df94588a0dc896299e0a19e805cfc3f6bbe9",
+    "license": "CC0-1.0"
+  },
+  {
+    "asset_id": "asset-b",
+    "asset_version": "1",
+    "media_type": "image/svg+xml",
+    "relative_path": "assets/b.svg",
+    "size_bytes": 282,
+    "sha256": "8fac4d35b53cb3a7de441944fe30740e0e8abc3756d04bee6db5ee4c717b24a7",
+    "license": "CC0-1.0"
+  },
+  {
+    "asset_id": "asset-b1",
+    "asset_version": "1",
+    "media_type": "text/plain; charset=utf-8",
+    "relative_path": "assets/b1.txt",
+    "size_bytes": 61,
+    "sha256": "7f51255fd170472d4ec8e5868e3c4278cfee74347ae84321a23b800c82e725cf",
+    "license": "CC0-1.0"
+  },
+  {
+    "asset_id": "asset-b2",
+    "asset_version": "1",
+    "media_type": "text/plain; charset=utf-8",
+    "relative_path": "assets/b2.txt",
+    "size_bytes": 49,
+    "sha256": "ad421ed8089e759017c7646d5337482b8df90d8a5866b4252758067206ad72a8",
+    "license": "CC0-1.0"
+  },
+  {
+    "asset_id": "asset-b3",
+    "asset_version": "1",
+    "media_type": "text/plain; charset=utf-8",
+    "relative_path": "assets/b3.txt",
+    "size_bytes": 55,
+    "sha256": "bfeb162993814750c6305a81ab1f6b67066f6c59c13d4137533e6d1bec6f0ed1",
+    "license": "CC0-1.0"
+  },
+  {
+    "asset_id": "asset-c",
+    "asset_version": "1",
+    "media_type": "image/svg+xml",
+    "relative_path": "assets/c.svg",
+    "size_bytes": 282,
+    "sha256": "637ecc6d067cd4aa057f5e37d74740f898a2eafc0ad7325c0a05094abb9b30f2",
+    "license": "CC0-1.0"
+  },
+  {
+    "asset_id": "asset-c1",
+    "asset_version": "1",
+    "media_type": "text/plain; charset=utf-8",
+    "relative_path": "assets/c1.txt",
+    "size_bytes": 52,
+    "sha256": "4e4c2e7d72647c87a1e1f80329a276ba89e43b1c7c86f0d8cc6bdf51148f559d",
+    "license": "CC0-1.0"
+  },
+  {
+    "asset_id": "asset-c2",
+    "asset_version": "1",
+    "media_type": "text/plain; charset=utf-8",
+    "relative_path": "assets/c2.txt",
+    "size_bytes": 58,
+    "sha256": "0097fc1cc1f5a89550ecac1b114f08af258f4f2777fc22cabab5a75c394a7f3a",
+    "license": "CC0-1.0"
+  },
+  {
+    "asset_id": "asset-c3",
+    "asset_version": "1",
+    "media_type": "text/plain; charset=utf-8",
+    "relative_path": "assets/c3.txt",
+    "size_bytes": 52,
+    "sha256": "e9437cdc5e4f7871c90ba0c147eedc795431d791d1ce7e30f75043a52fe4c14c",
+    "license": "CC0-1.0"
+  }
+]

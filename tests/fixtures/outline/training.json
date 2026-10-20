@@ -1,0 +1,165 @@
+{
+  "public_api": false,
+  "sample_type": "query-positive-negative-image-v1",
+  "view_id": "view-v2",
+  "recipe": {
+    "recipe_id": "synthetic-fixed-members",
+    "recipe_version": "1",
+    "space_id": "outline-synthetic-zh-image3",
+    "model_version": "1",
+    "dimension": 3,
+    "processing": "identity/no-fitted-statistics"
+  },
+  "missing_modality_policy": "exclude-with-explicit-record-reason",
+  "excluded": [
+    {
+      "record": {
+        "record_id": "r-null",
+        "record_version": "1"
+      },
+      "reason": "missing_text_image_and_vector"
+    }
+  ],
+  "samples": [
+    {
+      "sample_id": "synthetic-sample-a",
+      "sample_version": "1",
+      "group_id": "family-a",
+      "split": "train",
+      "members": [
+        {
+          "role": "query",
+          "record": {
+            "record_id": "r-a2",
+            "record_version": "1"
+          },
+          "fragment_id": "fragment-r-a2-v1",
+          "fragment_version": "1"
+        },
+        {
+          "role": "positive",
+          "record": {
+            "record_id": "r-a1",
+            "record_version": "2"
+          },
+          "fragment_id": "fragment-r-a1-v2",
+          "fragment_version": "1"
+        },
+        {
+          "role": "negative",
+          "record": {
+            "record_id": "r-a3",
+            "record_version": "1"
+          },
+          "fragment_id": "fragment-r-a3-v1",
+          "fragment_version": "1"
+        },
+        {
+          "role": "image",
+          "record": {
+            "record_id": "r-a1",
+            "record_version": "2"
+          },
+          "fragment_id": "image-r-a1-v2",
+          "fragment_version": "1"
+        }
+      ],
+      "label": "synthetic-role-only"
+    },
+    {
+      "sample_id": "synthetic-sample-b",
+      "sample_version": "1",
+      "group_id": "family-b",
+      "split": "validation",
+      "members": [
+        {
+          "role": "query",
+          "record": {
+            "record_id": "r-b2",
+            "record_version": "1"
+          },
+          "fragment_id": "fragment-r-b2-v1",
+          "fragment_version": "1"
+        },
+        {
+          "role": "positive",
+          "record": {
+            "record_id": "r-b1",
+            "record_version": "1"
+          },
+          "fragment_id": "fragment-r-b1-v1",
+          "fragment_version": "1"
+        },
+        {
+          "role": "negative",
+          "record": {
+            "record_id": "r-b3",
+            "record_version": "1"
+          },
+          "fragment_id": "fragment-r-b3-v1",
+          "fragment_version": "1"
+        },
+        {
+          "role": "image",
+          "record": {
+            "record_id": "r-b1",
+            "record_version": "1"
+          },
+          "fragment_id": "image-r-b1-v1",
+          "fragment_version": "1"
+        }
+      ],
+      "label": "synthetic-role-only"
+    },
+    {
+      "sample_id": "synthetic-sample-c",
+      "sample_version": "1",
+      "group_id": "family-c",
+      "split": "test",
+      "members": [
+        {
+          "role": "query",
+          "record": {
+            "record_id": "r-c2",
+            "record_version": "1"
+          },
+          "fragment_id": "fragment-r-c2-v1",
+          "fragment_version": "1"
+        },
+        {
+          "role": "positive",
+          "record": {
+            "record_id": "r-c1",
+            "record_version": "1"
+          },
+          "fragment_id": "fragment-r-c1-v1",
+          "fragment_version": "1"
+        },
+        {
+          "role": "negative",
+          "record": {
+            "record_id": "r-c3",
+            "record_version": "1"
+          },
+          "fragment_id": "fragment-r-c3-v1",
+          "fragment_version": "1"
+        },
+        {
+          "role": "image",
+          "record": {
+            "record_id": "r-c1",
+            "record_version": "1"
+          },
+          "fragment_id": "image-r-c1-v1",
+          "fragment_version": "1"
+        }
+      ],
+      "label": "synthetic-role-only"
+    }
+  ],
+  "reproducibility": {
+    "D": "fixture-only",
+    "O": "missing-real-framework",
+    "M": "consumer-responsibility"
+  }
+}

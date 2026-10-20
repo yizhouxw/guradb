@@ -1,0 +1,225 @@
+{
+  "view_id": "view-v2",
+  "selection": [
+    {
+      "case_id": "active",
+      "predicate": {
+        "field": "active",
+        "op": "eq",
+        "value": true
+      },
+      "expected": [
+        {
+          "record_id": "r-a1",
+          "record_version": "2"
+        },
+        {
+          "record_id": "r-a1-copy",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-a2",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-b1",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-b3",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-c1",
+          "record_version": "1"
+        }
+      ]
+    },
+    {
+      "case_id": "null-title",
+      "predicate": {
+        "field": "title",
+        "op": "is_null"
+      },
+      "expected": [
+        {
+          "record_id": "r-null",
+          "record_version": "1"
+        }
+      ]
+    },
+    {
+      "case_id": "null-equals",
+      "predicate": {
+        "field": "title",
+        "op": "eq",
+        "value": null
+      },
+      "expected": []
+    },
+    {
+      "case_id": "max-int8",
+      "predicate": {
+        "field": "priority",
+        "op": "eq",
+        "value": 9223372036854775807
+      },
+      "expected": [
+        {
+          "record_id": "r-a1",
+          "record_version": "2"
+        }
+      ]
+    },
+    {
+      "case_id": "min-int8",
+      "predicate": {
+        "field": "priority",
+        "op": "eq",
+        "value": -9223372036854775808
+      },
+      "expected": [
+        {
+          "record_id": "r-a2",
+          "record_version": "1"
+        }
+      ]
+    },
+    {
+      "case_id": "beyond-js-int",
+      "predicate": {
+        "field": "priority",
+        "op": "ge",
+        "value": 9007199254740993
+      },
+      "expected": [
+        {
+          "record_id": "r-a1",
+          "record_version": "2"
+        },
+        {
+          "record_id": "r-b1",
+          "record_version": "1"
+        }
+      ]
+    }
+  ],
+  "l2": {
+    "vector": [
+      0,
+      0,
+      0
+    ],
+    "expected": [
+      {
+        "record_id": "r-a1",
+        "record_version": "2",
+        "distance": 0
+      },
+      {
+        "record_id": "r-a1-copy",
+        "record_version": "1",
+        "distance": 0
+      },
+      {
+        "record_id": "r-a2",
+        "record_version": "1",
+        "distance": 1
+      },
+      {
+        "record_id": "r-a3",
+        "record_version": "1",
+        "distance": 4
+      },
+      {
+        "record_id": "r-b1",
+        "record_version": "1",
+        "distance": 4
+      },
+      {
+        "record_id": "r-c1",
+        "record_version": "1",
+        "distance": 4
+      },
+      {
+        "record_id": "r-b2",
+        "record_version": "1",
+        "distance": 9
+      },
+      {
+        "record_id": "r-c2",
+        "record_version": "1",
+        "distance": 9
+      },
+      {
+        "record_id": "r-b3",
+        "record_version": "1",
+        "distance": 16
+      },
+      {
+        "record_id": "r-c3",
+        "record_version": "1",
+        "distance": 16
+      }
+    ]
+  },
+  "bm25": {
+    "tokens": [
+      "权限",
+      "缓存"
+    ],
+    "n": 11,
+    "total_tokens": 22,
+    "df": {
+      "权限": 3,
+      "缓存": 3
+    },
+    "expected": [
+      {
+        "record_id": "r-a1",
+        "record_version": "2"
+      },
+      {
+        "record_id": "r-a1-copy",
+        "record_version": "1"
+      },
+      {
+        "record_id": "r-a2",
+        "record_version": "1"
+      },
+      {
+        "record_id": "r-a3",
+        "record_version": "1"
+      }
+    ]
+  },
+  "graph": {
+    "root": {
+      "record_id": "r-a1",
+      "record_version": "2"
+    },
+    "relation": "cites",
+    "max_depth": 2,
+    "expected": [
+      {
+        "record_id": "r-a2",
+        "record_version": "1",
+        "depth": 1
+      },
+      {
+        "record_id": "r-a3",
+        "record_version": "1",
+        "depth": 2
+      }
+    ]
+  },
+  "samples": [
+    "synthetic-sample-a",
+    "synthetic-sample-b",
+    "synthetic-sample-c"
+  ],
+  "business_relevance": {
+    "status": "missing",
+    "reason": "No independent business-domain human judgments; all role labels are synthetic"
+  }
+}

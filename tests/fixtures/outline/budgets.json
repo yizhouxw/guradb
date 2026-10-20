@@ -1,0 +1,81 @@
+{
+  "status": "pre-registered-synthetic-only",
+  "fixed_before_measurement": true,
+  "scope": "offline fixtures; no product latency/throughput/quality baseline",
+  "limits": {
+    "file_bytes": 1048576,
+    "total_input_bytes": 2097152,
+    "records": 100,
+    "graph_depth": 3
+  },
+  "quality": {
+    "relational_exact_match": 1.0,
+    "exact_l2_identity_match": 1.0,
+    "bm25_identity_match": 1.0,
+    "score_absolute_tolerance": 1e-12,
+    "graph_exact_match": 1.0,
+    "sample_member_value_match": 1.0,
+    "cross_split_duplicate_clusters": 0,
+    "unreported_missing_modality": 0,
+    "business_relevance": {
+      "status": "missing",
+      "required": "independent domain human judgments before I2 business quality"
+    },
+    "ann_recall": {
+      "status": "missing",
+      "required": "exact oracle comparison when actual ANN exists"
+    }
+  },
+  "working_sets": {
+    "facts": {
+      "max_fixture_bytes": 131072,
+      "production_bytes": null,
+      "production_cache_status": "missing"
+    },
+    "vectors": {
+      "max_fixture_bytes": 32768,
+      "production_bytes": null,
+      "production_cache_status": "missing"
+    },
+    "index": {
+      "max_fixture_bytes": 32768,
+      "production_bytes": null,
+      "production_cache_status": "missing"
+    },
+    "media": {
+      "max_fixture_bytes": 16384,
+      "production_bytes": null,
+      "production_cache_status": "missing"
+    }
+  },
+  "system_measurements": {
+    "cold_warm": {
+      "status": "missing",
+      "reason": "requires real fixed workload and controlled environment"
+    },
+    "greater_than_cache": {
+      "status": "missing",
+      "reason": "requires real fixed workload and controlled environment"
+    },
+    "latency_qps": {
+      "status": "missing",
+      "reason": "requires real fixed workload and controlled environment"
+    },
+    "get_bytes_rss": {
+      "status": "missing",
+      "reason": "requires real fixed workload and controlled environment"
+    },
+    "index_build_amplification": {
+      "status": "missing",
+      "reason": "requires real fixed workload and controlled environment"
+    },
+    "retention_export_amplification": {
+      "status": "missing",
+      "reason": "requires real fixed workload and controlled environment"
+    },
+    "consumer_wait_gpu_utilization": {
+      "status": "missing",
+      "reason": "requires real fixed workload and controlled environment"
+    }
+  }
+}
