@@ -1,14 +1,20 @@
 # 文档索引
 
-当前产品技术方案v0.4恢复完整AI多模态数据库的交付主线；用户手册按概念、任务、参考与管理员职责组织。产品目标、推荐基线和当前alpha白名单分别标记；本轮纠偏不新增运行时支持。
+当前概要设计v0.5以业务场景与官方竞品证据细化完整AI多模态数据库的架构和并行实施边界；用户手册按概念、任务、参考与管理员职责组织。产品目标、推荐基线和当前alpha白名单分别标记；本轮设计不新增运行时支持。
 
 | 文档 | 内容 |
 | --- | --- |
 | [用户手册](user/README.md) | 概念、建模、接入、检索、训练、安全、部署与参考；区分目标与当前操作 |
+| [概要设计v0.5](design/outline-design.md) | 业务场景分析、业务/技术/模块/功能/部署架构、关键技术和质量设计完整入口 |
+| [本轮官方证据矩阵](research/2026-10-20-outline-design-evidence.md) | 场景、竞品/edition事实、设计推论、目标与反证验证 |
+| [模块接口与责任合同](design/outline-module-contracts.md) | 唯一所有者、单向DAG、公共端口、错误/取消/预算、隔离开发与真实集成 |
+| [部署与运行治理设计](design/outline-runtime-and-operations.md) | 性能、可观测性、多云认证、安全与合规控制、故障与恢复验收 |
+| [并行实施计划](plans/2026-10-20-parallel-delivery.md) | 工作包、前置合同、依赖、有限并发波次、估算、集成门槛与旧任务映射 |
+| [本轮设计复审](reviews/2026-10-20-outline-design.md) | 文档范围、内容独立审查、验证和未实现边界 |
 | [2026-10-19方向复审](reviews/2026-10-19-product-direction.md) | 用户指正、独立源码审计、产品/架构/文档偏移及已修正内容 |
 | [已发布数据库与手册调研](research/2026-10-19-database-products.md) | 八个产品官方来源、架构/edition边界、手册规模和代表页深度 |
 | [产品交付合同](product/product-contract.md) | 用户角色、对象关系、J1–J6完整旅程及产品完成标准 |
-| [下一阶段产品交付](plans/2026-10-19-product-delivery.md) | M2共同对象/目录/查询与用户闭环；吸收A1–A6，保留M3/M4门槛 |
+| [此前产品交付](plans/2026-10-19-product-delivery.md) | 产品成果/验收义务保留；任务顺序已由2026-10-20并行计划替代 |
 | [手册建设合同](user/manual-plan.md) | 完整信息架构、逐域实质缺口及可执行教程/参考的验收 |
 | [最新实现与测试复审](reviews/2026-10-18-implementation-and-tests.md) | 主线PG入口、模块/客户端状态对账、双接口场景与严格覆盖率缺口 |
 | [2026-10-18 功能与架构复审](reviews/2026-10-18-capability-architecture.md) | 当前主线证据、12个功能域完成度、执行/生命周期/多机风险 |
@@ -21,7 +27,7 @@
 | [产品功能架构](product/functional-architecture.md) | 12 个能力域、优先级、核心对象与用户流程 |
 | [湖同步与服务化目标](product/lake-sync-and-serving.md) | 湖加工结果接入、刷新模式、写入权威、同步进度与索引共同发布 |
 | [记录身份与版本合同](product/data-contracts.md) | 稳定键/无键源、记录版本、查询视图、对象保留与访问边界 |
-| [总体架构 v0.4](architecture.md) | 共同目录/授权/查询上下文、对象模型、湖与物化层、迁移与分布式 |
+| [技术架构 v0.5参考](architecture.md) | 共同目录/授权/查询上下文、对象模型、湖与物化层、迁移与分布式 |
 | [格式兼容矩阵](compatibility/lake-formats.md) | 表格式、文件格式、训练数据集、兼容级别与验证 |
 | [查询和客户端](interfaces/query-and-clients.md) | PostgreSQL、SQL、HTTP、CLI 与 MCP |
 | [PG SQL 端口与 SDK](design/pg-wire-running.md) | 本机 PG wire 切片、psql/Psycopg 配置、支持与拒绝范围及验证状态 |

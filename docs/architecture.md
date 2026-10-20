@@ -1,8 +1,10 @@
-# GuraDB 技术架构 v0.4
+# GuraDB 技术架构 v0.5：技术参考
 
-状态：产品技术方案纠偏；长期推荐基线与当前实现分列。M0/M1 有界 alpha、部分 M2/本地 worker 及离线恢复已落地，完整 M2/M3/M4 未完成。复审：2026-10-19；本轮不修改运行时。
+状态：概要设计的技术参考；长期推荐基线与当前实现分列。M0/M1 有界 alpha、部分 M2/本地 worker 及离线恢复已有历史证据，完整 M2/M3/M4 未完成。设计更新：2026-10-20；本轮不修改运行时。
 
-最新[方向复审](reviews/2026-10-19-product-direction.md)与[产品合同](product/product-contract.md)解释纠偏依据，近期顺序见[产品交付计划](plans/2026-10-19-product-delivery.md)。历史代码/证据结论保留在[功能复审](reviews/2026-10-18-capability-architecture.md)。除现状说明外，统一计划、计算池、缓存、REST Catalog、HA 均是目标。
+完整设计入口为[概要设计v0.5](design/outline-design.md)，从S1–S5业务与[竞品证据](research/2026-10-20-outline-design-evidence.md)推导五类架构和横切质量；[模块合同](design/outline-module-contracts.md)规定松耦合边界，[运行治理专题](design/outline-runtime-and-operations.md)细化部署、性能、可观测性、云适配和安全合规。本文保留既有技术细节与兼容约束，新增组织原则见[ADR0018](decisions/0018-outline-design-and-module-contracts.md)，任务顺序以[并行实施计划](plans/2026-10-20-parallel-delivery.md)为准。
+
+此前[方向复审](reviews/2026-10-19-product-direction.md)与[产品合同](product/product-contract.md)解释纠偏依据；历史代码/证据结论保留在[功能复审](reviews/2026-10-18-capability-architecture.md)。除现状说明外，统一计划、计算池、缓存、REST Catalog、HA 均是目标。
 
 用户已确定采用对象存储湖架构，放弃高并发 OLTP，不支持实时延迟敏感事务，见 [ADR 0002](decisions/0002-object-store-lake-boundary.md)。本版依据[产品功能架构](product/functional-architecture.md)与[技术调研](research/README.md)，为后续详细设计选择默认路径；不再将所有技术选项并列悬置，也不把选型建议当作已经验证的功能。
 
@@ -281,4 +283,4 @@ OCR、ASR、抽帧与 embedding 为可插拔后台作业，首版允许外部完
 
 原有 [modules](../modules/README.md) 保留，新增职责通过模块内部子组件表达：gateway 增加 PG 兼容/结果接口；query 增加 DataFusion 扩展与融合；catalog 增加 revision/read view 发布；storage 管理对象/缓存；index 管理 Lance/Tantivy/邻接产物；cluster 管理任务与资源池；connectors 隔离各格式与 catalog。
 
-下一步以共同对象/目录/查询语义和可操作的多模态检索闭环为主线，吸收原A1样本选择、A2按需读取、A3生命周期工作。先补完整产品合同与统一入口，再以相同质量/成本证据推进规模；不以全Rust重写或新增算法替代产品交付。见[交付计划](plans/2026-10-19-product-delivery.md)；真实分布式和生产仍分别在M3/M4验收。
+下一步以共同对象/目录/查询语义和可操作的多模态检索闭环为主线，吸收原A1样本选择、A2按需读取、A3生命周期工作。先冻结合同，再模块并行与逐波真实集成，以相同质量/成本证据推进规模；不以全Rust重写或新增算法替代产品交付。见[并行实施计划](plans/2026-10-20-parallel-delivery.md)；真实分布式和生产仍分别在M3/M4验收。
