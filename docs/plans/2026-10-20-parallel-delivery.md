@@ -134,9 +134,9 @@ flowchart LR
 
 ## 6. 编码并行与集成纪律
 
-- 每个并行包使用独立 `codex/` 分支和独立 worktree，从同一 CF1 commit/checkpoint 开始；每包独立 task-start、文件归属、变更计划和证据。普通非并行小片仍按本仓库约定直接main，不移用其它项目规则。
+- 每个并行包使用独立 `codex/` 分支和独立 worktree，从同一 CF1 commit/checkpoint 开始；每包独立 task-start、文件归属、变更计划和证据。所有任务（含普通小片）统一按 [GitHub PR流程](../../harness/parallel-development.md) 审查、验证后合入main，不直接推送主线。
 - owner表锁定共享位置：P00拥有公共合同，P02/P07分时拥有catalog迁移，P08拥有gateway/客户端，P13拥有组合根/共享接线。子包只提交自己的文件；依赖通过版本化port和fixture，不跨目录“顺便修”。
-- 集成者按依赖顺序合入main，并对原始主线基点运行全部合入范围的check；每次合入产生新候选，不能只验单分支或空diff。分支证据不能自动证明合入后证据。
+- 集成者按依赖顺序通过GitHub PR以merge commit串行合入main，并对合并前主线基点运行全部合入范围的check；每次合入产生新候选，不能只验单分支或空diff。分支证据不能自动证明合入后证据。
 - 每个包包含用户手册先行合同、支持/拒绝白名单、真值/负例、适用语言/架构/functional/组件性能/故障与覆盖率门槛、独立复核。仓库既有严格适用行覆盖要求保留，不能以本计划替代。
 - 两次无新证据失败停止盲试，保留日志/diff/seed和commit，定位接口假设/实现/环境/能力边界；用task-abandon交接未完成包，不把它标完成。需要恢复按harness在新目录恢复checkpoint。
 

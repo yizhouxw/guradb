@@ -27,6 +27,8 @@ python3 -m venv .venv
 .venv/bin/python scripts/harness.py check --scope release
 ```
 
+并行开发统一按 [GitHub PR 流程](parallel-development.md)：一任务一分支/worktree，独立证据与审查，依赖顺序串行合入 main；不直接推送主线。
+
 ## 工作闭环
 
 1. 阅读根和受影响模块的 AGENTS、对应 ADR、接口与最近失败证据；只加载相关上下文。
