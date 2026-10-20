@@ -23,7 +23,7 @@ jobs:
         run: cp tests/harness/worker_probe.py "$RUNNER_TEMP/guradb-worker-probe.py"
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
-          ref: '4828d4aaebca94c642377e1c93148d60eaf85a53'
+          ref: 'd90a1e0d837644288ba4835c15db396f4f7540e1'
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065

@@ -1,4 +1,5 @@
 from io import StringIO
+from contextlib import redirect_stdout
 from pathlib import Path
 import runpy
 import sys
@@ -18,7 +19,7 @@ class WorkerReproducerTests(unittest.TestCase):
         self.assertNotIn('pull_request', workflow['on'])
         job = workflow['jobs']['reproduce']
         frozen = [s for s in job['steps'] if s.get('with', {}).get('ref')]
-        self.assertEqual(frozen[0]['with']['ref'], '4828d4aaebca94c642377e1c93148d60eaf85a53')
+        self.assertEqual(frozen[0]['with']['ref'], 'd90a1e0d837644288ba4835c15db396f4f7540e1')
         self.assertGreaterEqual(int(job['timeout-minutes'])*60, 3630+600)
         for step in job['steps']:
             self.assertNotIn('continue-on-error', step)
@@ -43,7 +44,9 @@ class WorkerReproducerTests(unittest.TestCase):
             try:
                 raise RuntimeError('real runner failure fixture')
             except RuntimeError:
-                result.addError(test, sys.exc_info())
+                with redirect_stdout(StringIO()) as output:
+                    result.addError(test, sys.exc_info())
+                self.assertNotIn('do-not-retain', output.getvalue())
             self.assertFalse(result.wasSuccessful())
             saved = root/'evidence/failure'
             self.assertEqual((saved/'0.failure.log').stat().st_size, 8192)

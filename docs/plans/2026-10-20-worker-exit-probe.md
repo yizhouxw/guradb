@@ -9,3 +9,5 @@ workflow先保存本分支诊断helper至RUNNER_TEMP，再checkout精确4828d4a�
 自测验证固定SHA/action/最小权限/无重试及错误退出；真实文件fixture验证日志尾部有界、输入不复制、记录错误未吞。替身只验证诊断编排。四套plan/check、hook和提交后check/checkpoint后推送Draft诊断PR；需新源码候选时更新冻结SHA重验。现场停止用task-abandon，保留分支/产物；无数据迁移或外部补偿。
 
 为保留原覆盖率进程的模块导入/测试顺序上下文，先按原runner顺序执行全部contracts+unit，再追加最多300次目标测试；沿用首次失败即停。没有更改被测源码、加载顺序、预算或失败判断。
+
+前测39367809537：固定4828d4a，3.11第235测试捕获complete-workers退出-6及terminate called without an active exception；3.14第210测试为10秒timeout，一片仍运行，不能混称SIGABRT。两份ZIP/manifest已归档共同Git目录guradb/worker-diagnostics/39367809537。后测将固定d90a1e0d837644288ba4835c15db396f4f7540e1（仅worker两处同步列解码及说明），原coverage顺序/300次追加/首次失败和原预算不变；配置准备中，等候选提交后门禁/推送再启动，不预填通过。
