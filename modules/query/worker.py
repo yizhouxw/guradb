@@ -39,7 +39,8 @@ def execute(task):
         raw = get(descriptor['file'])
         budget.account(len(raw))
         shard_bytes = len(raw)
-        table = pq.ParquetFile(BytesIO(raw)).read()
+        # The short-lived task keeps Parquet column decoding on its main thread.
+        table = pq.ParquetFile(BytesIO(raw)).read(use_threads=False)
         require(table.column_names == ['row_json'] and table.nbytes <= 64 << 20 and
                 len(table) == descriptor['rows'], 'source_invalid')
         bundle['rows'] = [decode_json(value.encode()) for value in table['row_json'].to_pylist()]
@@ -100,7 +101,7 @@ def execute(task):
                        'sha256': fragment['sha256']})
             budget.account(len(raw))
             require(len(raw) == fragment['size_bytes'], 'source_invalid')
-            table = pq.ParquetFile(BytesIO(raw)).read()
+            table = pq.ParquetFile(BytesIO(raw)).read(use_threads=False)
             require(table.nbytes <= 64 << 20, 'resource_limit')
             for values in table.to_pylist():
                 logical = key(values[bundle['source_key']['key_field']], bundle['source_key']['key_type'])

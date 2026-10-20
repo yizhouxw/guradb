@@ -1,7 +1,6 @@
 """Bounded local process fanout; the upper layer selects the trusted worker module."""
 import os
 from pathlib import Path
-import signal
 import subprocess
 import sys
 import tempfile
@@ -9,6 +8,7 @@ import time
 import uuid
 
 from modules.common.contracts import Failure, MAX_BYTES, digest, encoded, decode_json, require
+from modules.common.process import stop_group
 from modules.storage.objects import get, put
 
 
@@ -68,10 +68,22 @@ def fanout(module, payloads, budget, root):
             budget.check()
             require(len({result['pid'] for result in results}) == 3, 'worker_mismatch')
             return results
+        except Exception:
+            # Preserve bounded crash evidence before TemporaryDirectory removes
+            # the child logs. Never retain task inputs or change the failure.
+            try:
+                for shard, process in enumerate(processes):
+                    path = Path(directory)/f'{shard}.log'
+                    with path.open('rb') as stream:
+                        stream.seek(max(0, path.stat().st_size - 8192))
+                        tail = stream.read(8192)
+                    put(Path(root)/f'{shard}.failure.log', tail)
+                put(Path(root)/'worker-failure.json', encoded({'version': 1, 'workers': [
+                    {'shard': shard, 'pid': process.pid, 'returncode': process.poll()}
+                    for shard, process in enumerate(processes)]}))
+            except (OSError, Failure):
+                pass  # Diagnostics must not mask the original query failure.
+            raise
         finally:
             for process in processes:
-                try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-                process.wait(timeout=5)
+                stop_group(process)

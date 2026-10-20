@@ -13,3 +13,5 @@ Snapshot target 可选 `ann: {"partitions": 8}`，分区 1–64 且不超过行�
 性能固定8192行、16维、seed17、8分区，8 probes时 recall@10>=0.95，记录4 probes的实际recall与延迟，不声称低 probes 必然达到门槛。
 记录build<=60秒、query<=10秒、索引字节/源向量字节放大，冷进程/暖进程和OS缓存限制。native构建/查询在独立进程执行，取消/超时杀进程组并回收。
 API依据 [Lance vector search](https://lance.org/quickstart/vector-search/)，实际调用以固定安装版本测试为准。
+
+本轮实现，验收以当前提交报告和PR #3为准：同一次快照的全局与最多三个分片索引在一个可终止native进程内顺序构建，仍生成四个独立数据集与版本。没有跨视图或查询进程缓存。聚合输入超过原字节上限时回退逐索引进程，取消/deadline覆盖整个批次。批内索引报告共同native进程的保守峰值RSS，不能把它们当作四个独立进程峰值相加；512MiB限制不变。验收见[修复计划](../plans/2026-10-20-p0-native-builds.md)。

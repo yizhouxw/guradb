@@ -1,0 +1,9 @@
+# 真实取消测试 PID 发布竞态
+
+状态：进行中。follow-up native-cancel-marker；owner本CI修复任务，分支codex/fix-p0-native-builds独占worktree。原始follow-up基点949d484；完整PR原始基点仍302caa9，main为fcdc140。范围仅tests/contracts/test_ann.py和本计划，无数据库用户行为/API/持久格式/预算变化，因此无需修改用户手册。
+
+PR运行39362846900：Python3.11九门禁全部通过，Python3.14仅contracts失败，functional/performance-smoke/stability/coverage均通过。具体test_live_native_cancellation_and_timeout_reap读取空PID报ValueError，非产品worker退出。Path.write_text先创建最终文件，Budget.cancelled以exists触发，父进程可在写PID前杀死子进程；Linux调度使此前隐蔽窗口显现。保存原ZIP artifacts/pr3-delivery/pr-py314.zip，SHA256 a7a1b43ebaf6694cd9ab388768e6a035bff078bd911fbb31a64bfe76cc1c428a。
+
+验收：真实子进程只在完整PID写入并关闭后将临时文件原子rename为最终marker，父进程仍以最终marker.exists取消；在临时文件创建和写入间主动延迟50ms暴露窗口，必须仍有有效PID且真实进程已回收。原timeout=2秒、cancel预算10秒、结束<4秒断言不变；不重试、不跳过、不吞异常。保留旧逻辑加50ms间隔的真实失败演示到artifacts。原有cancel/timeout/负例与适用门禁保持。
+
+实现后单独复核文件发布顺序/进程存活断言与文件归属，check、hook、提交后原follow-up基点check/task-finish，再对完整302caa9范围check/checkpoint后正常push。当前PR两版本质量需重验，旧push绿灯不替代。无迁移/外部补偿；恢复保留checkpoint及失败现场，不重写共享历史。历史Linux功能worker偶发异常十次采样未复现，仍不确认根因；本测试竞态有独立具体证据。

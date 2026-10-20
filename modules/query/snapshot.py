@@ -5,15 +5,16 @@ import shutil
 
 from modules.common.contracts import Budget, Failure, decode_json, digest, encoded, require
 from modules.connectors.iceberg import snapshot
-from modules.index.ann import build as build_ann
 from modules.index.bm25 import build as build_bm25
-from modules.index.shards import build as build_shards
+from modules.index.shards import build_snapshot
 from modules.index.retrieval import ANALYZER, build, features, load_bundle
 from modules.storage.objects import Objects, get, put
 
 
 def construct(control, dataset, operation, target, root, s3=None, cancelled=lambda: False, inherited=None, added_files=None):
     require(isinstance(target, dict) and set(target) - {'ann'} == {'metadata_uri','metadata_sha256','snapshot_id','features_uri','features_sha256'}, 'invalid_request')
+    if 'ann' in target:
+        require(isinstance(target['ann'], dict), 'invalid_request')
     require(all(isinstance(target[name], str) and len(target[name]) == 64 and
                 all(c in '0123456789abcdef' for c in target[name])
                 for name in ('metadata_sha256','features_sha256')), 'invalid_request', 'both source pins require canonical SHA-256')
@@ -89,10 +90,9 @@ def construct(control, dataset, operation, target, root, s3=None, cancelled=lamb
                   'index_path': str(directory/'tantivy'), 'index_files': index_files, 'bm25': bm25,
                   'stats': {'source_reads': budget.reads, 'source_bytes': budget.bytes}}
         if 'ann' in target:
-            bundle['ann'] = build_ann(directory/'lance', result['rows'], revision, model, target['ann'], budget)
             context['index_versions'].append({'index_id': str(ds['id'])+':lance-ivf-flat', 'version': str(run['id'])})
         budget.check()
-        bundle['shards'] = build_shards(bundle, directory/'shards', budget)
+        bundle.update(build_snapshot(bundle, directory, budget, target.get('ann')))
         payload = encoded(bundle)
         require(len(payload) <= 32 << 20, 'resource_limit')
         reference = put(directory/'bundle.json', payload)

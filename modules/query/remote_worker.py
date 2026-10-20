@@ -7,7 +7,6 @@ import os
 import re
 import shutil
 from pathlib import Path
-import signal
 import sqlite3
 import subprocess
 import sys
@@ -17,6 +16,7 @@ import time
 
 from modules.cluster.transport import signature
 from modules.common.contracts import MAX_BYTES, Failure, decode_json, digest, encoded, require
+from modules.common.process import stop_group
 from modules.storage.objects import put
 
 
@@ -202,11 +202,7 @@ class Tasks:
                 result['server_pid'] = os.getpid()
                 return result
             finally:
-                try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-                process.wait(timeout=5)
+                stop_group(process)
 
 
 def serve(root, shared_root, secret, port=0):
