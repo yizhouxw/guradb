@@ -5,6 +5,8 @@
 - 依据：用户要求版本管理接入 agent harness，使开发可追溯、阻断错误可回滚
 - 规范：[Git 工作流](../../harness/version-control.md)
 
+> 2026-10-20后续决定：[ADR 0019](0019-pr-parallel-development.md)将直接main与本地合并推送改为独立分支/worktree、GitHub PR审查与串行合入。下文单人主线与推送段落保留历史依据；当前操作以0019和Git工作流为准，恢复/证据不变量继续有效。
+
 ## 决定与取舍
 
 使用已有 Git 仓库，建立首个项目基线与不可覆盖的 checkpoint tag。开发按有限切片提交，记录起始/最终 commit、质量报告与 checkout digest；当前单人开发默认直接在 `main` 完成，已有工作分支完成后合入 `main`；只有并行开发同一大需求时引入多分支，每个分支使用独立 worktree。已有用户改动保持原样，失败现场按恢复流程在新目录验证。提交前 hook 运行同一 change 门禁，并拒绝未暂存/未跟踪的工作区，避免验证与提交内容不同。

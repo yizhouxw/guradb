@@ -10,9 +10,9 @@
 
 遵循 [Git 工作流](harness/version-control.md) 与 [ADR 0008](docs/decisions/0008-git-traceability-and-recovery.md)。开始记录 `git status`、起始 commit/分支与检查点；不能自动 stage/stash/覆盖已有用户改动。
 
-当前按单人开发约定：普通任务默认直接在 `main` 开发并完成提交；已有工作分支开发完成后合并到 `main`。只有并行开发同一大需求时才使用多分支，每个分支对应独立 worktree，完成后合回 `main`。失败现场恢复仍按安全恢复流程保留在新目录。
+当前采用 [GitHub PR 并行流程](harness/parallel-development.md)与 [ADR 0019](docs/decisions/0019-pr-parallel-development.md)：所有开发任务（含文档）默认使用 `codex/<task>` 分支，每个并行任务独占 worktree、task receipt 和文件范围；通过 PR 审查与 CI 后由集成者按依赖顺序串行合入 `main`，不直接向主线提交或推送。失败现场恢复仍在新目录。该约定替代此前普通任务直接 main 的规则；已存在的 dirty 任务保留原现场，迁移办法见流程。
 
-有限切片通过门禁和复核后提交，记录变更、验证与恢复点；提交后生成精确绑定新 commit 的检查报告并建立 checkpoint。本仓库作者使用 `yizhouxw <yizhou.xw@gmail.com>`。用户已授权本仓库后续开发在门禁和复核通过、提交后验证完成后直接推送到现有 `origin`，普通任务推送 `main`，不再逐次询问；不得强推或覆盖远端新提交。远端设置和部署仍需另行授权。禁止为过门禁使用 `--no-verify` 或关闭 hook。
+有限切片通过门禁和复核后提交，记录变更、验证与恢复点；提交后生成精确绑定新 commit 的检查报告并建立 checkpoint。本仓库作者使用 `yizhouxw <yizhou.xw@gmail.com>`。用户已授权本仓库后续开发在门禁和复核通过、提交后验证完成后直接推送任务分支到现有 `origin` 并创建 PR，满足合入条件后通过 GitHub PR 合入 `main`，不再逐次询问；不得强推或覆盖远端新提交。远端设置和部署仍需另行授权。禁止为过门禁使用 `--no-verify` 或关闭 hook。
 
 非小型任务按[开发流程](harness/development-workflow.md)使用 `task-start --label ... --objective ...` 固定基点；plan/check/pre-commit 自动覆盖整项任务。恢复先读 `task-status`，最终提交后执行 check，再用 `task-finish --report ... --review ...` 核验原始范围、归档证据并结束。停止/交接用 task-abandon 保留现场，不把它标成完成。
 
