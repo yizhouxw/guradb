@@ -1,6 +1,6 @@
 # Git 追溯、检查点与恢复
 
-状态：已接入本地 Git/harness 和私有远端；推送另行授权，异地备份未验证。
+状态：已接入本地 Git/harness 和私有远端；用户已授权后续开发提交经验证后直接推送现有 `origin`；异地可恢复性仍需独立验证。
 
 ## 日常开发
 
@@ -9,7 +9,7 @@
 3. 完成有限切片，运行 plan/check，审查 `git diff`；只 stage 本任务文件，检查 `git diff --cached --check` 及 staged 差异，提交具体变更和验证说明。未完成/失败实验保留现场与日志，不当成质量合格基点；并行任务已有分支时可保存明确标记的 WIP 提交，未经门禁不得合入主线。
 4. 提交后执行 `harness.py check --base <任务起始commit>`，使报告精确绑定新 commit/checkout 指纹，且仍覆盖整项任务差异；不能省略 base 后只检查空差异。再用 `harness.py checkpoint --label <label> --report <report.json>` 建立带证据的检查点。报告中的 scope 只是实际运行范围，bootstrap/change 不能冒充数据库 release。
 5. 已有工作分支完成后，将通过门禁和复核的代码合入干净的 `main`；能快进时使用 `git merge --ff-only <branch>`，历史已分叉时保留历史并正常合并，冲突先分析再解决。合并后从合并前的 `main` 基点检查完整范围，生成绑定主线最终 commit 的报告和 checkpoint；不能只验证新增文档或空差异。普通任务在 `main` 完成同样闭环。
-6. 结束报告起始/最终 `main` commit、检查点、实际验证和剩余改动。常规本地提交及完成后的合入 `main` 属于开发闭环；推送与远端设置仍另行授权。不强推、重写共享历史或自动删除旧分支/检查点。
+6. 结束报告起始/最终 `main` commit、检查点、实际验证和剩余改动。常规本地提交及完成后的合入 `main` 属于开发闭环；用户已授权后续开发提交在门禁、复核和提交后验证完成后直接推送现有 `origin`，普通任务推送 `main`，不再逐次询问；远端设置与部署仍另行授权。推送前 fetch 并核对远端；发生分叉时先保留现场并分析，不覆盖远端新提交。不强推、重写共享历史或自动删除旧分支/检查点。
 
 非小型任务由 [task-start/status/finish](development-workflow.md) 将原始 base 和完成证据持久化；本地 auto 检查沿用 active task 基点。`task-finish` 对 change/release 报告重算整项变更和门禁、校验日志并归档，再结束任务；不支持用 bootstrap 或提交后的空差异报告结项。
 
@@ -47,4 +47,4 @@
 
 项目基线已保存为本地首个提交和 `checkpoints/initial-baseline`。按用户指定，仅本仓库配置作者 `yizhouxw <yizhou.xw@gmail.com>`，不修改全局配置；后续提交沿用该身份。
 
-当前已配置私有远端；本地 commit/tag 能应对错误修改，不能应对磁盘损坏。推送分支/检查点仍需授权，远端必需 CI 与异地可恢复性须分别验证；也可把 `git bundle create <outside-repo>/guradb.bundle --all` 产物复制到独立存储并用 `git bundle verify` 验证。bundle 不含未提交文件或 artifacts 日志，数据/凭证也不应通过代码备份保存。
+当前已配置私有远端；本地 commit/tag 能应对错误修改，不能应对磁盘损坏。用户已授权经验证的开发提交推送现有 `origin`；checkpoint tag 不随分支默认批量推送，远端设置和部署另行授权。远端必需 CI 与异地可恢复性须分别验证；也可把 `git bundle create <outside-repo>/guradb.bundle --all` 产物复制到独立存储并用 `git bundle verify` 验证。bundle 不含未提交文件或 artifacts 日志，数据/凭证也不应通过代码备份保存。

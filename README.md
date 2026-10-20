@@ -80,6 +80,6 @@ make check
 
 参与设计与开发请先阅读 [贡献指南](CONTRIBUTING.md) 和 [Agent 协作约定](AGENTS.md)。
 
-版本追溯已接入 [Git 工作流](harness/version-control.md)：切片提交、提交前检查、checkpoint 与独立目录恢复。已配置私有远端 [yizhouxw/guradb](https://github.com/yizhouxw/guradb)；本地新提交的推送需另行授权。
+版本追溯已接入 [Git 工作流](harness/version-control.md)：切片提交、提交前检查、checkpoint 与独立目录恢复。已配置私有远端 [yizhouxw/guradb](https://github.com/yizhouxw/guradb)；用户已授权后续开发提交经验证后直接推送现有 `origin`，普通任务推送 `main`；不强推，远端设置与部署另行授权。
 
 后续开发使用[任务与验收闭环](harness/development-workflow.md)，CI/CD 采用 [GitHub Actions 方案](harness/ci-cd.md)。此前 bootstrap CI 已远端通过；本轮 M0 工作流尚待推送后远端验证，CD 待发布产物和环境合同。
