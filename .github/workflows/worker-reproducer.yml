@@ -1,4 +1,4 @@
-name: Frozen worker diagnosis
+name: Frozen worker exit probe
 on:
   push:
     branches: ['codex/worker-reproducer']
@@ -7,7 +7,7 @@ permissions:
   contents: read
 jobs:
   reproduce:
-    name: worker sample (Python ${{ matrix.python }})
+    name: worker exit (Python ${{ matrix.python }})
     runs-on: ubuntu-latest
     timeout-minutes: 90
     strategy:
@@ -17,7 +17,13 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
-          ref: '949d484a3d06685d1dcd24cd8fe97a0dee375334'
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Preserve diagnostic helper before frozen checkout
+        run: cp tests/harness/worker_probe.py "$RUNNER_TEMP/guradb-worker-probe.py"
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: '4828d4aaebca94c642377e1c93148d60eaf85a53'
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -30,13 +36,8 @@ jobs:
           python -m pip check
           mkdir -p artifacts/worker-reproducer
           git rev-parse HEAD > artifacts/worker-reproducer/source-sha.txt
-      - name: Five independent real samples
-        run: |
-          status=0
-          for iteration in 1 2 3 4 5; do
-            timeout --signal=INT --kill-after=30s 900 python scripts/m2_acceptance.py functional --run-dir "artifacts/worker-reproducer/attempt-${iteration}" || status=1
-          done
-          exit "$status"
+      - name: Capture the first real worker failure
+        run: timeout --signal=INT --kill-after=30s 3600 python "$RUNNER_TEMP/guradb-worker-probe.py" --run-dir artifacts/worker-reproducer/probe
       - name: Preserve every sample
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
