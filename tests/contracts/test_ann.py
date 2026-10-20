@@ -115,7 +115,11 @@ class ANNContract(unittest.TestCase):
     def test_live_native_cancellation_and_timeout_reap(self):
         with tempfile.TemporaryDirectory() as directory:
             marker = Path(directory)/'pid'
-            script = 'import os,pathlib,time; pathlib.Path('+repr(str(marker))+').write_text(str(os.getpid())); time.sleep(60)'
+            # Publish readiness only after the PID is complete. Delay the private
+            # write deliberately: exists() must never expose an empty PID file.
+            script = ('import os,pathlib,time; marker=pathlib.Path('+repr(str(marker))+'); '
+                      'pending=marker.with_suffix(".pending"); pending.touch(); time.sleep(.05); '
+                      'pending.write_text(str(os.getpid())); pending.replace(marker); time.sleep(60)')
             for code in ('cancelled', 'timeout'):
                 marker.unlink(missing_ok=True)
                 budget = Budget(cancelled=marker.exists if code == 'cancelled' else lambda: False,
