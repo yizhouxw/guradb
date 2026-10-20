@@ -38,7 +38,10 @@ def main():
     from tests.contracts.test_shard_review import ShardReview
     cov = coverage.Coverage(config_file='.coveragerc', data_file=str(args.run_dir/'python.data'))
     cov.start()
-    suite = unittest.TestSuite(ShardReview('test_real_workers_share_remaining_source_budget') for _ in range(300))
+    suite = unittest.TestSuite()
+    for path in ('tests/contracts', 'tests/unit'):
+        suite.addTests(unittest.TestLoader().discover(str(Path.cwd()/path)))
+    suite.addTests(ShardReview('test_real_workers_share_remaining_source_budget') for _ in range(300))
     result = unittest.TextTestRunner(resultclass=functools.partial(Capture, directory=args.run_dir),
                                     verbosity=1, failfast=True).run(suite)
     cov.stop()
