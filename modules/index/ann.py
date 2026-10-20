@@ -4,12 +4,12 @@ import sys
 from pathlib import Path
 
 
-from modules.common.contracts import MAX_BYTES, MAX_ROWS, require
+from modules.common.contracts import MAX_BYTES, MAX_ROWS, encoded, require
 from modules.common.process import run_process
 from modules.storage.objects import get, put
 
 
-def build(directory, rows, revision, model, config, budget):
+def _task(directory, rows, revision, model, config, budget):
     require(isinstance(config, dict) and set(config) == {'partitions'}, 'invalid_request')
     partitions = config['partitions']
     require(type(partitions) is int and 1 <= partitions <= 64 and
@@ -17,10 +17,13 @@ def build(directory, rows, revision, model, config, budget):
     budget.check()
     directory = Path(directory).resolve()
     require(not directory.exists(), 'artifact_conflict')
-    native = run_process([sys.executable, '-m', 'modules.index.ann_worker'],
-        {'kind': 'build', 'path': str(directory), 'rows': [
+    return {'kind': 'build', 'path': str(directory), 'rows': [
             {'logical_key': row['logical_key'], 'vector': row['vector'], 'record_version': row.get('record_version', revision)} for row in rows],
-         'revision': revision, 'model': model, 'partitions': partitions}, budget)
+            'revision': revision, 'model': model, 'partitions': partitions}
+
+
+def _finish(task, version, native_rss, budget):
+    directory = Path(task['path'])
     files, size = [], 0
     for path in sorted(directory.rglob('*')):
         budget.check()
@@ -29,9 +32,30 @@ def build(directory, rows, revision, model, config, budget):
             require(size <= MAX_BYTES and len(files) < 128, 'resource_limit', 'ANN artifact budget exceeded')
             files.append(put(path, path.read_bytes()))
     require(len(files) <= 128, 'resource_limit')
-    return {'format': 'lance-ivf-flat-v1', 'path': str(directory.resolve()), 'version': native['value']['version'],
-            'revision': revision, 'partitions': partitions, 'rows': len(rows), 'model': model,
-            'files': files, 'native_rss_bytes': native['native_rss_bytes'], 'index_bytes': sum(Path(ref['path']).stat().st_size for ref in files)}
+    return {'format': 'lance-ivf-flat-v1', 'path': str(directory), 'version': version,
+            'revision': task['revision'], 'partitions': task['partitions'], 'rows': len(task['rows']), 'model': task['model'],
+            'files': files, 'native_rss_bytes': native_rss, 'index_bytes': sum(Path(ref['path']).stat().st_size for ref in files)}
+
+
+def build(directory, rows, revision, model, config, budget):
+    task = _task(directory, rows, revision, model, config, budget)
+    native = run_process([sys.executable, '-m', 'modules.index.ann_worker'], task, budget)
+    return _finish(task, native['value']['version'], native['native_rss_bytes'], budget)
+
+
+def build_many(entries, revision, model, config, budget):
+    """Build up to three independent shard indexes with one bounded native call."""
+    require(isinstance(entries, list) and 1 <= len(entries) <= 3, 'invalid_request')
+    tasks = [_task(directory, rows, revision, model, config, budget) for directory, rows in entries]
+    require(len({task['path'] for task in tasks}) == len(tasks), 'artifact_conflict')
+    payload = {'kind': 'build-many', 'tasks': tasks}
+    if len(encoded(payload)) > MAX_BYTES:
+        # Preserve the original per-index input envelope for large vectors.
+        return [build(directory, rows, revision, model, config, budget) for directory, rows in entries]
+    native = run_process([sys.executable, '-m', 'modules.index.ann_worker'], payload, budget)
+    require(isinstance(native['value'], list) and len(native['value']) == len(tasks), 'native_failed')
+    return [_finish(task, value['version'], native['native_rss_bytes'], budget)
+            for task, value in zip(tasks, native['value'])]
 
 
 def candidates(bundle, query, allowed, limit, nprobes, budget):

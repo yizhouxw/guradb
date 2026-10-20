@@ -6,13 +6,84 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
+from modules.index import ann, ann_worker
 from modules.common.contracts import Budget, Failure, key
 from modules.common.process import run_process
-from modules.index.ann import build, candidates
+from modules.index.ann import build, build_many, candidates
 
 
 class ANNContract(unittest.TestCase):
+    def test_batch_preserves_independent_versions_and_exhaustive_truth(self):
+        model = {'dimension': 2, 'model': 'test-space', 'metric': 'squared_l2', 'preprocessing': 'identity-v1'}
+        with tempfile.TemporaryDirectory() as directory:
+            entries = [(Path(directory)/str(shard), [
+                {'logical_key': key(i, 'long'), 'vector': [float(i), float(i % 3)],
+                 'record_version': 'record-'+str(i)} for i in range(shard, 96, 3)]) for shard in range(3)]
+            # The overflow case must keep the same valid individual-index inputs.
+            for fallback in (False, True):
+                selected = [(path/str(fallback), list(reversed(rows))) for path, rows in entries]
+                class Oversized:
+                    def __len__(self):
+                        return ann.MAX_BYTES+1
+                encoder = (lambda _: Oversized()) if fallback else ann.encoded
+                with patch.object(ann, 'encoded', side_effect=encoder), patch.object(ann, 'run_process', wraps=run_process) as calls:
+                    indexes = build_many(selected, 'revision', model, {'partitions': 1}, Budget(seconds=30))
+                self.assertEqual(calls.call_count, 3 if fallback else 1)
+                for (_, rows), index in zip(selected, indexes):
+                    self.assertEqual(index['rows'], len(rows))
+                    self.assertTrue(0 < index['native_rss_bytes'] <= 512 << 20)
+                    query = [7.25, 1.0]  # Avoid an ANN cutoff tie between equidistant source rows.
+                    bundle = {'ann': index, 'revision': 'revision', 'model': model, 'rows': rows}
+                    hits, _ = candidates(bundle, query, {r['logical_key'] for r in rows}, 4, 1, Budget())
+                    expected = sorted([(r['logical_key'], -sum((a-b)**2 for a,b in zip(r['vector'], query)))
+                                       for r in rows], key=lambda r: (-r[1], r[0]))[:4]
+                    self.assertEqual(hits, expected)
+
+    def test_batch_rejects_conflicts_and_partial_native_results(self):
+        rows = [{'logical_key': key(i, 'long'), 'vector': [float(i)]} for i in range(16)]
+        model = {'dimension': 1}
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)/'index'
+            for entries in ([], [(path, rows)]*2, [(path, rows)]*4):
+                with self.assertRaises(Failure):
+                    build_many(entries, 'revision', model, {'partitions': 1}, Budget())
+            self.assertFalse(path.exists(), 'preflight errors must not start native writes')
+            with patch.object(ann, 'run_process', return_value={'value': [], 'native_rss_bytes': 1}):
+                with self.assertRaises(Failure) as caught:
+                    build_many([(path, rows)], 'revision', model, {'partitions': 1}, Budget())
+            self.assertEqual(caught.exception.code, 'native_failed')
+            for tasks in ([], [{'kind': 'query'}], [{'kind': 'build'}]*4):
+                with self.assertRaises(Failure):
+                    ann_worker.execute({'kind': 'build-many', 'tasks': tasks})
+
+    def test_batch_worker_versions_reference_distinct_datasets(self):
+        with tempfile.TemporaryDirectory() as directory:
+            tasks = [{'kind': 'build', 'path': str(Path(directory)/str(shard)),
+                      'rows': [{'logical_key': key(i, 'long'), 'record_version': 'record-'+str(i),
+                                'vector': [float(i)]} for i in range(shard, 64, 2)],
+                      'revision': 'revision', 'model': {'dimension': 1}, 'partitions': 1}
+                     for shard in range(2)]
+            versions = ann_worker.execute({'kind': 'build-many', 'tasks': tasks})
+            self.assertEqual(len(versions), 2)
+            for task, version in zip(tasks, versions):
+                query = {'kind': 'query', 'index': {'path': task['path'], 'version': version['version'], 'rows': 32},
+                         'condition': "logical_key IS NOT NULL", 'query': task['rows'][0]['vector'], 'limit': 1, 'probes': 1}
+                found = ann_worker.execute(query)
+                self.assertEqual(found[0]['logical_key'], task['rows'][0]['logical_key'])
+                self.assertEqual(found[0]['record_version'], task['rows'][0]['record_version'])
+
+    def test_batch_cancellation_leaves_no_publishable_reference(self):
+        rows = [{'logical_key': key(i, 'long'), 'vector': [float(i)]} for i in range(256)]
+        with tempfile.TemporaryDirectory() as directory:
+            first = Path(directory)/'first'
+            with self.assertRaises(Failure) as caught:
+                build_many([(first, rows), (Path(directory)/'second', rows)], 'revision',
+                           {'dimension': 1}, {'partitions': 1}, Budget(cancelled=first.exists, seconds=10))
+            self.assertEqual(caught.exception.code, 'cancelled')
+            self.assertTrue(first.exists(), 'cancel only after real native construction starts')
+
     def test_live_native_cancellation_and_timeout_reap(self):
         with tempfile.TemporaryDirectory() as directory:
             marker = Path(directory)/'pid'

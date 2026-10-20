@@ -10,6 +10,11 @@ def execute(task):
     import lance
     import pyarrow as pa
 
+    if task['kind'] == 'build-many':
+        tasks = task['tasks']
+        require(isinstance(tasks, list) and 1 <= len(tasks) <= 3 and
+                all(value['kind'] == 'build' for value in tasks), 'invalid_request')
+        return [execute(value) for value in tasks]
     if task['kind'] == 'build':
         model, rows = task['model'], task['rows']
         schema = pa.schema([pa.field('logical_key', pa.string(), nullable=False),
