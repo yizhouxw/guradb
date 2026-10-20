@@ -6,7 +6,9 @@ GuraDB 的目标是在对象存储与开放湖上统一管理结构化数据、�
 
 **当前仍是有界alpha，完整数据库产品尚未交付。** 从[用户手册](docs/user/README.md)了解场景、建模、接入、检索、训练和运行；当前可用操作见[能力白名单](docs/user/features.md)与[安装体验](docs/user/installation.md)。用户不需要先理解下方的内部M0/M1/M2阶段名。
 
-2026-10-20形成[概要设计v0.5](docs/design/outline-design.md)：从业务场景与[官方竞品证据](docs/research/2026-10-20-outline-design-evidence.md)推导业务、技术、模块、功能、部署架构，以及性能、可观测性、云适配、安全合规；配套[模块合同](docs/design/outline-module-contracts.md)和[并行实施计划](docs/plans/2026-10-20-parallel-delivery.md)。延续2026-10-19的[产品纠偏](docs/reviews/2026-10-19-product-direction.md)与[产品合同](docs/product/product-contract.md)，研究/文档修订没有新增运行时能力。
+2026-10-20形成[概要设计v0.6](docs/design/outline-design.md)：从业务场景与[官方竞品证据](docs/research/2026-10-20-outline-design-evidence.md)推导业务、技术、模块、功能、部署架构，以及性能、可观测性、云适配、安全合规；配套[模块合同](docs/design/outline-module-contracts.md)和[并行实施计划](docs/plans/2026-10-20-parallel-delivery.md)。延续2026-10-19的[产品纠偏](docs/reviews/2026-10-19-product-direction.md)与[产品合同](docs/product/product-contract.md)，研究/文档修订没有新增运行时能力。
+
+本轮[产品技术评审落实](docs/reviews/2026-10-20-product-review-followup.md)将首个样板收敛为企业图文知识库→带版本证据→同语料embedding/reranker训练评估，补充[训练样本与消费合同](docs/product/training-contract.md)、按需读取/质量成本门槛和早期纵向验收；决定见[ADR0020](docs/decisions/0020-product-review-and-vertical-delivery.md)。这些是目标与实施路径修订，当前alpha支持范围不变。
 
 ## 当前实现与评估入口
 
@@ -29,7 +31,7 @@ PostgreSQL 客户端直连已实现有界本机切片：可选 PG SQL 端口复�
 
 推荐目标栈为 **Iceberg v2/Parquet 事实层 + 媒体对象 + Lance 检索物化层，Rust/Arrow/DataFusion 执行，Tantivy 全文与有界 Graph，小型 PostgreSQL 控制面**。当前 M0 SQL 与 Python/PyArrow 的 M1/M2 检索作业分别运行；新 bundle v2 使用全局统计 BM25，旧 v1 保留 Tantivy 路径，ANN/Graph/增量/托管 append 已有有界切片。真实多机与生产发布仍待验证；PG wire 本机只读切片按 [ADR 0014](docs/decisions/0014-bounded-pg-wire.md) 独立实施与验收。
 
-2026-10-18 [功能与架构复审](docs/reviews/2026-10-18-capability-architecture.md)、[A0集成复核](docs/reviews/2026-10-18-a0-integration.md)及[实现与测试复审](docs/reviews/2026-10-18-implementation-and-tests.md)保留历史代码/质量证据；[能力清单](api/capabilities/v1.json)是离线合同。下一阶段按[并行实施计划](docs/plans/2026-10-20-parallel-delivery.md)先冻结公共合同，再按模块独立开发并逐波集成；原产品交付与A1–A6验收义务保留映射。
+2026-10-18 [功能与架构复审](docs/reviews/2026-10-18-capability-architecture.md)、[A0集成复核](docs/reviews/2026-10-18-a0-integration.md)及[实现与测试复审](docs/reviews/2026-10-18-implementation-and-tests.md)保留历史代码/质量证据；[能力清单](api/capabilities/v1.json)是离线合同。下一阶段按[并行实施计划](docs/plans/2026-10-20-parallel-delivery.md)按共同读、接入生命周期、训练消费分批冻结合同，并提前验证共同查询、图文证据和实际训练消费；原产品交付与A1–A6验收义务保留映射。
 
 ## 用户文档
 
@@ -37,7 +39,7 @@ PostgreSQL 客户端直连已实现有界本机切片：可选 PG SQL 端口复�
 
 ## 从这里开始
 
-1. [概要设计 v0.5](docs/design/outline-design.md)：场景、五类架构、关键技术和质量目标的完整入口。
+1. [概要设计 v0.6](docs/design/outline-design.md)：场景、五类架构、关键技术和质量目标的完整入口。
 2. [产品技术调研结论](docs/research/README.md)与[产品功能架构](docs/product/functional-architecture.md)：证据、取舍和12个能力域。
 3. [技术架构参考](docs/architecture.md)、[模块合同](docs/design/outline-module-contracts.md)与[运行治理专题](docs/design/outline-runtime-and-operations.md)：实现边界与横切设计。
 4. [数据湖格式矩阵](docs/compatibility/lake-formats.md)与[接口设计](docs/interfaces/query-and-clients.md)：兼容范围与协议。

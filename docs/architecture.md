@@ -1,8 +1,8 @@
-# GuraDB 技术架构 v0.5：技术参考
+# GuraDB 技术架构 v0.6：技术参考
 
 状态：概要设计的技术参考；长期推荐基线与当前实现分列。M0/M1 有界 alpha、部分 M2/本地 worker 及离线恢复已有历史证据，完整 M2/M3/M4 未完成。设计更新：2026-10-20；本轮不修改运行时。
 
-完整设计入口为[概要设计v0.5](design/outline-design.md)，从S1–S5业务与[竞品证据](research/2026-10-20-outline-design-evidence.md)推导五类架构和横切质量；[模块合同](design/outline-module-contracts.md)规定松耦合边界，[运行治理专题](design/outline-runtime-and-operations.md)细化部署、性能、可观测性、云适配和安全合规。本文保留既有技术细节与兼容约束，新增组织原则见[ADR0018](decisions/0018-outline-design-and-module-contracts.md)，任务顺序以[并行实施计划](plans/2026-10-20-parallel-delivery.md)为准。
+完整设计入口为[概要设计v0.6](design/outline-design.md)，从S1–S5业务与[竞品证据](research/2026-10-20-outline-design-evidence.md)推导五类架构和横切质量；[模块合同](design/outline-module-contracts.md)规定松耦合边界，[运行治理专题](design/outline-runtime-and-operations.md)细化部署、性能、可观测性、云适配和安全合规。本文保留既有技术细节与兼容约束，新增组织原则见[ADR0018](decisions/0018-outline-design-and-module-contracts.md)，任务顺序以[并行实施计划](plans/2026-10-20-parallel-delivery.md)为准。
 
 此前[方向复审](reviews/2026-10-19-product-direction.md)与[产品合同](product/product-contract.md)解释纠偏依据；历史代码/证据结论保留在[功能复审](reviews/2026-10-18-capability-architecture.md)。除现状说明外，统一计划、计算池、缓存、REST Catalog、HA 均是目标。
 
@@ -30,9 +30,9 @@
 ### 迁移顺序与兼容
 
 1. 先定义版本化对象/视图描述符及目录解析入口，令固定manifest成为一种登记来源；保留旧M0启动路径作为显式alpha兼容模式，不悄改历史ID。
-2. 在同一dataset上接入资产/片段/特征和受控导入，统一授权/版本/pin，建立公共状态/错误合同。
-3. SQL provider和HTTP任务复用目录与查询上下文，逐项统一过滤/投影、受限关联/聚合、候选与回表，最后接训练选择。每片用旧行为与独立真值对照。
-4. 再按按需provider/流式批次、worker局部读取和有界归并去掉协调器全量rows，完成大于缓存和冷热证据后进入真实多机。
+2. I1先在受保护固定输入上让SQL provider和HTTP任务复用目录与查询上下文，统一已支持的过滤/投影、候选与回表；授权、pin、预算和发布fencing随共同读合同冻结。
+3. I2在同一dataset上接入资产/片段/特征、受控导入与生命周期；I3再接样本选择所需受限关联/聚合与真实框架消费。每片用旧行为与独立真值对照，不要求SQL扫描与ANN排名返回同一列表。
+4. 按需provider/流式批次、worker局部读取和有界归并在上述切片中逐步接入；去掉协调器全量rows并完成相关工作集大于缓存和冷热证据后，才进入真实多机规模验收。
 
 任何持久描述符变化都需旧reader/writer窗口、在途job/pin、备份和新目录重建/向前恢复方案。旧M0/M1兼容路径在替代范围通过后才讨论弃用，不能删除负例或放宽上限让迁移变绿。
 
@@ -41,6 +41,16 @@
 对象存储/Iceberg-Parquet、Arrow/DataFusion、派生Lance与全文/边结构、PG控制面仍是候选默认基线，不因本轮调研整体换库。LanceEnterprise、Vespa或Milvus的服务架构不能当作免费可复用的开源组件。
 
 每份重复数据/索引需登记所有者、输入/版本、完整性、空间/构建/请求成本、恢复方法与旧视图窗口。若不能证明Lance冗余或自定义BM25路径收益，应在固定质量/预算下评估替代并形成ADR；不能未经测量宣布哪种布局更快。原有[ADR 0003](decisions/0003-storage-and-execution-baseline.md)的重评条件继续有效。
+
+### v0.6的规模与消费准入
+
+[ADR0020](decisions/0020-product-review-and-vertical-delivery.md)将共同语义、按需读取与样本消费列为优先。P13在G1内分I1/I2/I3提前真实接线；CF1按A/B/C批次冻结，详见[实施计划](plans/2026-10-20-parallel-delivery.md)。保留Python后台/生态适配，不要求整体重写。
+
+扩大规模前，查询不得依赖协调器持有全部业务rows或每次读取全部源/索引文件。固定snapshot provider向执行层准确声明谓词下推、列/行组裁剪及剩余过滤；候选有界、按稳定ID/version批回表，Arrow流式背压与内存/I/O核算贯穿。全局排序/关联等工作随支持算子独立验收，不能把数据量相关内存隐藏在native进程。
+
+范围读取将固定对象版本、可信清单、完整性模式和缓存验证作为一体合同；整对象SHA-256不能证明任意局部字节。强局部完整性需已认证块摘要/证明或在预算内全对象验证，能力不足明确拒绝相应模式。详细机制与负例见[运行设计](design/outline-runtime-and-operations.md)。
+
+[训练合同](product/training-contract.md)规定sample与record分离、成员/处理版本、组隔离和数据/顺序复现；框架消费状态与数据库查询任务状态分别维护。事实/向量/索引/媒体工作集分别测缓存，物化去留按同质量下的构建、回表、历史保留及恢复成本决定。
 
 ## 1. 架构结论
 
@@ -247,7 +257,7 @@ M3 首个分布式目标是受限任务/分片执行与确定性发布，不从�
 
 ## 10. 训练读取与处理作业
 
-M1 从固定 revision/read view 生成不可变样本 manifest，记录样本 ID、模态引用、split、确定性排序、处理版本和所 pin 的数据；首先证明样本集合可复现。混洗、分片划分、断点和跨 worker 覆盖属于后续训练适配，分别验收。
+M1当前从固定revision/read view导出记录级manifest与split；M2/I3目标增加样本/成员与处理身份、分组隔离及一种真实框架的固定拓扑消费，验证样本字节和声明的顺序/批次复现。混洗、弹性分片和精确断点续读后续分别验收，详见[训练合同](product/training-contract.md)。
 
 后续顺序训练优先批量扫描、Parquet 投影及经认证的 WebDataset 分片；随机/混洗读取验证 Lance 物化、预取和局部性。不要为了逐样本随机读取产生大量对象存储小请求。训练 manifest 不等于已经支持 WebDataset 导出、训练框架 sampler 或消费恢复，三者单独适配。
 

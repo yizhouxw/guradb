@@ -22,6 +22,7 @@ ADR 用来记录已经比较过的方案和取舍。编号只表示记录顺序�
 | [0017](0017-product-database-and-user-manual.md) | 产品级数据库交付与用户手册纠偏 | 接受产品组织原则；共同对象/目录/查询、用户旅程与手册深度待逐片实现验收 |
 | [0018](0018-outline-design-and-module-contracts.md) | 概要设计基线与合同驱动的模块并行 | 接受责任与组织原则；端口schema、组件/性能/云/安全仍待实现验证 |
 | [0019](0019-pr-parallel-development.md) | GitHub PR 与多分支并行开发 | 已采用工程约定；远端保护设置待另行授权和核验 |
+| [0020](0020-product-review-and-vertical-delivery.md) | 图文到训练样板与提前纵向验收 | 接受产品/实施原则；新增schema、功能、规模和生产证据待验证 |
 | [模板](0000-template.md) | 后续决策的记录格式 | 模板 |
 
 ## 优先讨论的问题
