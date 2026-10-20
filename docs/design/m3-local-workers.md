@@ -15,3 +15,5 @@
 本切片提供本地并行执行证据，不把本机共享文件系统等价为远端对象/网络/HA证据。
 
 新版BM25评分与兼容边界见[ADR 0013](../decisions/0013-local-p0-partitions-and-recovery.md)。剩余读取/产物预算等分给worker并在收集结果时汇总；skew可能保守拒绝。worker `work.budget` 和 `work.vector_index` 区分实际成本与小片精确回退；不把本地文件读取字节称为远端网络物理I/O。
+
+本轮内部诊断改动，验收以当前提交报告为准：本地fanout失败时，在原query job私有目录保留每片最后最多8KiB stdout/stderr（最多三片）及PID/退出码，随后照常清理临时任务输入、杀进程组并收割。诊断不复制输入或环境、不由HTTP结果接口公开，随原job retention释放；写入失败或已有不同诊断均不能覆盖原错误或改变deadline。验收见[失败证据计划](../plans/2026-10-20-worker-failure-evidence.md)。

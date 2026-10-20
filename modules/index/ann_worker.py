@@ -12,7 +12,7 @@ def execute(task):
 
     if task['kind'] == 'build-many':
         tasks = task['tasks']
-        require(isinstance(tasks, list) and 1 <= len(tasks) <= 3 and
+        require(isinstance(tasks, list) and 1 <= len(tasks) <= 4 and
                 all(value['kind'] == 'build' for value in tasks), 'invalid_request')
         return [execute(value) for value in tasks]
     if task['kind'] == 'build':

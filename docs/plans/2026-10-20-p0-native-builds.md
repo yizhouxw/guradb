@@ -31,3 +31,9 @@
 新真值用例的初次查询恰落在ANN候选截断同距边界，改用非边界查询隔离批处理正确性；未删除或修改原有用例。首次Python覆盖率发现native正向batch仅在子进程执行而未被父进程coverage采集，补充直接native执行和独立数据集版本查询后全部生产行覆盖。失败现场与日志保留，不改阈值或豁免。
 
 后续最终commit、提交后报告与checkpoint以task receipt为准；远端PR和合并主线必须按实际Actions结果继续验收。
+
+## 远端后续失败与第二轮最小修复
+
+309359b的全树39355246182 Python3.14在graph查询10秒deadline中止，只有两次发布记录（2.25/1.08秒）；不把它当作完整60秒通过。758df5b当前PR39356393863 Python3.11的完整performance-smoke通过，但functional首次exact查询worker_failed，stderr被临时目录清理，另按worker失败证据计划补诊断。Python3.14功能通过，但持续负载末次发布60.456秒超窗，前面各次构建约4.7–6.5秒。
+
+当前follow-up worker-failure-evidence扩展到两条有实测依据的CI义务：诊断保留，以及将同次快照的全局与三个分片ANN改为最多四项的单进程顺序构建。四个数据集/版本/文件摘要不合并，仍全量构建；聚合输入超32MiB退回原单索引进程，查询进程/缓存、工作负载与全部预算不改。snapshot组合根与index内部接口一并复核，允许文件域新增modules/query/snapshot.py、modules/cluster/local.py及对应测试/设计文档；同一实现者独占。旧head结果不替代新候选验证。

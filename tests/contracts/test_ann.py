@@ -12,9 +12,37 @@ from modules.index import ann, ann_worker
 from modules.common.contracts import Budget, Failure, key
 from modules.common.process import run_process
 from modules.index.ann import build, build_many, candidates
+from modules.index.shards import build_snapshot
+from modules.query.snapshot import construct
 
 
 class ANNContract(unittest.TestCase):
+    def test_null_ann_configuration_is_rejected_before_catalog_access(self):
+        target = {'metadata_uri': 'file:///not-read', 'metadata_sha256': '0'*64, 'snapshot_id': '1',
+                  'features_uri': 'file:///not-read', 'features_sha256': '0'*64, 'ann': None}
+        with self.assertRaises(Failure) as caught:
+            construct(None, 'dataset', 'operation', target, '/not-created')
+        self.assertEqual(caught.exception.code, 'invalid_request')
+
+    def test_snapshot_builds_global_and_three_independent_shards_in_one_process(self):
+        rows = [{'logical_key': key(i, 'long'), 'vector': [float(i), float(i % 3)],
+                 'record_version': 'record-'+str(i), 'values': {'id': i}, 'media': []} for i in range(96)]
+        model = {'dimension': 2, 'model': 'test-space', 'metric': 'squared_l2', 'preprocessing': 'identity-v1'}
+        bundle = {'rows': list(reversed(rows)), 'revision': 'revision', 'model': model}
+        with tempfile.TemporaryDirectory() as directory, patch.object(ann, 'run_process', wraps=run_process) as calls:
+            built = build_snapshot(bundle, Path(directory), Budget(seconds=30), {'partitions': 1})
+            self.assertEqual(calls.call_count, 1)
+            self.assertEqual(len(calls.call_args.args[1]['tasks']), 4)
+            self.assertEqual(built['ann']['rows'], 96)
+            self.assertEqual([item['rows'] for item in built['shards']], [32, 32, 32])
+            for index, facts in [(built['ann'], rows)]+[(item['ann'], rows[n::3]) for n,item in enumerate(built['shards'])]:
+                view = {'ann': index, 'rows': facts, 'revision': 'revision', 'model': model}
+                found, _ = candidates(view, [7.25, 1.0], {r['logical_key'] for r in facts}, 4, 1, Budget())
+                expected = sorted([(r['logical_key'], -sum((a-b)**2 for a,b in zip(r['vector'], [7.25, 1.0])))
+                                   for r in facts], key=lambda r: (-r[1], r[0]))[:4]
+                self.assertEqual(found, expected)
+            self.assertNotIn('ann', bundle, 'construct metadata only after the whole batch succeeds')
+
     def test_batch_preserves_independent_versions_and_exhaustive_truth(self):
         model = {'dimension': 2, 'model': 'test-space', 'metric': 'squared_l2', 'preprocessing': 'identity-v1'}
         with tempfile.TemporaryDirectory() as directory:
@@ -46,7 +74,7 @@ class ANNContract(unittest.TestCase):
         model = {'dimension': 1}
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory)/'index'
-            for entries in ([], [(path, rows)]*2, [(path, rows)]*4):
+            for entries in ([], [(path, rows)]*2, [(path, rows)]*5):
                 with self.assertRaises(Failure):
                     build_many(entries, 'revision', model, {'partitions': 1}, Budget())
             self.assertFalse(path.exists(), 'preflight errors must not start native writes')
@@ -54,7 +82,7 @@ class ANNContract(unittest.TestCase):
                 with self.assertRaises(Failure) as caught:
                     build_many([(path, rows)], 'revision', model, {'partitions': 1}, Budget())
             self.assertEqual(caught.exception.code, 'native_failed')
-            for tasks in ([], [{'kind': 'query'}], [{'kind': 'build'}]*4):
+            for tasks in ([], [{'kind': 'query'}], [{'kind': 'build'}]*5):
                 with self.assertRaises(Failure):
                     ann_worker.execute({'kind': 'build-many', 'tasks': tasks})
 

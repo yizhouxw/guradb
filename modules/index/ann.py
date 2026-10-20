@@ -9,11 +9,16 @@ from modules.common.process import run_process
 from modules.storage.objects import get, put
 
 
-def _task(directory, rows, revision, model, config, budget):
+def partitions_for(config, row_count):
     require(isinstance(config, dict) and set(config) == {'partitions'}, 'invalid_request')
     partitions = config['partitions']
     require(type(partitions) is int and 1 <= partitions <= 64 and
-            partitions * 16 <= len(rows) <= MAX_ROWS, 'resource_limit', 'ANN needs at least 16 rows per partition')
+            partitions * 16 <= row_count <= MAX_ROWS, 'resource_limit', 'ANN needs at least 16 rows per partition')
+    return partitions
+
+
+def _task(directory, rows, revision, model, config, budget):
+    partitions = partitions_for(config, len(rows))
     budget.check()
     directory = Path(directory).resolve()
     require(not directory.exists(), 'artifact_conflict')
@@ -44,8 +49,8 @@ def build(directory, rows, revision, model, config, budget):
 
 
 def build_many(entries, revision, model, config, budget):
-    """Build up to three independent shard indexes with one bounded native call."""
-    require(isinstance(entries, list) and 1 <= len(entries) <= 3, 'invalid_request')
+    """Build up to four independent snapshot indexes with one bounded native call."""
+    require(isinstance(entries, list) and 1 <= len(entries) <= 4, 'invalid_request')
     tasks = [_task(directory, rows, revision, model, config, budget) for directory, rows in entries]
     require(len({task['path'] for task in tasks}) == len(tasks), 'artifact_conflict')
     payload = {'kind': 'build-many', 'tasks': tasks}
