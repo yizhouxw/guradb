@@ -72,7 +72,7 @@ flowchart TD
 
 ## 4. 冻结公共合同，而不是共享内部对象
 
-所有合同包含 `contract_version` 和必要的能力声明。以下列最低语义；字段编码、OpenAPI/schema、Rust/Python 映射在 P00 中评审冻结。本次没有新增可执行 API 或 schema。
+所有合同包含 `contract_version` 和必要的能力声明。按[ADR0020](../decisions/0020-product-review-and-vertical-delivery.md)及实施计划分CF1-A共同读、B接入生命周期、C训练消费冻结；各生产切片所需的安全/副作用合同必须先完整冻结，后批不改变前批语义而不升级版本。以下列最低语义；字段编码、OpenAPI/schema、Rust/Python 映射在 P00 中评审冻结。本次没有新增可执行 API 或 schema。
 
 | 合同 / 语义所有者 | 最低内容 | 生产者 → 消费者 / 禁止项 |
 | --- | --- | --- |
@@ -88,8 +88,8 @@ flowchart TD
 | IndexArtifact / index | artifact/build ID、固定revision/schema、逻辑ID/version映射、模型/分析器/距离/参数、覆盖范围与删除水位、分片引用/校验、构建成本、reader能力 | index → catalog验证 → query读取；禁止私有 rowid 作为外部结果 ID |
 | ReadBatch / common包络、connectors/query生成 | context摘要、schema/field IDs、batch序号/结束标志、Arrow schema与批次、逻辑ID/version、顺序/截断、计量与完整性 | provider/算子→下游；不随批次携带全量数据清单或完整凭据 |
 | TaskEnvelope / cluster | task/attempt/op、owner/generation、固定context摘要、shard/算子版本、输入引用、剩余deadline/配额、取消域、trace | query/编排者 → worker；禁止进程本机绝对路径作为跨机数据身份 |
-| TrainingSelection/Manifest/Pin / query选择、catalog保留 | 选择计划摘要、样本ID/模态/标签/特征版本、split/group/seed、固定view、顺序、输出格式、保留承诺/pin到期/释放状态 | query→connectors编码→catalog登记；pin不是访问授权、随机种子不能替代数据固定 |
-| CloudAdapter / storage | 后端标识/endpoint、ObjectRef、范围/条件/版本/完整性能力、短期凭据引用、加密引用、请求计量与错误分类 | storage port→AWS/兼容S3等实现；不返回云SDK对象给上层，不默认所有S3兼容 |
+| TrainingSelection/Manifest/Pin / query选择、catalog保留 | 选择/处理计划摘要、sample及成员角色/版本、持久group/split映射、固定view、采样/尾批/并行拓扑、复现等级、输出格式、保留承诺/pin到期/释放状态 | query→connectors编码→catalog登记；pin不是访问授权、随机种子不能替代数据固定 |
+| CloudAdapter / storage | 后端标识/endpoint、ObjectRef、范围/条件/版本/完整性模式与可信依据、块校验或缓存验证能力、短期凭据引用、加密引用、请求计量与错误分类 | storage port→AWS/兼容S3等实现；不返回云SDK对象给上层，不默认所有S3兼容 |
 
 ReadBatch 在进程内传 Arrow 批次及受控所有权，跨进程使用经协商的 Arrow IPC 或等价有界编码；common 只声明版本化包络/抽象 port，不引入 query 的 DataFusion 计划或具体云 SDK。切换编码单独验证类型、NULL、完整 int8、字节长度、取消和背压；不能由格式可解析推断查询语义兼容。
 
@@ -102,6 +102,14 @@ ReadBatch 在进程内传 Arrow 批次及受控所有权，跨进程使用经协
 5. 完成/取消释放查询 pin；训练/导出成功转为有期限持久消费 pin。源保留达不到承诺时拒绝复现等级；对象摘要不能恢复已被外部删除的字节。
 
 媒体默认通过gateway受控代理按固定版本批量/Range访问，query回表绑定父资产/片段版本，storage核对对象版本/摘要；每次请求重查授权，限制scheme/host/bucket、逐跳重定向和出口地址。直接签名URL是单独显式合同，须披露有效期内撤销限制，不能用旧URL/旧句柄绕过撤权。S2验收必须实际取得图像/片段字节，返回URI不足以证明证据可访问。
+
+### 4.2 按需执行与训练端口的补充
+
+source/provider须准确标记谓词下推能力与剩余过滤，输出有界Arrow批次和I/O/内存计量；index候选携带稳定ID/version与定位，query批回表，不能把完整业务rows包装成描述符。ObjectRef校验模式区分固定版本/后端传输保护、已验证缓存和可信块摘要，不能用全对象摘要替代局部验证，细则见[运行设计](outline-runtime-and-operations.md)。
+
+TrainingSelection的样本语义归query；connectors消费已冻结成员/组结果，不重新split。消费状态包含框架/采样器版本、epoch、并行拓扑、尾批、确认位置及支持的恢复级别，不能与普通query重试混同。集合完整性、采样次数/顺序和模型复现的责任按[训练合同](../product/training-contract.md)分层；大manifest放对象存储，catalog只存描述符与保留责任。
+
+新鲜度与SourceRetentionReceipt包含来源/覆盖依据、期限、续期结果和失败状态；不能用最近轮询时间替代覆盖或把上游保留失败静默降为best-effort。这些字段随CF1-B冻结；I1只允许已保护固定输入的共同读范围。
 
 ## 5. 两种 fencing 与持久状态
 
@@ -150,7 +158,7 @@ GC 先标记 retiring，catalog核对有效源维护回执、内部引用和grac
 | storage↔connectors/index | 固定ObjectRef的内存/本地后端、范围/错误fixture | 真实认证后端、version/range/checksum/限流/对象丢失/取消；各云认证单列 |
 | query↔providers | 小型Arrow批次、精确L2/BM25/关系真值、固定图 | 同dataset SQL/HTTP及训练选择、真实索引/媒体回表；NULL/权限/模型/缺shard不被补默认 |
 | cluster↔worker | 可控重复/迟到/取消的transport fake | 至少3台独立主机/文件系统及真实对象I/O；资源总计、网络隔离、worker死亡、凭据轮换 |
-| 训练↔生命周期 | mock clock/引用图、SourceRetentionReceipt与逐值小样本 | 独立reader、发布/撤权/pin/GC竞争、源维护/重启/保留到期；源仍引用或回执未知时不删除，稳定sample与模态不丢不重 |
+| 训练↔生命周期 | mock clock/引用图、SourceRetentionReceipt与逐值小样本 | 独立reader、发布/撤权/pin/GC竞争、源维护/重启/保留到期；源仍引用或回执未知时不删除，导出sample集合完整唯一、成员版本对齐；消费按采样策略核对 |
 
 contract freeze 包含schema、语义向量、错误/预算、能力协商、兼容矩阵与所有者签字；未freeze前只做原型。兼容分线：公共请求版本、持久描述符版本、算子/worker协议版本、外部格式版本；未知必需能力拒绝，未知可选字段仅在规定可忽略时接受，不能泛用“忽略未知字段”。支持窗口由实测矩阵声明，不预承诺任意新旧版本混跑。
 

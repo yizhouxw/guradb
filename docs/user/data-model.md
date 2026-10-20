@@ -15,6 +15,7 @@
 | 特征 | input_id/version、model_id/version、space、dimension、output_ref | 某个输入的处理输出 |
 | 标签 | target_id/version、label_schema、value、来源 | 人工或模型标注 |
 | 关系 | edge_id/version、typed_source/target、type、evidence | 带类型端点的有向关系 |
+| 训练样本 | sample_id/version、成员角色与对象版本、group_id、recipe_version | 可组合多个记录/片段/标签的消费单位，不复用物理行号 |
 
 资产版本可有多个片段，片段版本可有多个模型特征。父资产更新不证明旧坐标仍正确；新特征不能覆盖旧训练集依赖的输出。关系端点要说明是资产还是片段。
 
@@ -34,6 +35,8 @@
 embedding 记录模型身份/版本、空间、维数、距离和归一化约定。维度相同不证明空间相同；跨模态比较须声明共享空间或融合策略。
 
 模型升级先生成新特征/索引，质量验证后发布新视图；旧消费者结束前保留旧输出。不可重复调用的模型输出要持久保留，不能以索引可重建代替保存特征。
+
+训练样本应分别标记 query、positive、negative、image、label 等成员角色及精确版本；角色按首批样本类型白名单验收。一个记录可参加多个样本，一个样本也可引用多个记录。文档族、实体或近重复组在分块/增强前确定划分，后续片段与副本继承组归属；跨版本沿用持久组映射，规则变化产生新版本。详见[训练合同](../product/training-contract.md)，当前 alpha 尚无这些对象/API。
 
 ## 身份、schema 与变更
 
