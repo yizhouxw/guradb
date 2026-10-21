@@ -1,0 +1,355 @@
+{
+  "fixture_schema": "outline-synthetic-v1",
+  "public_api": false,
+  "dataset_id": "outline-enterprise-synthetic",
+  "language": "zh-CN",
+  "license": "CC0-1.0",
+  "seed": "outline-fixed-20261021",
+  "source_versions": [
+    "source-v1",
+    "source-v2"
+  ],
+  "views": [
+    {
+      "read_view_id": "view-v1",
+      "data_revision_id": "revision-v1",
+      "source_version_id": "source-v1",
+      "records": [
+        {
+          "record_id": "r-a1",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-a2",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-a3",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-a1-copy",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-b1",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-b2",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-b3",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-c1",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-c2",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-c3",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-null",
+          "record_version": "1"
+        }
+      ]
+    },
+    {
+      "read_view_id": "view-v2",
+      "data_revision_id": "revision-v2",
+      "source_version_id": "source-v2",
+      "records": [
+        {
+          "record_id": "r-a1",
+          "record_version": "2"
+        },
+        {
+          "record_id": "r-a2",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-a3",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-a1-copy",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-b1",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-b2",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-b3",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-c1",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-c2",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-c3",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-null",
+          "record_version": "1"
+        }
+      ]
+    }
+  ],
+  "records": [
+    {
+      "record_id": "r-a1",
+      "record_version": "1",
+      "title": "权限撤销说明",
+      "active": true,
+      "priority": 0,
+      "tokens": [
+        "权限",
+        "撤销",
+        "缓存"
+      ],
+      "text_asset": {
+        "asset_id": "asset-a1-v1",
+        "asset_version": "1"
+      },
+      "image_asset": {
+        "asset_id": "asset-a",
+        "asset_version": "1"
+      },
+      "group_id": "family-a",
+      "duplicate_cluster": "dup-r-a1-v1",
+      "source_id": "source-main"
+    },
+    {
+      "record_id": "r-a1",
+      "record_version": "2",
+      "title": "权限撤销说明",
+      "active": true,
+      "priority": 9223372036854775807,
+      "tokens": [
+        "权限",
+        "撤销",
+        "缓存"
+      ],
+      "text_asset": {
+        "asset_id": "asset-a1-v2",
+        "asset_version": "1"
+      },
+      "image_asset": {
+        "asset_id": "asset-a",
+        "asset_version": "1"
+      },
+      "group_id": "family-a",
+      "duplicate_cluster": "dup-a1-current",
+      "source_id": "source-main"
+    },
+    {
+      "record_id": "r-a2",
+      "record_version": "1",
+      "title": "如何申请权限？提交申请并由管理员审批",
+      "active": true,
+      "priority": -9223372036854775808,
+      "tokens": [
+        "权限",
+        "申请"
+      ],
+      "text_asset": {
+        "asset_id": "asset-a2",
+        "asset_version": "1"
+      },
+      "image_asset": null,
+      "group_id": "family-a",
+      "duplicate_cluster": "dup-r-a2-v1",
+      "source_id": "source-main"
+    },
+    {
+      "record_id": "r-a3",
+      "record_version": "1",
+      "title": "缓存刷新说明",
+      "active": false,
+      "priority": 0,
+      "tokens": [
+        "缓存",
+        "刷新"
+      ],
+      "text_asset": {
+        "asset_id": "asset-a3",
+        "asset_version": "1"
+      },
+      "image_asset": null,
+      "group_id": "family-a",
+      "duplicate_cluster": "dup-r-a3-v1",
+      "source_id": "source-main"
+    },
+    {
+      "record_id": "r-a1-copy",
+      "record_version": "1",
+      "title": "权限撤销说明",
+      "active": true,
+      "priority": 7,
+      "tokens": [
+        "权限",
+        "撤销",
+        "缓存"
+      ],
+      "text_asset": {
+        "asset_id": "asset-a1-v2",
+        "asset_version": "1"
+      },
+      "image_asset": null,
+      "group_id": "family-a",
+      "duplicate_cluster": "dup-a1-current",
+      "source_id": "source-mirror"
+    },
+    {
+      "record_id": "r-b1",
+      "record_version": "1",
+      "title": "备份恢复说明",
+      "active": true,
+      "priority": 9007199254740993,
+      "tokens": [
+        "备份",
+        "恢复"
+      ],
+      "text_asset": {
+        "asset_id": "asset-b1",
+        "asset_version": "1"
+      },
+      "image_asset": {
+        "asset_id": "asset-b",
+        "asset_version": "1"
+      },
+      "group_id": "family-b",
+      "duplicate_cluster": "dup-r-b1-v1",
+      "source_id": "source-main"
+    },
+    {
+      "record_id": "r-b2",
+      "record_version": "1",
+      "title": "如何保留备份？登记保留截止时间",
+      "active": false,
+      "priority": -9007199254740993,
+      "tokens": [
+        "备份",
+        "保留"
+      ],
+      "text_asset": {
+        "asset_id": "asset-b2",
+        "asset_version": "1"
+      },
+      "image_asset": null,
+      "group_id": "family-b",
+      "duplicate_cluster": "dup-r-b2-v1",
+      "source_id": "source-main"
+    },
+    {
+      "record_id": "r-b3",
+      "record_version": "1",
+      "title": "恢复校验说明",
+      "active": true,
+      "priority": 11,
+      "tokens": [
+        "恢复",
+        "校验"
+      ],
+      "text_asset": {
+        "asset_id": "asset-b3",
+        "asset_version": "1"
+      },
+      "image_asset": null,
+      "group_id": "family-b",
+      "duplicate_cluster": "dup-r-b3-v1",
+      "source_id": "source-main"
+    },
+    {
+      "record_id": "r-c1",
+      "record_version": "1",
+      "title": "训练分组说明",
+      "active": true,
+      "priority": 12,
+      "tokens": [
+        "训练",
+        "分组"
+      ],
+      "text_asset": {
+        "asset_id": "asset-c1",
+        "asset_version": "1"
+      },
+      "image_asset": {
+        "asset_id": "asset-c",
+        "asset_version": "1"
+      },
+      "group_id": "family-c",
+      "duplicate_cluster": "dup-r-c1-v1",
+      "source_id": "source-main"
+    },
+    {
+      "record_id": "r-c2",
+      "record_version": "1",
+      "title": "如何读取训练样本？固定样本版本与顺序",
+      "active": false,
+      "priority": 13,
+      "tokens": [
+        "训练",
+        "样本"
+      ],
+      "text_asset": {
+        "asset_id": "asset-c2",
+        "asset_version": "1"
+      },
+      "image_asset": null,
+      "group_id": "family-c",
+      "duplicate_cluster": "dup-r-c2-v1",
+      "source_id": "source-main"
+    },
+    {
+      "record_id": "r-c3",
+      "record_version": "1",
+      "title": "分组隔离说明",
+      "active": null,
+      "priority": 14,
+      "tokens": [
+        "分组",
+        "隔离"
+      ],
+      "text_asset": {
+        "asset_id": "asset-c3",
+        "asset_version": "1"
+      },
+      "image_asset": null,
+      "group_id": "family-c",
+      "duplicate_cluster": "dup-r-c3-v1",
+      "source_id": "source-main"
+    },
+    {
+      "record_id": "r-null",
+      "record_version": "1",
+      "title": null,
+      "active": null,
+      "priority": null,
+      "tokens": [],
+      "text_asset": null,
+      "image_asset": null,
+      "group_id": "family-missing",
+      "duplicate_cluster": "dup-r-null-v1",
+      "source_id": "source-main"
+    }
+  ]
+}

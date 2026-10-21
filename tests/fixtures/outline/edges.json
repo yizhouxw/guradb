@@ -1,0 +1,119 @@
+[
+  {
+    "edge_id": "edge-a12",
+    "edge_version": "1",
+    "relation": "cites",
+    "source": {
+      "record_id": "r-a1",
+      "record_version": "2"
+    },
+    "target": {
+      "record_id": "r-a2",
+      "record_version": "1"
+    }
+  },
+  {
+    "edge_id": "edge-a23",
+    "edge_version": "1",
+    "relation": "cites",
+    "source": {
+      "record_id": "r-a2",
+      "record_version": "1"
+    },
+    "target": {
+      "record_id": "r-a3",
+      "record_version": "1"
+    }
+  },
+  {
+    "edge_id": "edge-a31",
+    "edge_version": "1",
+    "relation": "cites",
+    "source": {
+      "record_id": "r-a3",
+      "record_version": "1"
+    },
+    "target": {
+      "record_id": "r-a1",
+      "record_version": "2"
+    }
+  },
+  {
+    "edge_id": "edge-b12",
+    "edge_version": "1",
+    "relation": "cites",
+    "source": {
+      "record_id": "r-b1",
+      "record_version": "1"
+    },
+    "target": {
+      "record_id": "r-b2",
+      "record_version": "1"
+    }
+  },
+  {
+    "edge_id": "edge-b23",
+    "edge_version": "1",
+    "relation": "cites",
+    "source": {
+      "record_id": "r-b2",
+      "record_version": "1"
+    },
+    "target": {
+      "record_id": "r-b3",
+      "record_version": "1"
+    }
+  },
+  {
+    "edge_id": "edge-b31",
+    "edge_version": "1",
+    "relation": "cites",
+    "source": {
+      "record_id": "r-b3",
+      "record_version": "1"
+    },
+    "target": {
+      "record_id": "r-b1",
+      "record_version": "1"
+    }
+  },
+  {
+    "edge_id": "edge-c12",
+    "edge_version": "1",
+    "relation": "cites",
+    "source": {
+      "record_id": "r-c1",
+      "record_version": "1"
+    },
+    "target": {
+      "record_id": "r-c2",
+      "record_version": "1"
+    }
+  },
+  {
+    "edge_id": "edge-c23",
+    "edge_version": "1",
+    "relation": "cites",
+    "source": {
+      "record_id": "r-c2",
+      "record_version": "1"
+    },
+    "target": {
+      "record_id": "r-c3",
+      "record_version": "1"
+    }
+  },
+  {
+    "edge_id": "edge-c31",
+    "edge_version": "1",
+    "relation": "cites",
+    "source": {
+      "record_id": "r-c3",
+      "record_version": "1"
+    },
+    "target": {
+      "record_id": "r-c1",
+      "record_version": "1"
+    }
+  }
+]

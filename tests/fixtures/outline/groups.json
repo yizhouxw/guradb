@@ -1,0 +1,83 @@
+{
+  "rule_version": "explicit-document-family-v1",
+  "dedup_version": "explicit-content-clusters-v1",
+  "near_duplicate_detection": {
+    "status": "missing",
+    "reason": "Only declared exact synthetic duplicates; no real near-duplicate detector"
+  },
+  "seed": "outline-fixed-20261021",
+  "groups": [
+    {
+      "group_id": "family-a",
+      "split": "train",
+      "members": [
+        {
+          "record_id": "r-a1",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-a1",
+          "record_version": "2"
+        },
+        {
+          "record_id": "r-a2",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-a3",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-a1-copy",
+          "record_version": "1"
+        }
+      ]
+    },
+    {
+      "group_id": "family-b",
+      "split": "validation",
+      "members": [
+        {
+          "record_id": "r-b1",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-b2",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-b3",
+          "record_version": "1"
+        }
+      ]
+    },
+    {
+      "group_id": "family-c",
+      "split": "test",
+      "members": [
+        {
+          "record_id": "r-c1",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-c2",
+          "record_version": "1"
+        },
+        {
+          "record_id": "r-c3",
+          "record_version": "1"
+        }
+      ]
+    },
+    {
+      "group_id": "family-missing",
+      "split": "train",
+      "members": [
+        {
+          "record_id": "r-null",
+          "record_version": "1"
+        }
+      ]
+    }
+  ]
+}

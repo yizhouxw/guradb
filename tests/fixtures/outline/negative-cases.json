@@ -1,0 +1,169 @@
+[
+  {
+    "case_id": "duplicate-record",
+    "document": "corpus",
+    "operation": "duplicate",
+    "path": [
+      "records",
+      0
+    ],
+    "error": "duplicate_record"
+  },
+  {
+    "case_id": "null-record-id",
+    "document": "corpus",
+    "operation": "replace",
+    "path": [
+      "records",
+      0,
+      "record_id"
+    ],
+    "value": null,
+    "error": "invalid_identity"
+  },
+  {
+    "case_id": "int8-overflow",
+    "document": "corpus",
+    "operation": "replace",
+    "path": [
+      "records",
+      0,
+      "priority"
+    ],
+    "value": 9223372036854775808,
+    "error": "invalid_int8"
+  },
+  {
+    "case_id": "bool-int8",
+    "document": "corpus",
+    "operation": "replace",
+    "path": [
+      "records",
+      0,
+      "priority"
+    ],
+    "value": true,
+    "error": "invalid_int8"
+  },
+  {
+    "case_id": "wrong-parent-version",
+    "document": "fragments",
+    "operation": "replace",
+    "path": [
+      0,
+      "parent",
+      "record_version"
+    ],
+    "value": "999",
+    "error": "unknown_record"
+  },
+  {
+    "case_id": "invalid-text-coordinate",
+    "document": "fragments",
+    "operation": "replace",
+    "path": [
+      0,
+      "end"
+    ],
+    "value": 1,
+    "error": "invalid_coordinate"
+  },
+  {
+    "case_id": "wrong-model-version",
+    "document": "features",
+    "operation": "replace",
+    "path": [
+      "features",
+      0,
+      "model_version"
+    ],
+    "value": "999",
+    "error": "wrong_feature_space"
+  },
+  {
+    "case_id": "wrong-dimension",
+    "document": "features",
+    "operation": "replace",
+    "path": [
+      "features",
+      0,
+      "vector"
+    ],
+    "value": [
+      0,
+      0
+    ],
+    "error": "wrong_feature_space"
+  },
+  {
+    "case_id": "missing-image",
+    "document": "corpus",
+    "operation": "replace",
+    "path": [
+      "records",
+      1,
+      "image_asset"
+    ],
+    "value": null,
+    "error": "missing_modality"
+  },
+  {
+    "case_id": "sample-member-version",
+    "document": "training",
+    "operation": "replace",
+    "path": [
+      "samples",
+      0,
+      "members",
+      1,
+      "record",
+      "record_version"
+    ],
+    "value": "1",
+    "error": "wrong_member_version"
+  },
+  {
+    "case_id": "duplicate-sample",
+    "document": "training",
+    "operation": "duplicate",
+    "path": [
+      "samples",
+      0
+    ],
+    "error": "duplicate_sample"
+  },
+  {
+    "case_id": "cross-split-member",
+    "document": "training",
+    "operation": "replace",
+    "path": [
+      "samples",
+      0,
+      "split"
+    ],
+    "value": "test",
+    "error": "cross_split_member"
+  },
+  {
+    "case_id": "cross-split-duplicate",
+    "document": "corpus",
+    "operation": "replace",
+    "path": [
+      "records",
+      4,
+      "group_id"
+    ],
+    "value": "family-b",
+    "error": "cross_split_duplicate"
+  },
+  {
+    "case_id": "undeclared-missing",
+    "document": "training",
+    "operation": "replace",
+    "path": [
+      "excluded"
+    ],
+    "value": [],
+    "error": "unreported_missing_modality"
+  }
+]
