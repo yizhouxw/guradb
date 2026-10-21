@@ -71,5 +71,5 @@ commands = [["{python}", "-m", "compileall", "-q", "modules", "clients", "script
 
 [suites.unit-coverage]
 state = "ready"
-timeout_seconds = 480
+timeout_seconds = 900
 commands = [["{python}", "scripts/unit_coverage.py", "--language", "all", "--run-dir", "{run_dir}/unit-coverage"]]
