@@ -167,38 +167,38 @@
     },
     {
       "path": "crates/guradb-query/src/sql.rs",
-      "source_sha256": "7d6753f135345af9470778973129b1df4859892e20a053f1fb4581311ce04f6b",
+      "source_sha256": "d6a77508504f358f0d86cf65e7de8b1cb6901a79edf6e134f6145404973d0880",
       "category": "parser-invariant",
       "reason": "固定PostgreSqlDialect不生成标识符函数、ORDER BY INTERPOLATE/ALL/WITH FILL AST；这些其他dialect防御不会被当前SQL字符串入口触发。禁止为覆盖率扩大语法白名单。",
       "evidence": "Cargo.lock sqlparser 0.58.0；其parser/mod.rs parse_object_name/parse_optional_order_by/parse_order_by_expr的dialect guards；tests/unit/compiler.rs拒绝ORDER BY ALL。",
       "lines": [
         {
-          "number": 123,
+          "number": 103,
           "text": "        return Err(unsupported());"
         },
         {
-          "number": 201,
+          "number": 181,
           "text": "            return Err(unsupported());"
         },
         {
-          "number": 204,
+          "number": 184,
           "text": "            return Err(unsupported());"
         },
         {
-          "number": 216,
+          "number": 196,
           "text": "                return Err(unsupported());"
         }
       ]
     },
     {
       "path": "crates/guradb-query/src/sql.rs",
-      "source_sha256": "7d6753f135345af9470778973129b1df4859892e20a053f1fb4581311ce04f6b",
+      "source_sha256": "d6a77508504f358f0d86cf65e7de8b1cb6901a79edf6e134f6145404973d0880",
       "category": "parser-invariant",
       "reason": "当前parser要求非空SELECT投影，catalog验证schema非空，因此合法入口不能得到空projection。保留失效上游合同的防御。",
       "evidence": "crates/guradb-common/tests/unit/contracts.rs验证manifest空schema拒绝；crates/guradb-query/tests/unit/compiler.rs验证投影白名单及重复列拒绝。",
       "lines": [
         {
-          "number": 187,
+          "number": 167,
           "text": "        return Err(unsupported());"
         }
       ]

@@ -1,3 +1,4 @@
+mod compile;
 pub mod describe;
 pub mod sql;
 
