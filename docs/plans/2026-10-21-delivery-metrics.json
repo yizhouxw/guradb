@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "snapshot": "2026-10-21T13:50Z strategy-v2 actual primitive and bootstrap snapshot",
-  "main_observed_at_utc": "2026-10-21T13:45:00Z",
+  "snapshot": "2026-10-21T14:43:44Z first-delivery-window actual snapshot",
+  "main_observed_at_utc": "2026-10-21T14:19:00Z",
   "main_sha": "1e4f6a6c26eb28982f4b61cc75aa05e290211809",
   "validation_costs": [
     {
@@ -28,13 +28,82 @@
       "harness_tests": 132,
       "contract_tests": 136,
       "comparable_to_catalog_full_quality": false
+    },
+    {
+      "feature": "V2-GATES-engineering",
+      "scope": "normal-hook-and-clean-original-base-post; not product module pass",
+      "head": "82b2bfeeac6fd1186ce33f644e0d38fc4dd263cc",
+      "hook_command_seconds": 121.9333435,
+      "post_seconds": 114.52095325,
+      "reports": [
+        "5ba89b81f6ed61da060945ee8ba388cc8db43a2e9a37ceb70f45f0849db0d14c",
+        "3bedd684a9b520f2f9efe89b3fdbb3a75524bb27d263b28b08bbb9c09cc08f44"
+      ],
+      "suites_each": 5,
+      "product_quality_claim": false
+    },
+    {
+      "feature": "query-storage-scoped-probe",
+      "scope": "strict coverage failed before three M0 modes",
+      "outer_seconds": 192.389681,
+      "planned_after_coverage_modes": 3,
+      "executed_after_coverage_modes": 0,
+      "python_covered": 976,
+      "python_eligible": 976,
+      "rust_covered": 710,
+      "rust_eligible": 711,
+      "result": "failed",
+      "independent_review": "c53194cf3ec69c3144ce2431fbdaa49395772dd87eb0f68cb2b5215289957323",
+      "modular_after_seconds": null
+    },
+    {
+      "feature": "M-STORAGE-direct-fixture-v2",
+      "scope": "26 targeted units then first functional; not full module",
+      "outer_seconds": 29.130642,
+      "functional_seconds": 23.75540566595737,
+      "units_passed": 26,
+      "functional_exit": 1,
+      "dot_put_attempted": false,
+      "result": "failed; before-dot LIST7 vs8 missing repeated-separator",
+      "product_module_pass": false
+    },
+    {
+      "feature": "M-QUERY-owner-tests",
+      "scope": "first normal-hook full module12source/11commands, then original-base post",
+      "head_dependency": "82b2bfeeac6fd1186ce33f644e0d38fc4dd263cc",
+      "status": "first normal-hook module passed; clean original-base post pending",
+      "outer_seconds": null,
+      "reused_commands": 0,
+      "first_complete_attempt_result": "passed",
+      "commit": "ad5c9fe1dcaf887362eef0908715e6fa1e2b96ba",
+      "normal_commit_outer_seconds": 557.1700363,
+      "report": "07df4eaeb76af99230441a9a23b0bcf1a3df0b4ba6843ee486185958cae33cce",
+      "commands_passed": 11,
+      "suites_passed": 9,
+      "rust_raw_lines": 623,
+      "rust_original_owner_excluded_lines": 5,
+      "rust_eligible": 618,
+      "rust_covered": 618,
+      "investment_category": "tests",
+      "new_user_feature_count": 0
     }
   ],
   "first_pass_rate": {
     "passed_first_complete": null,
     "complete_attempted": null,
     "value": null,
-    "reason": "historical first-attempt ledger incomplete; new tasks track by functional ID, no estimate"
+    "reason": "historical functional first-attempt ledger incomplete; query test slice first module attempt passed, clean post pending; internal tests/tool success does not count new user capabilities",
+    "tracked_new_validation_cohort": [
+      {
+        "id": "M-QUERY-owner-tests",
+        "category": "tests",
+        "complete_attempted": 1,
+        "passed_first_complete": 1,
+        "value": 1.0,
+        "status": "normal hook passed; post pending",
+        "new_user_feature_count": 0
+      }
+    ]
   },
   "integration_wait_minutes": null,
   "new_user_journeys": {
@@ -59,6 +128,23 @@
       "service_mutations": 0,
       "outer_seconds": 0.151409792015329,
       "result": "preserved; canonical same repository@digest lookup succeeds; no pull/fallback"
+    },
+    {
+      "feature": "M-STORAGE",
+      "stage": "functional-before-dot-list",
+      "classification": "fixture-diagnostic-vs-product-boundary",
+      "units_executed_passed": 26,
+      "functional_exit": 1,
+      "result": "original FAIL retained; docs-first new recovery476c1; diagnostic expected8 unchanged; new read functional pending"
+    },
+    {
+      "feature": "PR14/15/16",
+      "stage": "GitHub job admission",
+      "classification": "account-billing-or-spending-limit",
+      "quality_tests_executed": 0,
+      "steps_each": [],
+      "observed_at_utc": "2026-10-21T14:33:25Z",
+      "result": "all six jobs not started; no merge/waiver/settings mutation"
     }
   ],
   "investment_categories": [
@@ -96,7 +182,120 @@
   "remote": {
     "catalog_pr": "https://github.com/yizhouxw/guradb/pull/14",
     "head": "86fcaf093deaba98c0495f775ac1d4767bbbf950",
-    "ci": "pending actual verification",
-    "main_integrated": false
+    "strategy_pr": "https://github.com/yizhouxw/guradb/pull/15",
+    "gates_pr": "https://github.com/yizhouxw/guradb/pull/16",
+    "ci": "blocked before steps by account billing/spending limit; not executed",
+    "run_ids": [
+      39610864133,
+      39614317514,
+      39616551823
+    ],
+    "main_integrated": false,
+    "external_owner": "user account administration",
+    "local_owner": "ROOT PR integration"
+  },
+  "integration_wait_observations": [
+    {
+      "feature": "M-CATALOG",
+      "meaning": "elapsed since branch task-finish, not all delay attributable to CI",
+      "since_utc": "2026-10-21T12:55:43Z",
+      "observed_utc": "2026-10-21T14:43:44Z",
+      "minutes": 108.01666666666667,
+      "next_consumer": "real PG reauthorize -> P03/P04; interface pairing pending"
+    }
+  ],
+  "active_tasks": [
+    {
+      "id": "7c8222175e9b48c187c7d1f174032a66",
+      "owner": "p00_cf1a",
+      "scope": "query existing semantics tests + module validation"
+    },
+    {
+      "id": "476c1fbff60a40a9944eb56036716375",
+      "owner": "plan_audit",
+      "scope": "P03 readonly acceptance / fixture diagnostic separation",
+      "original_base": "4d6baca888421d90f146679ef71b0e555fe60881"
+    },
+    {
+      "id": "5e78cdfefe0543f0a2761bfc51735c7d",
+      "owner": "ROOT",
+      "scope": "three plan/progress/metrics docs only"
+    }
+  ],
+  "critical_pair_slices": [
+    {
+      "id": "A",
+      "owner": "plan_audit",
+      "dependencies": [
+        "P03-read-M"
+      ],
+      "real_output": "P03 real object -> P04 single-source ReadBatch",
+      "status": "pending"
+    },
+    {
+      "id": "B",
+      "owner": "plan_audit",
+      "dependencies": [
+        "A"
+      ],
+      "real_output": "full main10+mirror1 and explicit located descriptors; same parent ledger",
+      "status": "pending"
+    },
+    {
+      "id": "C",
+      "owner": "ROOT",
+      "dependencies": [
+        "catalog-controlled-call-interface",
+        "storage-source-parent-control-interface",
+        "A",
+        "B"
+      ],
+      "real_output": "real PG reauthorize/cancel/deadline to read with precise pin cleanup",
+      "status": "pending"
+    },
+    {
+      "id": "D",
+      "owner": "ROOT",
+      "dependencies": [
+        "B",
+        "C",
+        "P05-R2",
+        "query-real-provider-interface"
+      ],
+      "real_output": "real full Source -> Rust bridge; no SealedFixture substitution",
+      "status": "pending"
+    },
+    {
+      "id": "E",
+      "owner": "p00_cf1a",
+      "dependencies": [
+        "B",
+        "C",
+        "D-for-materialize"
+      ],
+      "real_output": "real multi-source BM25/exact artifact/candidate/source materialization; shared retry ledger",
+      "status": "pending"
+    },
+    {
+      "id": "F",
+      "owner": "ROOT",
+      "dependencies": [
+        "C",
+        "D",
+        "E-for-full-I1"
+      ],
+      "real_output": "formal HTTP/PG scan first, then complete I1 retrieval",
+      "status": "pending"
+    }
+  ],
+  "p03_source_recovery": {
+    "task": "476c1fbff60a40a9944eb56036716375",
+    "source_manifest": "2d1dfa7dcf5aaa403959a1d038aa1cfe9c79bc7b4b854f85785b5c6e12e0d2b5",
+    "independent_source_review": "b448c266fc5ed2d71933964caf337e7c33adb1906918ac4fbf115f325172cf44",
+    "root_source_review": "05d4a89c27dca1090995646f032488ff10029c48ce478cba4fd131d9a0fcfde8",
+    "old26tests_and7production_and_audit_unchanged": true,
+    "new_unit_definitions": 8,
+    "new_runtime_result": null,
+    "original_diagnostic": "FAIL retained"
   }
 }
