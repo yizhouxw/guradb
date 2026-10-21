@@ -30,6 +30,56 @@ def request():
 
 
 class RemoteTest(unittest.TestCase):
+    def test_running_output_keeps_valid_result_and_cleans_process(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            tasks = remote_worker.Tasks(root/'tasks', root, SECRET)
+            self.addCleanup(tasks.lease.close)
+            value = request()
+            process = Mock(pid=4321, returncode=None)
+            states = iter((None, 0))
+            def poll():
+                process.returncode = next(states)
+                return process.returncode
+            process.poll.side_effect = poll
+            result = {name: value[name] for name in ('task_id', 'shard', 'fingerprint')}
+            result.update(pid=process.pid, records=3)
+            def spawn(command, **_):
+                Path(command[-1]).write_bytes(encoded(result))
+                return process
+            with patch.object(remote_worker.subprocess, 'Popen', side_effect=spawn) as popen, patch.object(remote_worker, 'stop_group') as stop, patch.object(remote_worker.time, 'sleep') as sleep:
+                actual = tasks.run(value, threading.Event(), time.monotonic()+20)
+            self.assertEqual(actual, dict(result, owner=value['owner'], server_pid=os.getpid()))
+            self.assertEqual(process.poll.call_count, 2)
+            popen.assert_called_once()
+            sleep.assert_called_once_with(.01)
+            stop.assert_called_once_with(process)
+
+    def test_running_oversized_output_rejected_before_exit_and_cleans_process(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            tasks = remote_worker.Tasks(root/'tasks', root, SECRET)
+            self.addCleanup(tasks.lease.close)
+            process = Mock(pid=4321, returncode=None)
+            states = iter((None, 0))
+            def poll():
+                process.returncode = next(states)
+                return process.returncode
+            process.poll.side_effect = poll
+            def spawn(command, **_):
+                with Path(command[-1]).open('wb') as stream:
+                    stream.truncate(remote_worker.MAX_BYTES+1)
+                return process
+            with patch.object(remote_worker.subprocess, 'Popen', side_effect=spawn) as popen, patch.object(remote_worker, 'stop_group') as stop, patch.object(remote_worker.time, 'sleep') as sleep:
+                with self.assertRaises(Failure) as caught:
+                    tasks.run(request(), threading.Event(), time.monotonic()+20)
+            self.assertEqual(caught.exception.code, 'resource_limit')
+            process.poll.assert_called_once_with()
+            self.assertIsNone(process.returncode)
+            popen.assert_called_once()
+            sleep.assert_not_called()
+            stop.assert_called_once_with(process)
+
     def test_scope_replay_cancellation_and_abandoned_result(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()

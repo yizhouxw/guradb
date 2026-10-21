@@ -3,10 +3,13 @@
 import argparse
 from contextlib import contextmanager
 import fcntl
+import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
+import time
 import unittest
 import traceback
 from importlib.metadata import version
@@ -16,6 +19,71 @@ from harnesslib.runner import checkout_digest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+
+
+class PhaseEvidence:
+    """Append durable boundaries; an unmatched start never proves completion."""
+
+    def __init__(self, directory):
+        self.path = directory/'phases.jsonl'
+        self.sequence = 0
+        self.origin = time.monotonic_ns()
+        with self.path.open('x') as stream:
+            self._write(stream, {'event': 'run_started'})
+
+    def _write(self, stream, payload):
+        record = {'schema_version': 1, 'monotonic_ns': time.monotonic_ns(), **payload}
+        stream.write(json.dumps(record, sort_keys=True, allow_nan=False)+'\n')
+        stream.flush()
+        os.fsync(stream.fileno())
+
+    def record(self, event, **payload):
+        with self.path.open('a') as stream:
+            self._write(stream, {'event': event, **payload})
+
+    def run(self, name, operation):
+        self.sequence += 1
+        phase_id = self.sequence
+        started = time.monotonic_ns()
+        self.record('started', phase=name, phase_id=phase_id,
+                    elapsed_seconds=(started-self.origin)/1_000_000_000)
+        try:
+            result = operation()
+        except BaseException as error:
+            self.record('failed', phase=name, phase_id=phase_id,
+                        duration_seconds=(time.monotonic_ns()-started)/1_000_000_000,
+                        exception_type=type(error).__name__)
+            raise
+        self.record('failed' if result is False else 'finished', phase=name, phase_id=phase_id,
+                    duration_seconds=(time.monotonic_ns()-started)/1_000_000_000,
+                    outcome='rejected' if result is False else 'completed')
+        return result
+
+
+def measured(evidence, name, operation):
+    return operation() if evidence is None else evidence.run(name, operation)
+
+
+def evidence_inputs():
+    paths = {ROOT/'Cargo.lock', ROOT/'rust-toolchain.toml', ROOT/'.coveragerc',
+             ROOT/'harness/coverage-exclusions.json', ROOT/'tools/test-coverage/Dockerfile',
+             ROOT/'scripts/unit_coverage.py', *ROOT.glob('requirements*.lock')}
+    return {path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in sorted(paths)}
+
+
+def image_identity(evidence, image):
+    value = subprocess.check_output(['docker', 'image', 'inspect', '--format', '{{.Id}}', image],
+                                    cwd=ROOT, text=True).strip()
+    if len(value) != 71 or not value.startswith('sha256:') or any(c not in '0123456789abcdef' for c in value[7:]):
+        raise ValueError('Docker image identity is not a SHA-256 ID')
+    evidence.record('tool_identity', image_tag=image, image_id=value, observation='after_image_build')
+
+
+def record_identity(evidence, observation):
+    value = identity()
+    evidence.record('source_identity', observation=observation, identity=value, inputs=evidence_inputs())
+    return value
 
 
 @contextmanager
@@ -53,19 +121,28 @@ def python_coverage(directory):
     return result.wasSuccessful() and complete and payload['totals']['missing_lines'] == 0 and payload['totals']['excluded_lines'] == 0
 
 
-def rust_coverage(directory):
+def rust_coverage(directory, evidence=None):
     image = 'guradb-coverage:1.90.0'
-    subprocess.run(['docker', 'build', '-q', '-t', image, '-f', 'tools/test-coverage/Dockerfile', '.'], cwd=ROOT, check=True)
+    measured(evidence, 'docker_image_build', lambda: subprocess.run(
+        ['docker', 'build', '-q', '-t', image, '-f', 'tools/test-coverage/Dockerfile', '.'], cwd=ROOT, check=True))
+    if evidence is not None:
+        evidence.run('docker_image_identity', lambda: image_identity(evidence, image))
     output = directory/'rust.json'
-    subprocess.run(['docker', 'run', '--rm', '-v', f'{ROOT}:/workspace', '-w', '/workspace',
+    measured(evidence, 'rust_collect_test_json', lambda: subprocess.run(
+                    ['docker', 'run', '--rm', '-v', f'{ROOT}:/workspace', '-w', '/workspace',
                     '-v', 'guradb-cargo-registry:/usr/local/cargo/registry', image,
                     'cargo', 'llvm-cov', '--workspace', '--locked', '--ignore-filename-regex', '(^|/)tests/', '--json', '--output-path',
-                    '/workspace/'+output.relative_to(ROOT).as_posix()], cwd=ROOT, check=True)
+                    '/workspace/'+output.relative_to(ROOT).as_posix()], cwd=ROOT, check=True))
     lcov = directory/'rust.lcov'
-    subprocess.run(['docker', 'run', '--rm', '-v', f'{ROOT}:/workspace', '-w', '/workspace',
+    measured(evidence, 'rust_lcov_export', lambda: subprocess.run(
+                    ['docker', 'run', '--rm', '-v', f'{ROOT}:/workspace', '-w', '/workspace',
                     '-v', 'guradb-cargo-registry:/usr/local/cargo/registry', image,
                     'cargo', 'llvm-cov', 'report', '--locked', '--ignore-filename-regex', '(^|/)tests/',
-                    '--lcov', '--output-path', '/workspace/'+lcov.relative_to(ROOT).as_posix()], cwd=ROOT, check=True)
+                    '--lcov', '--output-path', '/workspace/'+lcov.relative_to(ROOT).as_posix()], cwd=ROOT, check=True))
+    return measured(evidence, 'rust_summary', lambda: rust_summary(directory, output, lcov))
+
+
+def rust_summary(directory, output, lcov):
     payload = json.loads(output.read_text())
     sources = {p.relative_to(ROOT).as_posix() for p in (ROOT/'crates').glob('*/src/**/*.rs')}
     files = read_lcov(lcov, sources)
@@ -99,16 +176,17 @@ def main():
         parser.error('run directory must be within workspace')
     directory.mkdir(parents=True, exist_ok=False)
     with exclusive_run(ROOT):
-        before = identity()
+        evidence = PhaseEvidence(directory)
+        before = evidence.run('identity_before', lambda: record_identity(evidence, 'before'))
         outcomes = {}
-        for name, driver in (('python', python_coverage), ('rust', rust_coverage)):
+        for name, driver in (('python', python_coverage), ('rust', lambda path: rust_coverage(path, evidence))):
             if args.language in (name, 'all'):
                 try:
-                    outcomes[name] = driver(directory)
+                    outcomes[name] = evidence.run(name, lambda: driver(directory))
                 except Exception:
                     traceback.print_exc()
                     outcomes[name] = False
-        after = identity()
+        after = evidence.run('identity_after', lambda: record_identity(evidence, 'after'))
         outcomes['unchanged_source'] = before == after
         (directory/'identity.json').write_text(json.dumps({'before': before, 'after': after}, indent=2)+'\n')
         (directory/'result.json').write_text(json.dumps(outcomes, indent=2)+'\n')
