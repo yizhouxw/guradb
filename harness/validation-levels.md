@@ -10,7 +10,7 @@
 
 新报告schema2带requested/effective validation level、selected modules/pair/profile IDs、registry/profile SHA、source denominator清单及原selection_base；校验器重算选择与精确argv/log SHA。module报告不能改名冒充system/release，task-finish/checkpoint归档完整claim。schema1报告沿原plan/scope校验，只能写legacy claim。所有报告仍绑定当前commit、whole checkout摘要，运行中源码变化失败；本片不引入旧结果复用或缓存测试结果。
 
-CI保留quality (Python 3.11/3.14)两个job名字。PR与分支push按auto，main promotion显式system；schedule/manual release保留完整义务。工程job预算必须容纳实际ready commands+一次600秒上传余量且≤hosted360min；planned不执行但release必失败，未来ready超限必须拆分而非减工作量。
+CI保留quality (Python 3.11/3.14)两个job名字。PR按auto，只有main push触发promotion并显式system；工作分支和标签push不另起相同矩阵，分支验证通过开PR或手工workflow_dispatch进入。PR不限制目标branch，依赖PR也必须运行；schedule/manual release保留完整义务。工程job预算必须容纳实际ready commands+一次600秒上传余量且≤hosted360min；planned不执行但release必失败，未来ready超限必须拆分而非减工作量。此触发收紧待本片源码独审及工程实测，不由本页声明远端已验证。
 
 本页先行合同已落实为工程工具源码；当前有限验收及未通过项见下文。提交/推送仍等ROOT分配窗口与独审，不能据工程结果宣称模块、配对或CI通过。
 

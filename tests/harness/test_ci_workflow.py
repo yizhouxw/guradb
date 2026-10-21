@@ -21,6 +21,36 @@ class CIWorkflowTests(unittest.TestCase):
     def setUp(self):
         self.workflow = yaml.load((ROOT / ".github/workflows/check.yml").read_text(), Loader=yaml.BaseLoader)
 
+    def assert_trigger_contract(self, workflow):
+        events = workflow["on"]
+        self.assertEqual(set(events), {"push", "pull_request", "schedule", "workflow_dispatch"})
+        self.assertEqual(events["push"], {"branches": ["main"]})
+        # No base/path filter: stacked PRs targeting a feature branch still run.
+        request = events["pull_request"]
+        self.assertTrue(request is None or request == "" or request == {})
+
+    def test_only_main_pushes_and_unfiltered_prs_schedule_the_matrix(self):
+        self.assert_trigger_contract(self.workflow)
+
+    def test_duplicate_push_or_missing_pr_release_paths_are_rejected(self):
+        for push in ("", {"branches": ["**"]},
+                     {"branches": ["main"], "tags": ["v*"]},
+                     {"branches": ["main"], "paths": ["scripts/**"]}):
+            candidate = copy.deepcopy(self.workflow)
+            candidate["on"]["push"] = push
+            with self.subTest(push=push), self.assertRaises(AssertionError):
+                self.assert_trigger_contract(candidate)
+        for request in ({"branches": ["main"]}, {"paths": ["crates/**"]}):
+            candidate = copy.deepcopy(self.workflow)
+            candidate["on"]["pull_request"] = request
+            with self.subTest(request=request), self.assertRaises(AssertionError):
+                self.assert_trigger_contract(candidate)
+        for event in ("pull_request", "workflow_dispatch", "schedule"):
+            candidate = copy.deepcopy(self.workflow)
+            del candidate["on"][event]
+            with self.subTest(missing=event), self.assertRaises(AssertionError):
+                self.assert_trigger_contract(candidate)
+
     def test_manual_checks_and_tokens_cannot_silently_skip_quality(self):
         workflow = self.workflow
         self.assertEqual(workflow["on"]["workflow_dispatch"]["inputs"]["base"]["default"], "all")

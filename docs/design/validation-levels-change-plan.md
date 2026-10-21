@@ -46,3 +46,13 @@ P01独审指出旧coverage单位临时目录只模拟覆盖数据、不含项目
 ROOT与PlanAudit接受拆成两个有限任务：本工具任务先交付engineering选择、完整owner分母、防伪报告及fail-closed能力；`ready`仅表示命令映射可执行，每次结果仍由strict和真实组件门禁判定。本片还须正常hook首次完整engineering、原base提交后报告、独审及归档，当前hook/提交/post/CI/main均待完成。后续在本工具精确提交HEAD上新建query-only测试任务，仅用有意义的describe正负例闭合owner缺行；保持auto module实际完整11条命令和原3个M0功能/性能/故障出口，不混工具源码、不复制旧失败结果。产品源与工程源混改按现有规则扩大system，此次不改规则来避开它。
 
 这次有限退出不表示整体策略交付完成：模块/真实配对仍待下一片实测，system按稳定批次运行，release planned缺口、原完整命令和原预算仍保持；远端CI与主线合入也不能由本地工程证据替代。
+
+## main push触发收紧（新task先行合同，待实现与验收）
+
+工程工具提交82b2bfee已完成其原1e4 task；本增量在干净82b2上重新task-start，固定base为82b2bfeeac6fd1186ce33f644e0d38fc4dd263cc，task4572e7482b8443c687f26e5e285d5cb6，checkpoint153349-before-gates-v2-main-push-only-ac2b8a7e，继续同一PR16分支。先保全五文件，再改三份说明，最后才改workflow/测试；这不是数据库或产品profile行为变化。
+
+ROOT只读事件snapshot SHA0ddddf5761501dd83c8b565212b2fd23cf35db31d7b629c3d94b8aeb5a620001确认，同一82b2头部有push run39616133984与pull_request run39616551823；仅证明重复调度，计费阻断下不能称两套测试已执行。原workflow同时监听全部push和PR，concurrency含event_name且只取消旧PR，不能跨事件防重。
+
+唯一行为变更是push仅匹配main；PR仍不设base/path过滤并走auto，main promotion仍system，schedule/手工输入/release、两个Pythonjob/PIN/全部argv/预算/strict/planned/always归档完整保留。工作分支与标签push不再另起矩阵；无PR分支应开PR或手工运行，tag未建立发布/CD能力，不借此豁免release。主线system并非应删的重复层。
+
+只拥有workflow、test_ci_workflow.py及本计划/validation-levels/ci-cd五文件。新增声明式触发正负回归，拒绝恢复所有分支push、额外tag/path过滤或只允许main目标PR而跳过依赖PR。先SOURCE冻结及非作者复核；随后按授权正常hook FIRST engineering、新82b2原base clean提交后报告及完整PR1e4另验。此段先行，尚未运行新质量门禁或验证远端调度，不改旧失败/成功报告，不复用其profile给新源码。

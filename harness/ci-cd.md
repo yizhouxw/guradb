@@ -7,12 +7,14 @@ GitHub Actions 作为本项目 CI/CD 的推荐执行平台。当前已有[质量
 | 入口 | 实际范围 | 执行与证据 |
 | --- | --- | --- |
 | pull_request | PR base 的 merge-base 到当前测试树 | 本地同一 harness，锁定依赖，Python 3.11/3.14；新 PR 运行可取消旧 PR 运行 |
-| push | before 到当前树；初次 push 全树 | 不因本地干净而误用空差异；保留失败日志 |
+| push（仅main） | before 到当前树；初次main push全树 | 显式system作为主线promotion；不因本地干净而误用空差异，保留失败日志 |
 | workflow_dispatch | 默认 `base=all`；可明确选择已有 base；scope 为 change/release | 全树检查已提交代码，release 缺任何必需运行时 suite 都失败 |
 
 普通检查250分钟、release 360分钟是当前job上限，不是产品性能目标。按policy实际ready命令数×单命令超时并保留600秒安装/上传余量计算串行上界；普通检查保守计全部ready suites，包含Python和Rust。planned套件立即记录missing、不启动命令，因此没有虚设的一条执行时间，release仍因missing失败；未来变ready并配置命令时必须计入，超限须分段。当前全部ready及余量为14820秒/247分钟，unit-coverage工程watchdog为900秒，既有组件/工作负载阈值不变。GitHub-hosted job受[官方6小时上限](https://docs.github.com/en/actions/reference/limits)约束，自测拒绝写入超过360分钟。冷编译或工具安装超过预算明确失败，远端尚未验证，不能把本地缓存运行当作CI时长证据。完整性能/长稳接入后按受控硬件、对象区域和拓扑拆分专用job/runner；共享hosted runner只证明基础和smoke验证，不建立产品性能基线。
 
 权限仅 contents:read；Actions 固定 commit SHA，checkout 不保留写凭据；输入经 env 和带引号 argv 传给 harness，不将任意 ref 输入拼入 shell 代码。所有必需门禁禁止 continue-on-error。报告在 always 路径上传，matrix 产物各有独立名称；普通 push/release 不通过新任务自动取消。依赖安装或 runner 被中止时可能尚无报告，必须查看 Actions job 状态，不能以“没有红色报告”当通过。[工作流语法](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)。
+
+工作分支及标签push不单独调度该矩阵，避免与同一head的pull_request事件重复调度；需要分支验证时开PR或手动workflow_dispatch。PR保留任意目标branch的auto检查，不能因依赖PR的base不是main而漏验。main push的system层与PR auto层目的不同，继续保留；手工和定时release仍执行完整义务、planned缺失仍失败。本轮观察到同82b2头部的push/pull_request两条run，不代表计费阻断下两套门禁实际执行；触发修订的远端效果仍待真实事件证据，不豁免现有CI。
 
 ## 建立远端后的接入
 
