@@ -38,6 +38,21 @@ class FixturePutFailure(Exception):
                 'backend_error_code': self.backend_code, 'http_status': self.backend_status}
 
 
+def special_fixture_put(client, case_id, key):
+    """Return a fixed version or the one certified negative-only PUT outcome."""
+    try:
+        version = client.put_object(Bucket='m0-data', Key=key, Body=TINY).get('VersionId')
+    except ClientError as error:
+        failure = FixturePutFailure(case_id, error)
+        if not (case_id == 'dot-segment' and failure.backend_code == 'SignatureDoesNotMatch'
+                and failure.backend_status == 403):
+            raise failure from None
+        return failure
+    assert case_id != 'dot-segment', 'uncertified dot-segment PUT unexpectedly succeeded'
+    assert version and version != 'null'
+    return version
+
+
 def rss_bytes():
     peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     return peak if sys.platform == 'darwin' else peak * 1024
@@ -144,13 +159,8 @@ def functional(proxy, client, versions, large, prefix):
     for case_id, key_suffix in (('space', 'with space'), ('unicode-percent-plus', '资料%+'),
                                 ('repeated-separator', 'repeated//path'), ('dot-segment', 'dot/../path')):
         key = prefix + '/' + key_suffix
-        try:
-            version = client.put_object(Bucket='m0-data', Key=key, Body=TINY).get('VersionId')
-        except ClientError as error:
-            failure = FixturePutFailure(case_id, error)
-            if case_id != 'dot-segment':
-                raise failure from None
-            assert failure.backend_code == 'SignatureDoesNotMatch' and failure.backend_status == 403
+        outcome = special_fixture_put(client, case_id, key)
+        if isinstance(outcome, FixturePutFailure):
             # This placeholder is exclusively a local rejection input, never an S3 version claim.
             negative = object_ref(TINY, key=key, version='negative-only-no-backend-version')
             rejected = instance(proxy.endpoint, negative)
@@ -159,13 +169,12 @@ def functional(proxy, client, versions, large, prefix):
             returned = time.monotonic()
             assert proxy.requests == before and rejected.scope.object_requests == 0
             assert rejected.scope.output_bytes == 0
-            results.append({'case': 'dot-segment-backend-put-rejected', 'fixture': failure.diagnostics(),
+            results.append({'case': 'dot-segment-backend-put-rejected', 'fixture': outcome.diagnostics(),
                             'module_input': 'negative-only; not a backend version',
                             'actual_gets': 0, 'usage': rejected.scope.usage(),
                             'scope_io': scope_snapshot(rejected.scope, returned)})
             continue
-        assert case_id != 'dot-segment', 'uncertified dot-segment PUT unexpectedly succeeded'
-        assert version and version != 'null'
+        version = outcome
         encoded_ref = object_ref(TINY, key=key, version=version)
         reader = instance(proxy.endpoint, encoded_ref)
         assert reader.read(reader.scope.binding, encoded_ref, 0, 16) == TINY
