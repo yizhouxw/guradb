@@ -189,6 +189,12 @@ def plan(root: Path, paths: list[str], policy: dict, architecture: dict,
                                             ("tests/faults/", "stability-component", "stability")):
                 if path.startswith(prefix):
                     gates.add(component if path.startswith(prefix + "component/") else full)
+            if path == "scripts/fixed_objects_acceptance.py" or path.startswith("tests/storage_support/"):
+                # Fixture, fault and measurement changes must rerun their actual
+                # component drivers even without a production source change.
+                runtime_changed = True
+                gates.update({"python", "functional", "performance-smoke",
+                              "stability-component", "unit-coverage"})
         dependency_change = (PurePosixPath(path).name in {
             "Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "requirements-m0.lock", "requirements-m1.lock"}
             or path in {"scripts/cargo.py", "scripts/m0.py", "scripts/m1.py", "scripts/m1_acceptance.py"} or path.startswith(("scripts/m0lib/", "scripts/m1lib/")))

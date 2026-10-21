@@ -48,4 +48,4 @@ paths = ["clients/mcp/"]
 allowed = ["common", "client-api"]
 
 [python]
-external = ["pyarrow", "fastavro", "psycopg", "tantivy", "lance", "pyiceberg"]
+external = ["pyarrow", "fastavro", "psycopg", "tantivy", "lance", "pyiceberg", "botocore"]

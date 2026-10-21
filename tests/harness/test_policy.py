@@ -79,6 +79,22 @@ class PolicyTests(unittest.TestCase):
         self.assertTrue({"performance-smoke", "stability-component", "performance", "stability", "soak"}
                         .issubset(self.config[0]["release_suites"]))
 
+    def test_fixed_object_driver_and_support_cannot_bypass_component_gates(self):
+        required = {"python", "functional", "performance-smoke", "stability-component", "unit-coverage"}
+        for path in ("scripts/fixed_objects_acceptance.py", "tests/storage_support/__init__.py",
+                     "tests/storage_support/fixtures.py", "tests/storage_support/fault_server.py",
+                     "tests/storage_support/recording_proxy.py", "tests/storage_support/acceptance.py",
+                     "tests/storage_support/log_capture.py", "tests/storage_support/future_helper.py"):
+            with self.subTest(path=path):
+                result = plan(ROOT, [path], *self.config[:3])
+                self.assertTrue(result["runtime_changed"])
+                self.assertTrue(required.issubset(result["required_suites"]))
+                self.assertFalse({"rust", "performance", "stability", "soak"}
+                                 .intersection(result["required_suites"]))
+        documentation = plan(ROOT, ["tests/storage_support/README.md"], *self.config[:3])
+        self.assertFalse(documentation["runtime_changed"])
+        self.assertEqual(set(documentation["required_suites"]), set(self.config[0]["bootstrap_suites"]))
+
     def test_client_cannot_hide_as_documentation(self):
         result = plan(ROOT, ["clients/cli/main.py"], *self.config[:3])
         self.assertIn("functional", result["required_suites"])
