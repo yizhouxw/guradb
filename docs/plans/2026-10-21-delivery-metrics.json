@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "snapshot": "2026-10-21T14:43:44Z first-delivery-window actual snapshot",
-  "main_observed_at_utc": "2026-10-21T14:19:00Z",
+  "snapshot": "2026-10-21T15:25:04Z actual module/pair checkpoint",
+  "main_observed_at_utc": "2026-10-21T15:18:00Z",
   "main_sha": "1e4f6a6c26eb28982f4b61cc75aa05e290211809",
   "validation_costs": [
     {
@@ -71,7 +71,7 @@
       "feature": "M-QUERY-owner-tests",
       "scope": "first normal-hook full module12source/11commands, then original-base post",
       "head_dependency": "82b2bfeeac6fd1186ce33f644e0d38fc4dd263cc",
-      "status": "first normal-hook module passed; clean original-base post pending",
+      "status": "normal hook and clean original-base post passed; task completed; DraftPR17 depends on16",
       "outer_seconds": null,
       "reused_commands": 0,
       "first_complete_attempt_result": "passed",
@@ -85,14 +85,83 @@
       "rust_eligible": 618,
       "rust_covered": 618,
       "investment_category": "tests",
-      "new_user_feature_count": 0
+      "new_user_feature_count": 0,
+      "post_seconds": 418.63354325,
+      "post_report": "997a9338660db2830aa78ff4126bd16160962c50a6eb97f6797a99ddf86f04b2",
+      "python_covered": 890,
+      "python_eligible": 890,
+      "independent_actual_review": "540f7fbee18ea016134087e4f5084beeea2fa87ae7919f3bae8a19562920aa81"
+    },
+    {
+      "feature": "P03-read-component",
+      "scope": "60 units in two commands plus original readonly functional/performance/fault; not strict/full task",
+      "pure34_seconds": 4.03905012505129,
+      "remaining26_plus_three_modes_seconds": 50.1314470829675,
+      "functional_cases": 12,
+      "performance_cases": 4,
+      "fault_cases": 12,
+      "source_manifest": "2d1dfa7dcf5aaa403959a1d038aa1cfe9c79bc7b4b854f85785b5c6e12e0d2b5",
+      "independent_actual_review": "0c05f60e654897265bfe039783d570555a93bf4b3fba32fa53f5d8a19a81c1b5",
+      "original_mutating_sdk_diagnostic": "FAIL retained; not rerun",
+      "strict_full_pass": false
+    },
+    {
+      "feature": "P04-real-P03-single-source-pair",
+      "scope": "actual immutable object to narrow Parquet ReadBatch; no realPG/Rust/full multiSource/system",
+      "source_manifest": "51601127d5a82c91dc77fa5a445ada83a31ba8d45cfe63999e8cb8010b7fa9d0",
+      "units": 44,
+      "unit_outer_seconds": 0.7776971249841154,
+      "modes": [
+        {
+          "mode": "functional",
+          "cases": 6,
+          "seconds": 17.743405665969476,
+          "report": "f73a4267d6558e3e38b9e67bc95b9da607de06b6e447d51e311c7442605d4b1b"
+        },
+        {
+          "mode": "performance",
+          "cases": 4,
+          "seconds": 16.660156875033863,
+          "report": "92bcd1a34d97d3daa04962e06fc5e054bcf9d4859729008ae648b164073beae2"
+        },
+        {
+          "mode": "fault",
+          "cases": 23,
+          "seconds": 5.619701916002668,
+          "report": "fa040d78a2136217a1af47add3a97cf4791d14644735957086160045a600d800"
+        }
+      ],
+      "three_modes_seconds": 40.02326445700601,
+      "source28_and_resources_unchanged": true,
+      "safe_file_count": 314,
+      "safe_bytes": 3318854,
+      "safe_index": "7dd16227127e9c1cd6c2c7c3c72592a180d90873a76403e635243faa91aa6049",
+      "root_actual_review": "fdd9a13eab7d5b28879262e142de17e3601c60977572c840ef9aeaf1615613a6",
+      "independent_additional_review": "ef3e107e536abbceefa07e5fd8431b1f99039460490d40cd175efe75db00608b",
+      "strict_full_pass": false
+    },
+    {
+      "feature": "P05-M1-native-lib-first",
+      "scope": "complete real Arrow/DF lib tests with sealed fixture provider; not component performance or strict",
+      "source_manifest": "c32f44b69c605ef8db13cc7385aba94ea0a2153e522dbb5abfbccbafec23b968",
+      "tests_passed": 55,
+      "ignored": 0,
+      "filtered": 0,
+      "compile_seconds": 14.85,
+      "test_seconds": 1.49,
+      "outer_seconds": 16.611806916887872,
+      "index": "20de7e61f490c0a517facddaa3954c39f2bc02bda37d585eb305dce8558acb76",
+      "independent_actual_review": "8e51f46b9ae97f9c8791ae596075ab59271ff755e080e4bcc087563a4adbfcdc",
+      "provider_object_io": 0,
+      "native_hard_memory_proved": false,
+      "new_m1_performance_pass": false
     }
   ],
   "first_pass_rate": {
     "passed_first_complete": null,
     "complete_attempted": null,
     "value": null,
-    "reason": "historical functional first-attempt ledger incomplete; query test slice first module attempt passed, clean post pending; internal tests/tool success does not count new user capabilities",
+    "reason": "historical functional first-attempt ledger incomplete; new query test slice first full module passed and post complete; native/lib and local pair command cohorts separately reported, not new system/user features",
     "tracked_new_validation_cohort": [
       {
         "id": "M-QUERY-owner-tests",
@@ -100,8 +169,26 @@
         "complete_attempted": 1,
         "passed_first_complete": 1,
         "value": 1.0,
-        "status": "normal hook passed; post pending",
+        "status": "normal hook plus clean original-base post passed; task completed",
         "new_user_feature_count": 0
+      }
+    ],
+    "phase_only_cohorts": [
+      {
+        "id": "P05-M1-native-lib-first",
+        "scope": "native lib phase only",
+        "complete_attempted": 1,
+        "passed_first_complete": 1,
+        "value": 1.0,
+        "complete_module_claim": false
+      },
+      {
+        "id": "P04-current-single-source-pair-three-drivers",
+        "scope": "three existing component drivers on new fixed source; not entire task or historical first pass",
+        "complete_attempted": 1,
+        "passed_first_complete": 1,
+        "value": 1.0,
+        "complete_module_claim": false
       }
     ]
   },
@@ -135,7 +222,7 @@
       "classification": "fixture-diagnostic-vs-product-boundary",
       "units_executed_passed": 26,
       "functional_exit": 1,
-      "result": "original FAIL retained; docs-first new recovery476c1; diagnostic expected8 unchanged; new read functional pending"
+      "result": "original FAIL retained; expected8 unchanged; new readonly product cohort passed separately on source2d1d; SDK diagnostic not rerun"
     },
     {
       "feature": "PR14/15/16",
@@ -145,6 +232,15 @@
       "steps_each": [],
       "observed_at_utc": "2026-10-21T14:33:25Z",
       "result": "all six jobs not started; no merge/waiver/settings mutation"
+    },
+    {
+      "feature": "PR14/15/16/17",
+      "stage": "latest head GitHub job admission",
+      "classification": "account-billing-or-spending-limit",
+      "quality_tests_executed": 0,
+      "jobs_not_started": 8,
+      "observed_at_utc": "2026-10-21T15:17:15Z",
+      "result": "all latest-head jobs have0 steps and payment/spending-limit annotation; no merge/waiver/settings mutation"
     }
   ],
   "investment_categories": [
@@ -187,12 +283,20 @@
     "ci": "blocked before steps by account billing/spending limit; not executed",
     "run_ids": [
       39610864133,
-      39614317514,
-      39616551823
+      39622464153,
+      39616551823,
+      39622252811
     ],
     "main_integrated": false,
     "external_owner": "user account administration",
-    "local_owner": "ROOT PR integration"
+    "local_owner": "ROOT PR integration",
+    "query_owner_pr": "https://github.com/yizhouxw/guradb/pull/17",
+    "strategy_head": "6a56e541cff58e971a5f873c921c210727611410",
+    "gates_head": "82b2bfeeac6fd1186ce33f644e0d38fc4dd263cc",
+    "query_owner_head": "ad5c9fe1dcaf887362eef0908715e6fa1e2b96ba",
+    "latest_snapshot": "099b49b1fc234c7b01e1082dab6dcbb4a0b5b0f74259f5475aba9302e161b74a",
+    "latest_observed_at_utc": "2026-10-21T15:17:15Z",
+    "jobs_not_started": 8
   },
   "integration_wait_observations": [
     {
@@ -202,24 +306,41 @@
       "observed_utc": "2026-10-21T14:43:44Z",
       "minutes": 108.01666666666667,
       "next_consumer": "real PG reauthorize -> P03/P04; interface pairing pending"
+    },
+    {
+      "feature": "M-CATALOG",
+      "meaning": "branch task-finish to current snapshot; not all delay attributable to CI",
+      "since_utc": "2026-10-21T12:55:43Z",
+      "observed_utc": "2026-10-21T15:25:04Z",
+      "minutes": 149.35,
+      "next_consumer": "controlled real PG->read interface still pending"
     }
   ],
   "active_tasks": [
     {
-      "id": "7c8222175e9b48c187c7d1f174032a66",
-      "owner": "p00_cf1a",
-      "scope": "query existing semantics tests + module validation"
+      "id": "a333a15a124b498da3774a1c8fe64b2e",
+      "owner": "ROOT",
+      "scope": "three plan/progress/metrics files only"
     },
     {
       "id": "476c1fbff60a40a9944eb56036716375",
       "owner": "plan_audit",
-      "scope": "P03 readonly acceptance / fixture diagnostic separation",
-      "original_base": "4d6baca888421d90f146679ef71b0e555fe60881"
+      "scope": "P03 recovery component stable, old-base strict/full/commit still pending",
+      "original_base": "4d6baca888421d90f146679ef71b0e555fe60881",
+      "behavior_writer_dispatched": false
     },
     {
-      "id": "5e78cdfefe0543f0a2761bfc51735c7d",
-      "owner": "ROOT",
-      "scope": "three plan/progress/metrics docs only"
+      "id": "4696bbe16be041d3b900019fe2fd08b3",
+      "owner": "plan_audit",
+      "scope": "P04 current real pair stable; only B source plan preparation now",
+      "original_base": "17d66c66a067eebe73280ce8d3488fb4f7cdcfe9",
+      "behavior_writer_dispatched": false
+    },
+    {
+      "id": "bc81c2ae8eb94fb99a646c061a61c35c",
+      "owner": "p00_cf1a",
+      "scope": "P05 first native55 stable; only next actual M1 component probe plan now",
+      "behavior_writer_dispatched": false
     }
   ],
   "critical_pair_slices": [
@@ -230,7 +351,10 @@
         "P03-read-M"
       ],
       "real_output": "P03 real object -> P04 single-source ReadBatch",
-      "status": "pending"
+      "status": "local actual singleSource component pair passed; strict/full original task pending",
+      "source_manifest": "51601127d5a82c91dc77fa5a445ada83a31ba8d45cfe63999e8cb8010b7fa9d0",
+      "root_actual_review": "fdd9a13eab7d5b28879262e142de17e3601c60977572c840ef9aeaf1615613a6",
+      "independent_actual_review": "ef3e107e536abbceefa07e5fd8431b1f99039460490d40cd175efe75db00608b"
     },
     {
       "id": "B",
@@ -239,7 +363,7 @@
         "A"
       ],
       "real_output": "full main10+mirror1 and explicit located descriptors; same parent ledger",
-      "status": "pending"
+      "status": "minimal next slice source plan; no implementation yet"
     },
     {
       "id": "C",
@@ -295,7 +419,88 @@
     "root_source_review": "05d4a89c27dca1090995646f032488ff10029c48ce478cba4fd131d9a0fcfde8",
     "old26tests_and7production_and_audit_unchanged": true,
     "new_unit_definitions": 8,
-    "new_runtime_result": null,
+    "new_runtime_result": {
+      "component": "passed",
+      "unit_count": 60,
+      "functional": 12,
+      "performance": 4,
+      "faults": 12,
+      "root_release": "5ad7d23c4c107ef3ea2043f163933e7f6d117825ea747eb78e7cddb5dc750419",
+      "independent_actual_review": "0c05f60e654897265bfe039783d570555a93bf4b3fba32fa53f5d8a19a81c1b5",
+      "strict_full_task_pass": false
+    },
     "original_diagnostic": "FAIL retained"
-  }
+  },
+  "pair_wait_observations": [
+    {
+      "id": "A",
+      "meaning": "P03 ROOT read component release to first real P04 functional command; not full module certification",
+      "stable_since_utc": "2026-10-21T14:57:38Z",
+      "consumer_started_utc": "2026-10-21T15:18:34Z",
+      "seconds": 1256,
+      "minutes": 20.933333333333334,
+      "released_utc": "2026-10-21T15:20:01Z"
+    }
+  ],
+  "wip": {
+    "actual_slots": 4,
+    "behavior_limit": 2,
+    "running_behavior_at_snapshot": 0,
+    "next_behavior_tasks": [
+      "B-multisource-located",
+      "P05-M1-component-exit"
+    ],
+    "runtime_window_owner": null,
+    "role_count_is_not_concurrency": true
+  },
+  "investment_observations": {
+    "scope": "this strategy delivery window only; phase/module/system counts kept separate",
+    "rust_behavior": {
+      "new_m1_native_lib_phase_passed": 1,
+      "tests_executed": 55,
+      "new_m1_complete_module_passed": 0,
+      "new_user_journeys_passed": 0
+    },
+    "public_contract": {
+      "requirements_defined": 42,
+      "strategy_pr_document_files": 19,
+      "new_user_feature_count": 0
+    },
+    "tests": {
+      "query_owner_added_describe_cases": 2,
+      "p03_added_read_acceptance_units": 8,
+      "p04_added_fixture_identity_units": 6,
+      "p05_added_independent_result_cases": 7,
+      "full_query_existing_module_test_slice_passed": 1,
+      "new_user_feature_count": 0
+    },
+    "engineering_tools": {
+      "gates_pr_source_files": 21,
+      "engineering_suites_each_round": 5,
+      "harness_tests_each_round": 132,
+      "contract_tests_each_round": 136,
+      "product_module_certifications_from_tools": 0
+    }
+  },
+  "engineering_next_slice": {
+    "owner": "p00_cf1a",
+    "scope": "bounded phase/dirty-reason observations within original commands, module Python registry when real owner closure exists",
+    "change_cached_semantics_workload_or_threshold": false,
+    "evidence_archive": "single-pass current writer index; preserve historical profiles without repeated scanning",
+    "performance_speedup_claim": null
+  },
+  "next_slice_plans": [
+    {
+      "id": "P05-M1-component-probe",
+      "owner": "p00_cf1a",
+      "source_plan": "78092508679b7ef53d3ca6217c597304f1eb65bc258b081abfa545069fce9eda",
+      "state": "source-only; no new implementation or benchmark",
+      "proposed_parent_managed_memory_bytes": 268435456,
+      "budget_state": "proposed pending pre-implementation review; not a measured product default",
+      "files_proposed": [
+        "crates/guradb-query/examples/fixed_m1_probe.rs",
+        "scripts/fixed_query_acceptance.py"
+      ]
+    }
+  ]
 }

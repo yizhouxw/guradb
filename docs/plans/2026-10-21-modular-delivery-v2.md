@@ -12,10 +12,10 @@
 
 | 槽位 / 具名负责人 | 当前任务及唯一文件域 | 下一职责 / 独立审查 |
 | --- | --- | --- |
-| ROOT：项目经理、集成与文档 | `codex/strategy-v2`，首片 `96cfa` 已结项、[PR15](https://github.com/yizhouxw/guradb/pull/15)；本轮 task `5e78cdfefe0543f0a2761bfc51735c7d` 只更新计划/事实/度量；协调全部共享写权 | 维护关键路径、接受交接、排资源与批次、消除阻塞；入口/组合根实现；不自批自己的实现 |
+| ROOT：项目经理、集成与文档 | `codex/strategy-v2` 两片已结项至 `6a56e54`、[PR15](https://github.com/yizhouxw/guradb/pull/15)；本轮 task `a333a15a124b498da3774a1c8fe64b2e` 仅更新计划/事实/度量；协调共享写权 | 维护关键路径、接受交接、排资源与批次、消除阻塞；入口/组合根实现；不自批自己的实现 |
 | p01_oracles：产品经理、测试 | 需求粒度/正负验收、独立真值、物理 PG 官方研究及有界原型；当前只在其独占 ignored 目录准备，tracked 由 ROOT 整合 | 独审架构/用户合同，随后承担真实配对与用户系统验证；自己写的 oracle/原型由 ROOT 或架构师审 |
-| plan_audit：架构师、模块开发 | 已完成 harness 非作者审查；现独占 `codex/p03-read-module-recovery`，task `476c1fbff60a40a9944eb56036716375` 的 P03 先行合同、夹具/验收分派 | storage/connectors 小片；其 P03 实现由 p01 与 ROOT 审，不继续自审；随后接真实对象/源配对 |
-| p00_cf1a：模块开发、工程工具 | `gates-v2` task `972583` 已结项、[PR16](https://github.com/yizhouxw/guradb/pull/16)；现独占 `codex/query-owner-inference-tests`，task `7c8222175e9b48c187c7d1f174032a66` 的两文件补测与完整模块验证 | 随后收尾 P05 结果预约；common/catalog/index 按稳定点顺序接权，不同时开三个包 |
+| plan_audit：架构师、模块开发 | P03 只读组件已验；`codex/p04-fixed-source-p03` task `4696bbe16be041d3b900019fe2fd08b3` 的原真实对象→源配对已重新实测；现在只准备 B 多来源最小切片 | storage/connectors 单一 writer；其实现由 p01 与 ROOT 审。P03/P04 原 receipt 的 strict/full/提交出口尚未完成，不并开两套行为修改 |
+| p00_cf1a：模块开发、工程工具 | 工具 PR16 与 query 补测 task7c822 已结项，补测 [Draft PR17](https://github.com/yizhouxw/guradb/pull/17) 依赖 PR16；当前 P05 task `bc81c2ae8eb94fb99a646c061a61c35c` 首次完整 Rust lib 55 项已验 | 下一片为新 M1 真实组件性能/故障与 strict，先冻结最小 probe 及预算；随后提供真实 Source 消费接口。common/catalog/index 按稳定点顺序接权 |
 
 同时最多两项行为实现，保留审查能力；角色数不等于并发数。普通无污染单元、源码审查和隔离功能夹具可并行；性能测量独占同一物理资源，coverage 互斥其 target/profile，迁移/组合根有唯一窗口。端口、网络、对象前缀和数据目录必须各自隔离，不把所有测试长期串成整库窗口。
 
@@ -26,9 +26,9 @@
 | V2-GATES | p00；`82b2bfe` 工具分支正常 hook/原 base post 各 5/5，非作者独审完成，PR16 待 CI/main | 初始只映射 Rust query/storage 与 legacy-M0；无映射扩大范围。代表性 strict 曾实测 710/711 而失败，不能标模块通过 |
 | V2-PRODUCT | ROOT；42 条需求、唯一 owner、预算/错误与版本研究已交 PR15，非作者产品/架构审查及两轮文档检查完成 | 每个开发 DRI；未冻参数/预算的具体需求先交冻结小片，其他已闭合小片继续 |
 | M-CATALOG | ROOT 闭合已验 P02 分支：`86fcaf0`，真实 PG 六轮证据已独审、task-finish/正常推送已完成；[PR14](https://github.com/yizhouxw/guradb/pull/14)已创建，双 CI/main 待闭合 | PG 父期限与对象授权配对；连接器 HTTP429仍保留；ROOT已用现有认证的标准API解除PR创建阻塞，继续跟踪CI，不阻止本地模块 |
-| M-STORAGE | plan_audit；镜像身份已校正，26 定向单元通过；真实 functional 在 dot 之前因 LIST 缺 repeated-separator 失败，原失败保留。新 task 从原 4d 恢复，先行合同分离只读验收与 SDK 写入诊断，再重新验证 | P04 真源；全部合法 special key 固定 GET、预算/成本/故障义务不变；SDK 版本账诊断保持原断言与 FAIL，不改 8 为 7 |
-| M-QUERY | p00；先以两例公共 Describe 测试补本模块数值推断缺口，首次完整 12 源/11 命令及原三个 M0 模式已通过，提交 ad5c9fe，clean post 待完成；再收尾 P05 a925 的完整结果 Value 树预约 | 真实 Source 消费；保留 P05 原 26 测试及新增负例、全部 11 成员/8192 负载，不等待公开入口全部实现 |
-| P-OBJECT-SOURCE | plan_audit 实现、p01 测试：P03↔P04 真对象版本/批次/错误/费用；每端模块证据先稳定 | Rust query；不等 writer/训练/全部湖格式 |
+| M-STORAGE | plan_audit；原诊断 FAIL 保留。新 source44 `2d1dfa7d` 已通过 60 项单元及原只读功能12/性能4/故障12，ROOT与p01独立核原件；原 4d receipt 的 strict/full/提交仍待完成 | 已解除 P04 配对等待；全部合法 special key 固定 GET、0IO dot 拒绝、预算/费用均保留；SDK 写入诊断仍不改 8 为 7、不标绿 |
+| M-QUERY | p00；Describe 补测 `ad5c9fe` 的正常 hook/clean post 均 9 suite/11 命令、完整12生产源 strict 与原三个 M0 已验，task7c822 已结项。P05 新 source31 `c32f44b6` 首次完整 lib 55/55，经 p01 非作者实物复核 | P05 新 M1 的 strict/组件性能/故障仍待验，真实 Source 消费接口仍缺；保留全11成员/8192原负载，不以旧M0证据代验新M1 |
+| P-OBJECT-SOURCE | plan_audit 实现、p01与ROOT独审：新 source28 `51601127` 的 44单元、原6功能/4性能/23故障实际通过，真实 P03→P04 单 SourceVersion 读取；资源已释放 | A 本地配对稳定点；不是完整多来源 B、整项 strict、PG/Rust、主线或 I1。下一消费者先实现完整两来源及 located 出口 |
 | P-CONTROL-READ | ROOT 装配、catalog/storage owner 修各自实现：真实 PG 绑定/reauth→对象，同父 deadline/cancel/ledger | Source/Rust；真实暂停 PG、对象故障与撤权；同步 trait 或内存 callback 不能充当网络期限认证 |
 | P-SOURCE-QUERY | ROOT 组合、两端 owner 实现：有界私有 bridge，Python 真源→Rust 唯一 SQL/Arrow/DF，完整两来源 11 成员/稳定 ID | 正式 HTTP/PG；限定 IPC/错误费用/取消与 reap 证明先复核，不另建 Python SQL 引擎 |
 | S-SCAN / I1 | ROOT 批次集成，p01 独立用户旅程：先 PG→S3→Parquet→Rust 扫描端到端，再接 P06 候选/回表/正式入口完成原 I1 | I2→I3；扫描成功单列，不把它改称完整 I1 |
@@ -49,6 +49,8 @@
 
 顺序为 P03 M→A→B，P05 R2 可与 A 独立；C 供应方接口可先准备，真实 PG→读取需稳定 A/B；D 需 B+C+P05，E 构建/产物读可在 B/C 后、候选回表需 D，F 先接 D。完整 11 成员在既有 cap 内，但不推出 8192/10k 整链支持；P05 原 8192/32 batch 验收另保留。子期限取父更小者，不能将 P04 页/查询、P06 build/query 和宿主预算相加或重开 TTL。各 M/P/S 结果分别记录，A 通过不省 B–F。
 
+本轮已实际启动 A：从 P03 只读组件 ROOT 确认稳定点 14:57:38 到 P04 首个真实功能命令 15:18:34 约 20.9 分钟，15:20 已清理并释放。该记录只计算这次局部交接等待，不把两端历史模块各绿当配对，也不把 A 内单 SourceVersion 的11行当 B 的 main10+mirror1 两来源。B 与 P05 模块验收成为下一两项行为工作；ROOT 先冻结它们各自最小接口/预算，再排真实 C/D。
+
 ## 四层验证和 CI
 
 | 层 | 触发与范围 | 完成含义 |
@@ -60,7 +62,7 @@
 
 机器实现由 `gates-v2` 任务提供 `--level auto/module/pair/system/release`、明确 module/pair registry 和 v2 证据绑定；**此策略页本身不证明代码已生效**。pre-commit/PR 自动选实际范围；main/system 与手工 release 分开。未知 owner、未认证映射、公共合同或无法证明影响范围的变更扩大检查；显式要求过窄范围要拒绝。报告和 receipt 固定 level、模块、源闭包、命令/预算、profile 摘要与原始任务基点，模块报告不能冒充 system/release。
 
-14:33 UTC 核对：PR14/15/16 的两版本 Actions 均因账户付款/支出额度未启动，`steps=[]`。这不是源码测试失败，也没有 CI 通过证据；ROOT 已请求用户处理账户，保持合入条件，继续本地模块/配对。工具只在 PR16 分支已实现和验证，尚未在主线生效。
+15:17 UTC 在各最新 head 核对：PR14/15/16/17 的 8 个两版本 Actions 作业均因账户付款/支出额度未启动，执行步骤为 0。没有 CI 通过证据；ROOT 已请求用户处理账户，保持合入条件，继续本地模块/配对。15:18 fetch 的 main 仍为 `1e4f6a6`；工具在 PR16 分支已实现和验证，主线尚未生效。合入按依赖排 PR15/16、PR17（依赖16），P02与后续读取切片按各自原始范围集成；不跳过远端和合并后系统验证。
 
 工程工具变更运行完整 harness 自测、选择器差异、真实 CLI/报告伪造负例及代表性模块路径；不凭空把所有工具源码加入生产覆盖分母。已有生产严格覆盖、原始性能负载/时限、Rust 有限排除和发布义务保持。门禁调整须非作者审查并给 before/after 实际选择与运行耗时；缺失映射公开列出，不把“有 registry”当已优化所有模块。
 
