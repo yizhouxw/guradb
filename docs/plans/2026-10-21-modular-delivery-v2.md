@@ -12,10 +12,10 @@
 
 | 槽位 / 具名负责人 | 当前任务及唯一文件域 | 下一职责 / 独立审查 |
 | --- | --- | --- |
-| ROOT：项目经理、集成与文档 | `codex/strategy-v2` 两片已结项至 `6a56e54`、[PR15](https://github.com/yizhouxw/guradb/pull/15)；本轮 task `a333a15a124b498da3774a1c8fe64b2e` 仅更新计划/事实/度量；协调共享写权 | 维护关键路径、接受交接、排资源与批次、消除阻塞；入口/组合根实现；不自批自己的实现 |
+| ROOT：项目经理、集成与文档 | `codex/strategy-v2` 两片已结项至 `6a56e54`、[PR15](https://github.com/yizhouxw/guradb/pull/15)；前片已结项至`8823331`；本轮 task `c4363c6eab934e95953930c3cabf54bf` 仅更新计划/事实/度量；协调共享写权 | 维护关键路径、接受交接、排资源与批次、消除阻塞；入口/组合根实现；不自批自己的实现 |
 | p01_oracles：产品经理、测试 | 需求粒度/正负验收、独立真值、物理 PG 官方研究及有界原型；当前只在其独占 ignored 目录准备，tracked 由 ROOT 整合 | 独审架构/用户合同，随后承担真实配对与用户系统验证；自己写的 oracle/原型由 ROOT 或架构师审 |
-| plan_audit：架构师、模块开发 | P03 只读组件已验；`codex/p04-fixed-source-p03` task `4696bbe16be041d3b900019fe2fd08b3` 的原真实对象→源配对已重新实测；现在只准备 B 多来源最小切片 | storage/connectors 单一 writer；其实现由 p01 与 ROOT 审。P03/P04 原 receipt 的 strict/full/提交出口尚未完成，不并开两套行为修改 |
-| p00_cf1a：模块开发、工程工具 | 工具 PR16 与 query 补测 task7c822 已结项，补测 [Draft PR17](https://github.com/yizhouxw/guradb/pull/17) 依赖 PR16；当前 P05 task `bc81c2ae8eb94fb99a646c061a61c35c` 首次完整 Rust lib 55 项已验 | 下一片为新 M1 真实组件性能/故障与 strict，先冻结最小 probe 及预算；随后提供真实 Source 消费接口。common/catalog/index 按稳定点顺序接权 |
+| plan_audit：架构师、模块开发 | P03 只读组件已验；`codex/p04-fixed-source-p03` task `4696bbe16be041d3b900019fe2fd08b3` 的原真实对象→源配对已重新实测；B1双源实际配对已验，现实施B2显式located SOURCE | storage/connectors 单一 writer；其实现由 p01 与 ROOT 审。P03/P04 原 receipt 的 strict/full/提交出口尚未完成，不并开两套行为修改 |
+| p00_cf1a：模块开发、工程工具 | 工具 PR16 与 query 补测 task7c822 已结项，补测 [Draft PR17](https://github.com/yizhouxw/guradb/pull/17) 依赖 PR16；当前 P05 task `bc81c2ae8eb94fb99a646c061a61c35c` 首次完整 Rust lib 55 项已验 | 新M1 probe已固定预算并写出SOURCE，按独审修正query身份/启动生命周期/T0，尚未新实测；随后提供真实 Source 消费接口。common/catalog/index 按稳定点顺序接权 |
 
 同时最多两项行为实现，保留审查能力；角色数不等于并发数。普通无污染单元、源码审查和隔离功能夹具可并行；性能测量独占同一物理资源，coverage 互斥其 target/profile，迁移/组合根有唯一窗口。端口、网络、对象前缀和数据目录必须各自隔离，不把所有测试长期串成整库窗口。
 
@@ -41,7 +41,7 @@
 | 小片 / DRI | 固定输入 → 验收出口 | 开工依赖与已查明缺口 |
 | --- | --- | --- |
 | A / plan_audit | P03 真固定 metadata/Parquet → P04 单 source 真 ReadBatch；逐 cell/ID/version/费用及坏 footer/撤权/取消 | P03 读取稳定即可启动；构造接口现可相接，不等 PG/Rust/index；通过只记单 source pair |
-| B / plan_audit | 同一完整 revision 的 main10+mirror1 → 全 11 成员与显式 located 描述符、同父账 | A；P04 仍限制一个 source，locations 只有私有状态。不得拆子 view、猜 ordinal 或省 mirror；保留 1000 行/4 文件/16 rowgroup cap |
+| B / plan_audit | 同一完整 revision 的 main10+mirror1 → 全 11 成员与显式 located 描述符、同父账 | A；B1两来源真实组件已验，B2仍须显式located出口。不得拆子 view、猜 ordinal 或省 mirror；保留 1000 行/4 文件/16 rowgroup cap |
 | C / ROOT | P02 真 PG bind/reauthorize/release → B 原期限/取消/授权与精确 lease 清理 | catalog owner 先交受控调用接口，storage/source owner 交父控制接入口；现网络 reauthorize 不能直接塞入仅认证内存 callback，真实 PG 暂停/撤权须验 |
 | D / ROOT | B 全 11 批流+C 父控制 → P05 唯一 Rust Compiler/Arrow/DF 值、身份血缘和真实账 | P05 R2 稳定后 query owner 先交真实 provider 消费者，ROOT 再写有界私有 bridge；现 `execute_fixture(SealedFixture)` 的 0 对象 I/O 账不能包装真源冒充配对；IPC 取消/回收/错尾输入须验 |
 | E / p00 | B located+批流 → 真 BM25/exact 产物；P03 读产物→候选；D 真回表 | B+C；现索引 manifest 仍单 source_version_id，独立 ExecutionScope 仅预计一次/size，须显式迁移并接真实跨 attempt 父账。构建可先于 D，回表完成须 D；保留 100 行/单 shard/1MiB |
@@ -49,7 +49,7 @@
 
 顺序为 P03 M→A→B，P05 R2 可与 A 独立；C 供应方接口可先准备，真实 PG→读取需稳定 A/B；D 需 B+C+P05，E 构建/产物读可在 B/C 后、候选回表需 D，F 先接 D。完整 11 成员在既有 cap 内，但不推出 8192/10k 整链支持；P05 原 8192/32 batch 验收另保留。子期限取父更小者，不能将 P04 页/查询、P06 build/query 和宿主预算相加或重开 TTL。各 M/P/S 结果分别记录，A 通过不省 B–F。
 
-本轮已实际启动 A：从 P03 只读组件 ROOT 确认稳定点 14:57:38 到 P04 首个真实功能命令 15:18:34 约 20.9 分钟，15:20 已清理并释放。该记录只计算这次局部交接等待，不把两端历史模块各绿当配对，也不把 A 内单 SourceVersion 的11行当 B 的 main10+mirror1 两来源。B 与 P05 模块验收成为下一两项行为工作；ROOT 先冻结它们各自最小接口/预算，再排真实 C/D。
+本轮已实际启动 A：从 P03 只读组件 ROOT 确认稳定点 14:57:38 到 P04 首个真实功能命令 15:18:34 约 20.9 分钟，15:20 已清理并释放。该记录只计算这次局部交接等待，不把两端历史模块各绿当配对，也不把 A 内单 SourceVersion 的11行当 B 的 main10+mirror1 两来源。B1已接通真实main10+mirror1与双源130；B2 located和P05 probe修订为当前两项行为在制，再排真实C/D。
 
 ## 四层验证和 CI
 
@@ -75,3 +75,15 @@
 首次通过率 = 首次完整计划执行即通过的功能点数 / 已有首次完整执行的功能点数；环境预检、实现、oracle、门禁与证据失败分别分类，未执行不计分母。不使用最终绿次数作分子；逐重试成本保留。Rust 行为、公共合同、测试、工具分别统计变更，不把合同/工具行数算用户功能。
 
 工程优化排独立任务：实际镜像/平台探测与共享夹具、锁缓存/普通编译复用、模块覆盖分母与串行 profile、防重复质量运行、一次清单安全归档、恢复按故障范围处理。SOURCE 交接只核本次源/契约/必要证据，不反复扫描所有历史 profile。进度以[实施事实账本](2026-10-21-delivery-progress.md)为准，不按包数或代码量虚报完成比例。
+
+## 16:34 UTC 可执行检查点
+
+| 当前出口 | 已验事实 / 下一动作与唯一负责人 |
+| --- | --- |
+| B1 真实双源批流 | source30 `0de215b4` 的65单元、10功能/8性能/26故障通过，独审e8a78f02；main10+mirror1与双源130全局64/64/2共用父账。只认证本地组件与真实P03配对，不是strict/full/main/I1。 |
+| B2 located / plan_audit | 沿已审联合输出合同实施SOURCE；A+P≤原768KiB、有限32轮长度固定点、最终hash/定位/费用方程与fresh授权后一次交付。拒绝整页超限，不缩旧页/猜ordinal/偷读_state。 |
+| M1 probe / p00 | SOURCE33独审需修query身份、启动前durable归属/精确owner/unknown HOLD/主错误保留及T0单调下界；加4个launcher负例，原55与8192/32批/三列1000/5cold+warm不变。256MiB/32MiB是事前冻结试验预算，非实测生产默认。 |
+| C / ROOT装配、原模块owner供应 | bind前T0/取消/page较小期限尚未传PG。按完整原request与principal清理已持久query是有限候选；absent不能终局，阻迟到重建须独立持久closed-request配额/版本/迁移合同。PG等待/缓冲不计0，当前仅设计。 |
+| CI / ROOT | `23a2e37`去重工程片已正常hook/post5/5并独审；PR auto/main system/manual/schedule/release保留。15:54仅观测该head的PR run，两个作业0步骤计费失败；16:10:57 fetch主线仍1e4。账户阻断不阻止上述两个本地切片。 |
+
+首轮新增unit时钟oracle失败与后轮外层证据索引失败分别记账；所有实际组件已过，59个原故障.bin按objects.json补索引而未重跑。原window FAIL和系统default bridge ID变化均保留，独立确认自有资源退出；不把补证当作重写绿色。原模块严格100%、完整任务与系统/发布义务保持。

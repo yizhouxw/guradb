@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "snapshot": "2026-10-21T15:25:04Z actual module/pair checkpoint",
-  "main_observed_at_utc": "2026-10-21T15:18:00Z",
+  "snapshot": "2026-10-21T16:34:19.577091+00:00 B1 actual component and real pair checkpoint",
+  "main_observed_at_utc": "2026-10-21T16:10:57Z",
   "main_sha": "1e4f6a6c26eb28982f4b61cc75aa05e290211809",
   "validation_costs": [
     {
@@ -155,6 +155,66 @@
       "provider_object_io": 0,
       "native_hard_memory_proved": false,
       "new_m1_performance_pass": false
+    },
+    {
+      "feature": "P04-B1-two-source-real-pair",
+      "source_manifest": "0de215b463a69a4fc760dd3b06e8afe7c2dfbd655ac2d4532787b19ffc96209f",
+      "scope": "local component and real P03 pair; not formal strict/full/main",
+      "unit_count": 65,
+      "unit_internal_seconds": 0.706,
+      "unit_outer_seconds": 0.972836791886948,
+      "modes": [
+        {
+          "mode": "functional",
+          "cases": 10,
+          "seconds": 24.03230349998921,
+          "report": "5d6dcc552283f21afd0e8acdbdc6158f54301037dcf6a0f96f8326bfd7418e8a"
+        },
+        {
+          "mode": "performance",
+          "cases": 8,
+          "seconds": 18.913824875024147,
+          "report": "6b8465a7857ea3dd927b61eefe22c16890b9f9d787198041a09f90ab2e67206e"
+        },
+        {
+          "mode": "fault",
+          "cases": 26,
+          "seconds": 5.883838500012644,
+          "report": "fd3e22e843f37cee455727d96d8d36fc0e72721417b518f80fa6d42f376b620c"
+        }
+      ],
+      "outer_seconds": 52.139335290994495,
+      "outer_engineering_result": "FAIL retained; safe-index omitted original fault .bin; default bridge ID delta retained",
+      "safe_index": "353223d5e02977f4083cd4d85073e1724464bf8dff49a61e2f429ad55a58a047",
+      "safe_files": 450,
+      "safe_bytes": 7039919,
+      "manifest_bound_bins": 59,
+      "root_release": "4b5430ea3c5c50176dcae8ec9a38e4273757b7cc9964aa7e73641d744741d00c",
+      "independent_actual_review": "e8a78f02f23e48260c1a12504ce67d7a0997d490eb18a58bda956d8d31d2eacc",
+      "max_page_ms": 38.964,
+      "max_cohort_ms": 58.985,
+      "cancel_ms": 7.0235,
+      "tests_rerun_for_index": false,
+      "strict_full_pass": false
+    },
+    {
+      "feature": "CI-main-push-only-engineering",
+      "head": "23a2e374d779af3881bb17b46698fd08a673cd37",
+      "hook_seconds": 116.937055,
+      "own_base_post_seconds": 40.995685,
+      "full_pr_post_seconds": 41.042237,
+      "suites_each": 5,
+      "harness_tests": 134,
+      "contract_tests": 136,
+      "native_tests": 9,
+      "native_compile_lines_observed": [
+        56,
+        0,
+        0
+      ],
+      "root_cause_proved": false,
+      "independent_actual_review": "6a45a55e786c0f7d93a8f93876b287c6c7e5a24bcd82defac6ba244eb470b98e",
+      "product_quality_claim": false
     }
   ],
   "first_pass_rate": {
@@ -171,6 +231,30 @@
         "value": 1.0,
         "status": "normal hook plus clean original-base post passed; task completed",
         "new_user_feature_count": 0
+      },
+      {
+        "id": "B1-unit-oracle",
+        "category": "tests",
+        "passed_first_complete": 0,
+        "complete_attempted": 1,
+        "value": 0.0,
+        "not_new_product_feature": true
+      },
+      {
+        "id": "B1-three-component-commands",
+        "category": "component/pair command cohort",
+        "passed_first_complete": 3,
+        "complete_attempted": 3,
+        "value": 1.0,
+        "not_formal_module_or_main": true
+      },
+      {
+        "id": "B1-indexing",
+        "category": "engineering evidence",
+        "passed_first_complete": 0,
+        "complete_attempted": 1,
+        "value": 0.0,
+        "repair_without_quality_rerun": true
       }
     ],
     "phase_only_cohorts": [
@@ -291,12 +375,21 @@
     "external_owner": "user account administration",
     "local_owner": "ROOT PR integration",
     "query_owner_pr": "https://github.com/yizhouxw/guradb/pull/17",
-    "strategy_head": "6a56e541cff58e971a5f873c921c210727611410",
-    "gates_head": "82b2bfeeac6fd1186ce33f644e0d38fc4dd263cc",
+    "strategy_head": "88233310a398dfa150e6a72204e14eabbf836d3b",
+    "gates_head": "23a2e374d779af3881bb17b46698fd08a673cd37",
     "query_owner_head": "ad5c9fe1dcaf887362eef0908715e6fa1e2b96ba",
-    "latest_snapshot": "099b49b1fc234c7b01e1082dab6dcbb4a0b5b0f74259f5475aba9302e161b74a",
-    "latest_observed_at_utc": "2026-10-21T15:17:15Z",
-    "jobs_not_started": 8
+    "latest_snapshot": "3e12e6e7c09bd502a3a619473f63d7bc256a790de404e66afc076769e3212991",
+    "latest_observed_at_utc": "2026-10-21T15:54:00Z",
+    "jobs_not_started": 8,
+    "new_run_ids": [
+      39626691839,
+      39629589830
+    ],
+    "new_jobs_not_started": 4,
+    "feature_push_run_observed_for_23a2": false,
+    "pr_run_observed_for_23a2": true,
+    "previous_snapshot": "099b49b1fc234c7b01e1082dab6dcbb4a0b5b0f74259f5475aba9302e161b74a",
+    "latest_snapshot_path": "/Users/chad/dev/guradb/artifacts/gates-v2-main-only-pr-update/result.json"
   },
   "integration_wait_observations": [
     {
@@ -314,11 +407,19 @@
       "observed_utc": "2026-10-21T15:25:04Z",
       "minutes": 149.35,
       "next_consumer": "controlled real PG->read interface still pending"
+    },
+    {
+      "feature": "M-CATALOG",
+      "meaning": "task-finish to snapshot; not all waiting attributable to CI",
+      "since_utc": "2026-10-21T12:55:43Z",
+      "observed_utc": "2026-10-21T16:34:19.577091+00:00",
+      "minutes": 218.6096181833333,
+      "next_consumer": "controlled real PG read with exact unknown-bind cleanup"
     }
   ],
   "active_tasks": [
     {
-      "id": "a333a15a124b498da3774a1c8fe64b2e",
+      "id": "c4363c6eab934e95953930c3cabf54bf",
       "owner": "ROOT",
       "scope": "three plan/progress/metrics files only"
     },
@@ -332,15 +433,15 @@
     {
       "id": "4696bbe16be041d3b900019fe2fd08b3",
       "owner": "plan_audit",
-      "scope": "P04 current real pair stable; only B source plan preparation now",
+      "scope": "B1 actual65/10/8/26 independently accepted; B2 located SOURCE",
       "original_base": "17d66c66a067eebe73280ce8d3488fb4f7cdcfe9",
-      "behavior_writer_dispatched": false
+      "behavior_writer_dispatched": true
     },
     {
       "id": "bc81c2ae8eb94fb99a646c061a61c35c",
       "owner": "p00_cf1a",
-      "scope": "P05 first native55 stable; only next actual M1 component probe plan now",
-      "behavior_writer_dispatched": false
+      "scope": "P05 probe finite R1/R2/R3 plus4launcher tests SOURCE repair; no runtime",
+      "behavior_writer_dispatched": true
     }
   ],
   "critical_pair_slices": [
@@ -363,7 +464,11 @@
         "A"
       ],
       "real_output": "full main10+mirror1 and explicit located descriptors; same parent ledger",
-      "status": "minimal next slice source plan; no implementation yet"
+      "status": "B1 actual component and P03 pair passed; B2 located SOURCE implementation",
+      "sub_slices": {
+        "B1": "accepted independent e8a78f02; not strict/full/main",
+        "B2": "pending explicit located/joint768KiB; source-only"
+      }
     },
     {
       "id": "C",
@@ -375,7 +480,8 @@
         "B"
       ],
       "real_output": "real PG reauthorize/cancel/deadline to read with precise pin cleanup",
-      "status": "pending"
+      "status": "architecture source only; parent PG deadline/cancel/invoice and unknown-bind cleanup missing",
+      "architecture_review": "7a2c1a5328782042b3d973feb969b0097b3f711f91424a30b46d563623b597c2"
     },
     {
       "id": "D",
@@ -445,10 +551,10 @@
   "wip": {
     "actual_slots": 4,
     "behavior_limit": 2,
-    "running_behavior_at_snapshot": 0,
+    "running_behavior_at_snapshot": 2,
     "next_behavior_tasks": [
-      "B-multisource-located",
-      "P05-M1-component-exit"
+      "B2-located-output",
+      "P05-probe-source-repair"
     ],
     "runtime_window_owner": null,
     "role_count_is_not_concurrency": true
@@ -472,14 +578,24 @@
       "p04_added_fixture_identity_units": 6,
       "p05_added_independent_result_cases": 7,
       "full_query_existing_module_test_slice_passed": 1,
-      "new_user_feature_count": 0
+      "new_user_feature_count": 0,
+      "p04_added_multisource_units": 21,
+      "ci_trigger_added_regressions": 2,
+      "p05_launcher_units_planned": 4
     },
     "engineering_tools": {
-      "gates_pr_source_files": 21,
+      "gates_pr_source_files": 22,
       "engineering_suites_each_round": 5,
-      "harness_tests_each_round": 132,
+      "harness_tests_each_round": 134,
       "contract_tests_each_round": 136,
-      "product_module_certifications_from_tools": 0
+      "product_module_certifications_from_tools": 0,
+      "indexing_failure_retained": true
+    },
+    "python_transition_behavior": {
+      "accepted_component_slices": 1,
+      "slice": "B1 one/two fixed-manifest union",
+      "formal_complete_modules": 0,
+      "main_user_journeys": 0
     }
   },
   "engineering_next_slice": {
@@ -494,13 +610,34 @@
       "id": "P05-M1-component-probe",
       "owner": "p00_cf1a",
       "source_plan": "78092508679b7ef53d3ca6217c597304f1eb65bc258b081abfa545069fce9eda",
-      "state": "source-only; no new implementation or benchmark",
+      "state": "SOURCE33 changes-required; R1/R2/R3+4launcher units in implementation; no new build/runtime",
       "proposed_parent_managed_memory_bytes": 268435456,
-      "budget_state": "proposed pending pre-implementation review; not a measured product default",
+      "budget_state": "ROOT fixed before implementation; trial256MiB not measured production default",
       "files_proposed": [
         "crates/guradb-query/examples/fixed_m1_probe.rs",
         "scripts/fixed_query_acceptance.py"
-      ]
+      ],
+      "source_candidate": "004561f2705b6ab6dcc30b13a43f5233e05b7cf699814f0b7eb37bd3167afb38",
+      "independent_source_review": "167176007e1051a8f918b9ef745cd174c4f4c6e11f70ac67d5006637dd970e9f",
+      "launcher_regression_new_file_planned": true
     }
-  ]
+  ],
+  "b1_failures_retained": {
+    "first_unit": {
+      "report": "e1aa9446a92f09f5d00584e6d77b4bb60c9a681714a45cf773feba4b8b24e28b",
+      "passed": 64,
+      "failed": 1,
+      "total": 65,
+      "internal_seconds": 0.726,
+      "outer_seconds": 1.1165103329112753,
+      "component_commands_started": 0,
+      "cause": "new oracle real-clock deadline equality"
+    },
+    "repaired_window": {
+      "actual_all_components_pass": true,
+      "original_outer_failed": true,
+      "cause": "safe-index missing existing fault .bin; system default bridge delta kept",
+      "no_production_budget_or_workload_change": true
+    }
+  }
 }
