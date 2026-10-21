@@ -26,9 +26,9 @@
 
 | 包 | 当前状态 / 下一实物依赖 |
 | --- | --- |
-| P00 | CF1-A稳定稿独立源码审查、12组真实跨语言golden/23组拒绝错误码比对、新增Python/Rust执行行覆盖已有局部证据；首次整仓check发现两条Clippy错误，修复后须完整重验，尚未freeze；B/C待A复核与下游反馈 |
+| P00 | CF1-A/1.0首片经PR#9合入4d6baca，精确主线10项门禁、12golden/23拒绝码双向互通、两版本PR/主线CI闭合；B/C仍待下游反馈与独立验收 |
 | P01 | synthetic图文/组真值首片已合入84c07af2并完成本地/远端主线验收；业务样本/人工相关性、真实模型/框架及生产规模预算未完成 |
-| P02 | 待CF1-A/P01，先共同目录绑定与真实PG |
+| P02 | 新恢复树运行前2432清单已通过26targeted、232Python/4028行零排除和PG七容量performance组件，独立实际4516文件/4509正文及语义复核PASS；完整原4d门禁、Rust、新functional/fault及提交/PR/main仍pending；保护fixture与I1/HA边界保持 |
 | P03 | 待CF1-A固定ObjectRef，先认证对象后端的range/version/checksum |
 | P04 | 待P03/CF1-A/P01，先固定源ReadBatch；生命周期部分依赖B |
 | P05 | 待CF1-A/P01，先共同请求/关系/精确计划；训练选择依赖C |
@@ -73,3 +73,14 @@ P01[离线使用合同](../user/outline-oracles.md)与fixture manifest `455fc7a3
 此追踪首次提交只有文档状态变化，采用默认change门禁，不新增数据库功能或性能声明。数据库切片必须执行其实际plan选出的语言/功能/性能/故障/覆盖率门禁。两次无新证据失败后定位根因并保存现场；错误恢复按[恢复流程](../../harness/version-control.md)，不破坏性覆盖已有目录。代码回退不撤销数据或外部副作用，持久包另留对账与补偿证据。
 
 首次启动的代码绑定报告、复核和checkpoint在`delivery-progress`任务receipt归档；当前进度更新由`w0-status-local-simulation`独立receipt记录，门禁和最终提交证据待完成。本文件中的实施中状态不能当作任何门槛通过证据。
+
+
+P02固定目录首片：task `08a01f79d8a347b0b429e072167318c3`，分支 `codex/p02-fixed-catalog`，worktree `/Users/chad/dev/guradb-p02-fixed-catalog`，原始base `4d6baca888421d90f146679ef71b0e555fe60881`，checkpoint `checkpoints/20261021T015356Z-before-p02-fixed-catalog-eee85479`。root为当前唯一作者，p00曾在明确交权期间完成facade/admin/mutation/binding/单测/driver后已正式停写交回；root补COMMIT中断、真实暂停commit与负例，并串行接用户导航/共享harness。局部证据与原始范围见[变更计划](../design/fixed-catalog-change-plan.md)，保护authority仍是显式可信fixture，真实PG/对象/源/I1不得由单元结果推定。
+
+PR#9精确主线报告为 `artifacts/harness/20261021T013721Z-42424eaa/report.json`，SHA `1ac66d36a01bb586e309d38ae31d5718e164cc5d863f1a6e7d8553213b4a0225`，checkpoint `checkpoints/20261021T015015Z-p00-cf1a-main-verified-5ce1adab`；PR CI run39525801267和精确主线push run39528308712的Python3.11/3.14均success。上文P00早期Clippy失败是保留的历史现场，不是当前阻塞；该失败报告没有被拼接成修后通过证据。仅离线合同首片闭合，B/C及整体计划仍未完成。
+
+P02恢复承接：新 `/Users/chad/dev/guradb-p02-fixed-catalog-recovered`、branch `codex/p02-fixed-catalog-recovery`、task `5d1ffe780f3b4001a706a0d96a925a77` clean原4d先启动再FF17d，原base保留；root合成6共享、900watchdog、PG3driver对应275分钟工程job及hosted负例当前change适配。原08a/dirty/raw与首次重启FAIL保留；旧c480观测场景通过不补齐FC10其它quota或新fullcheck。细节见本片变更计划，后续新增源/索引/PG真实配对及I1仍待验收。
+
+P02恢复树新增五项行容量的直接补证已完成：64grant、256identity、128target、1024query和16dataset，并保留原512operation及8MiB字节负载，原120秒上限不变。performance报告c49472bc用时31.526968秒、独立combined审查03b40a46逐核4516原件/4509正文；两历史grant仅重建，不计作历史raw。当前结果属于运行前2432清单，随后仅结果/导航文字更新，新完整checkout门禁仍pending。旧595551失败、旧c480局部结果及旧08a abandoned现场保留；实际命令、路径和未覆盖项见[目录变更计划](../design/fixed-catalog-change-plan.md#恢复树-fc10-七容量的实际结果与独立复核)。
+
+P02已从原4d在全新/Users/chad/dev/guradb-p02-fixed-catalog-main1（codex/p02-fixed-catalog-main1/taskb826fc2af8cf4ebcbf2142ec6b6913f8）先clean task-start再cleanFF已闭合1e4，34源码/模式等09856备份；root逐实物复核receipt/5上游/empty index后只补内部状态。旧5d1/08a与raw留原位；新checkout正常hook/完整原base freshpost、PR/main仍pending，不将2432七容量组件当新整项通过。

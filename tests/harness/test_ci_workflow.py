@@ -59,7 +59,8 @@ class CIWorkflowTests(unittest.TestCase):
         self.assert_job_budgets_fit(load(ROOT)[0])
 
     def test_job_above_hosted_hard_limit_is_rejected(self):
-        self.workflow["jobs"]["quality"]["timeout-minutes"] = "${{ inputs.scope == 'release' && 367 || 250 }}"
+        job = self.workflow["jobs"]["quality"]
+        job["timeout-minutes"] = re.sub(r"&& \d+ \|\|", "&& 367 ||", job["timeout-minutes"], count=1)
         with self.assertRaisesRegex(AssertionError, "hosted job"):
             self.assert_job_budgets_fit(load(ROOT)[0])
 
