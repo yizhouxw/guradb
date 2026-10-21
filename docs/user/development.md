@@ -32,3 +32,9 @@ python3 -m venv .venv
 模块归属与依赖按[harness 架构清单](../../harness/architecture.toml)，源文件不超过 600 行。公共类型不反向依赖上层，不在客户端另造服务端语义。新增依赖固定版本与锁，写清用途/许可/兼容；持久格式变更先说明旧 reader/writer、作业/pin、升级和恢复。
 
 所有任务默认使用独立分支/worktree，经 PR 合入 main；已有用户改动不能自动 stage/stash，不能绕过 hook 提交。长任务恢复先读 task-status、当前 diff/计划/最新失败。两次无新证据失败后定位根因，不能盲目重复；交接需留下已完成、失败现场、下一步和未解决风险。详细规则见[贡献指南](../../CONTRIBUTING.md)。
+
+## 共同读合同开发验证（离线模块验收）
+
+P00 CF1-A提供离线的版本化共同读合同、schema/golden与Python/Rust互通验证。它供各模块开发者传递固定dataset/revision/view、授权/pin/预算及对象/批次，不新增数据库命令或用户入口。合同版本、显式int8/NULL编码、严格拒绝及登记/发布未知结果边界见[CF1-A合同](../interfaces/cf1a-contract.md)，执行映射见[场景表](../design/cf1a-scenarios.md)。真实PG/对象/源、取消预算执行及共同查询仍待独立集成；CF1-B/C待后续冻结。
+
+本地已用真实Rust进程与Python双向交换12组golden并核对23种拒绝code，修复后的完整10项门禁通过。执行命令、报告和覆盖率见[变更计划](../design/cf1a-change-plan.md)；最终commit绑定的harness报告由task receipt归档，互通原始JSON/log/manifest另行复制到共同Git归档并在receipt的review中引用。PR CI、真实后端接线与I1仍待独立验收。

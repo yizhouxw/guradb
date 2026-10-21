@@ -136,3 +136,5 @@ mod tests;
 #[cfg(test)]
 #[path = "../tests/unit/contracts.rs"]
 mod contract_tests;
+
+pub mod cf1a;
