@@ -4,17 +4,19 @@
 
 ## 1. 当前实物与下一出口
 
+本表为2026-10-21 17:13:09 UTC已收交接快照；完整历史/精确报告见[实施事实账本](../plans/2026-10-21-delivery-progress.md)及其JSON。组件、真实配对、完整模块、主线分别记账，不在本次文字同步重跑历史证据。
+
 | 实物 | 可直接复用的稳定面 | 尚不能声称 |
 | --- | --- | --- |
-| CF1-A Rust/Python canonical/schema/ports | 已有固定 binding、ReadBatch、CandidateBatch、登记/发布/精确 lease 合同 | 同步 trait 本身不证明父取消、失败 Usage 或真实跨语言执行 |
-| P02 真实 PG 目录候选 | register/publish CAS、绑定、撤权、精确 pin、unknown 对账及七类容量已形成组件证据；后续精确 commit/CI 由 ROOT 进度账决定 | 不等于 PG→P03 当前授权已接线；当前跨模块 reauthorize 的父期限/取消闭包仍缺真实配对证明，需父控制适配 |
-| P03 固定对象读 | 固定 VersionId/完整性/累计 scope/真实 socket 取消已实现；direct fixture 42 文件 a828 候选已独审 | PR13 历史双 CI 失败保留；新首窗仅在只读镜像身份预检失败（默认现为 arm64，旧 runner 要求 amd64），尚未安装/测试/启动服务，不能挪用诊断为 PASS |
-| P04 固定源 | ec182 历史真实 P03/S3/Parquet 三组组件与独立真值已过；窄格式、完整首次 scan、SourceReadPort | 新 shared 接线/最终 head 单独验；不是一般 Parquet/按需 provider/写入 |
-| P05 Rust | A1a 唯一 SQL core 与 26 目标 unit/strict 既有证据；5faf M1 原 22 新定义 | M1 完整 Value 预约 R2，a925 PARTIAL 保留待独审/编译；不能当真实 Source 或 I1 |
-| P06 固定物理索引 | BM25/3D squared_l2 真文件、独立数学/定位/11 行真值和组件证据 | 真实 P03/P04/PG 配对、located-build 输入及候选回表未接通 |
-| P08 | 三 leaf 正式入口设计候选 | 新 HTTP/PG 查询入口尚未实现；旧 alpha 不充当新共同入口 |
+| CF1-A Rust/Python canonical/schema/ports | 已有固定binding、ReadBatch、CandidateBatch、登记/发布/精确lease；主线12golden/23拒绝双语互通 | 同步trait本身不证明父取消、失败Usage或真实跨语言执行 |
+| P02 真实PG目录 | 分支`86fcaf0`原4d范围正常hook/clean post均10suite/29命令，真实PG容量/CAS/撤权/pin/unknown证据与非作者审核已闭合，task b826已结束、PR14已推送 | CI/main仍待闭合；PG→P03的父期限/取消/reauth及unknown-bind精确cleanup未接线，不借目录模块绿替代真实配对 |
+| P03 固定对象读 | source44 `2d1dfa7d`：60unit及原只读12功能/4性能/12故障真实通过，p01实物审`0c05f60e`；固定VersionId/完整性/累计scope/socket取消，已供P04真实调用 | 原4d receipt strict/full/提交仍待完成；SDK mutating诊断LIST7/预期8及PR13历史CI失败保留，不能当产品读门禁修复已绿 |
+| P04 固定源与B2 | source33 `a509e6e2`：FIRST79、原10/8/26再追加located4/4/+2真实通过；main10+mirror1和双源130全值/定位、同父账A+P≤768KiB，release `cb0b8b4e`。普通A不变；B1独立实物审`e8a78f02` | B2本次p01独立实物审`6f5b29dc`通过；原task/base17d strict/full/提交未完成。不是一般Parquet/按需provider/写入，也未证明P06消费、真实PG/Rust/I1 |
+| P05 Rust | source31 `c32f44b6`原55lib实测与p01审`8e51f46b`保留；source35 `4ec8eb51`首次真实sealed Arrow/DF组件7进程/12请求（10perf）、全11/8192/32批/三列1000及no-LIMIT资源拒绝通过，report `67ee19bf`/release `54381502` | 新组件p01非作者实物审c3dc2e9d通过；generic Source/PG/bridge、native硬内存/取消、full fault、strict/registered模块出口及I1仍缺。旧镜像缺失与fmt648 STOP保留；新镜像/重构后另验，不复用旧M0或旧镜像报告 |
+| P06 固定物理索引 | BM25/3D squared_l2真文件、独立数学/定位/11行真值与历史组件证据 | 真实P03/P04/PG配对、B2 located-build消费者和候选回表仍未接通，不能借B2 producer结果认证索引模块 |
+| P08 | 三leaf正式入口设计候选 | 新HTTP/PG查询入口尚未实现；旧alpha不充当新共同入口 |
 
-状态由模块功能点记录 `designed/source_reviewed/component_passed/paired/system_passed/released`，每项附精确源与报告；一项不可替代下一项。上表是本次小量源码/已收交接的事实摘要，未重跑历史证据，未补称任何 PR/main 闭合。
+状态由模块功能点记录 `designed/source_reviewed/component_passed/paired/system_passed/released`，每项附精确源与报告；一项不可替代下一项。以下职责/DAG/DRI、预算、共享合同与迁移纪律保持，不因本表快照改变。第6节保留策略制定时的首批顺序，其当时状态不替代本表当前快照。
 
 ## 2. 模块合同与唯一开发 owner
 

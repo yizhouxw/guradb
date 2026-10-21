@@ -12,10 +12,10 @@
 
 | 槽位 / 具名负责人 | 当前任务及唯一文件域 | 下一职责 / 独立审查 |
 | --- | --- | --- |
-| ROOT：项目经理、集成与文档 | `codex/strategy-v2` 两片已结项至 `6a56e54`、[PR15](https://github.com/yizhouxw/guradb/pull/15)；前片已结项至`8823331`；本轮 task `c4363c6eab934e95953930c3cabf54bf` 仅更新计划/事实/度量；协调共享写权 | 维护关键路径、接受交接、排资源与批次、消除阻塞；入口/组合根实现；不自批自己的实现 |
+| ROOT：项目经理、集成与文档 | `codex/strategy-v2` 两片已结项至 `6a56e54`、[PR15](https://github.com/yizhouxw/guradb/pull/15)；前片已结项至`8823331`；本轮 task `0185061d57e74bed82c6aa571aff39ee` 从`1eb19ed`续记四份事实文档，临时writer为plan_audit、ROOT/p01非作者审；ROOT协调共享写权 | 维护关键路径、接受交接、排资源与批次、消除阻塞；入口/组合根实现；不自批自己的实现 |
 | p01_oracles：产品经理、测试 | 需求粒度/正负验收、独立真值、物理 PG 官方研究及有界原型；当前只在其独占 ignored 目录准备，tracked 由 ROOT 整合 | 独审架构/用户合同，随后承担真实配对与用户系统验证；自己写的 oracle/原型由 ROOT 或架构师审 |
-| plan_audit：架构师、模块开发 | P03 只读组件已验；`codex/p04-fixed-source-p03` task `4696bbe16be041d3b900019fe2fd08b3` 的原真实对象→源配对已重新实测；B1双源实际配对已验，现实施B2显式located SOURCE | storage/connectors 单一 writer；其实现由 p01 与 ROOT 审。P03/P04 原 receipt 的 strict/full/提交出口尚未完成，不并开两套行为修改 |
-| p00_cf1a：模块开发、工程工具 | 工具 PR16 与 query 补测 task7c822 已结项，补测 [Draft PR17](https://github.com/yizhouxw/guradb/pull/17) 依赖 PR16；当前 P05 task `bc81c2ae8eb94fb99a646c061a61c35c` 首次完整 Rust lib 55 项已验 | 新M1 probe已固定预算并写出SOURCE，按独审修正query身份/启动生命周期/T0，尚未新实测；随后提供真实 Source 消费接口。common/catalog/index 按稳定点顺序接权 |
+| plan_audit：架构师、模块开发 | P03 只读组件已验；`codex/p04-fixed-source-p03` task `4696bbe16be041d3b900019fe2fd08b3` 的原真实对象→源配对已重新实测；B1双源及B2显式located已完成首次79单元和三组真实组件，当前已获p01独立实物复核6f5b29dc、保持冻结 | storage/connectors 单一 writer；其实现由 p01 与 ROOT 审。P03/P04 原 receipt 的 strict/full/提交出口尚未完成，不并开两套行为修改 |
+| p00_cf1a：模块开发、工程工具 | 工具 PR16 与 query 补测 task7c822 已结项，补测 [Draft PR17](https://github.com/yizhouxw/guradb/pull/17) 依赖 PR16；当前 P05 task `bc81c2ae8eb94fb99a646c061a61c35c` 首次完整 Rust lib 55 项已验 | 新M1 probe四项launcher单元已验；旧镜像缺失另记，新镜像版本已实测，单次fmt后648行触规模STOP，按职责拆分并fmt后583/78行，首次build及真实sealed Arrow/DF组件通过、非作者实物审c3dc2e9d通过；随后提供真实 Source 消费接口。common/catalog/index 按稳定点顺序接权 |
 
 同时最多两项行为实现，保留审查能力；角色数不等于并发数。普通无污染单元、源码审查和隔离功能夹具可并行；性能测量独占同一物理资源，coverage 互斥其 target/profile，迁移/组合根有唯一窗口。端口、网络、对象前缀和数据目录必须各自隔离，不把所有测试长期串成整库窗口。
 
@@ -27,7 +27,7 @@
 | V2-PRODUCT | ROOT；42 条需求、唯一 owner、预算/错误与版本研究已交 PR15，非作者产品/架构审查及两轮文档检查完成 | 每个开发 DRI；未冻参数/预算的具体需求先交冻结小片，其他已闭合小片继续 |
 | M-CATALOG | ROOT 闭合已验 P02 分支：`86fcaf0`，真实 PG 六轮证据已独审、task-finish/正常推送已完成；[PR14](https://github.com/yizhouxw/guradb/pull/14)已创建，双 CI/main 待闭合 | PG 父期限与对象授权配对；连接器 HTTP429仍保留；ROOT已用现有认证的标准API解除PR创建阻塞，继续跟踪CI，不阻止本地模块 |
 | M-STORAGE | plan_audit；原诊断 FAIL 保留。新 source44 `2d1dfa7d` 已通过 60 项单元及原只读功能12/性能4/故障12，ROOT与p01独立核原件；原 4d receipt 的 strict/full/提交仍待完成 | 已解除 P04 配对等待；全部合法 special key 固定 GET、0IO dot 拒绝、预算/费用均保留；SDK 写入诊断仍不改 8 为 7、不标绿 |
-| M-QUERY | p00；Describe 补测 `ad5c9fe` 的正常 hook/clean post 均 9 suite/11 命令、完整12生产源 strict 与原三个 M0 已验，task7c822 已结项。P05 新 source31 `c32f44b6` 首次完整 lib 55/55，经 p01 非作者实物复核 | P05 新 M1 的 strict/组件性能/故障仍待验，真实 Source 消费接口仍缺；保留全11成员/8192原负载，不以旧M0证据代验新M1 |
+| M-QUERY | p00；Describe 补测 `ad5c9fe` 的正常 hook/clean post 均 9 suite/11 命令、完整12生产源 strict 与原三个 M0 已验，task7c822 已结项。P05 新 source31 `c32f44b6` 首次完整 lib 55/55，经 p01 非作者实物复核 | P05新sealed Arrow/DF组件性能已首次实测、非作者实物审c3dc2e9d通过；strict/full fault及真实Source消费者仍缺；保留全11成员/8192原负载，不以旧M0证据代验新M1 |
 | P-OBJECT-SOURCE | plan_audit 实现、p01与ROOT独审：新 source28 `51601127` 的 44单元、原6功能/4性能/23故障实际通过，真实 P03→P04 单 SourceVersion 读取；资源已释放 | A 本地配对稳定点；不是完整多来源 B、整项 strict、PG/Rust、主线或 I1。下一消费者先实现完整两来源及 located 出口 |
 | P-CONTROL-READ | ROOT 装配、catalog/storage owner 修各自实现：真实 PG 绑定/reauth→对象，同父 deadline/cancel/ledger | Source/Rust；真实暂停 PG、对象故障与撤权；同步 trait 或内存 callback 不能充当网络期限认证 |
 | P-SOURCE-QUERY | ROOT 组合、两端 owner 实现：有界私有 bridge，Python 真源→Rust 唯一 SQL/Arrow/DF，完整两来源 11 成员/稳定 ID | 正式 HTTP/PG；限定 IPC/错误费用/取消与 reap 证明先复核，不另建 Python SQL 引擎 |
@@ -41,7 +41,7 @@
 | 小片 / DRI | 固定输入 → 验收出口 | 开工依赖与已查明缺口 |
 | --- | --- | --- |
 | A / plan_audit | P03 真固定 metadata/Parquet → P04 单 source 真 ReadBatch；逐 cell/ID/version/费用及坏 footer/撤权/取消 | P03 读取稳定即可启动；构造接口现可相接，不等 PG/Rust/index；通过只记单 source pair |
-| B / plan_audit | 同一完整 revision 的 main10+mirror1 → 全 11 成员与显式 located 描述符、同父账 | A；B1两来源真实组件已验，B2仍须显式located出口。不得拆子 view、猜 ordinal 或省 mirror；保留 1000 行/4 文件/16 rowgroup cap |
+| B / plan_audit | 同一完整 revision 的 main10+mirror1 → 全 11 成员与显式 located 描述符、同父账 | A；B1两来源和B2 located首次真实组件已通过，B2独立实物复核6f5b29dc通过。不得拆子 view、猜 ordinal 或省 mirror；保留 1000 行/4 文件/16 rowgroup cap |
 | C / ROOT | P02 真 PG bind/reauthorize/release → B 原期限/取消/授权与精确 lease 清理 | catalog owner 先交受控调用接口，storage/source owner 交父控制接入口；现网络 reauthorize 不能直接塞入仅认证内存 callback，真实 PG 暂停/撤权须验 |
 | D / ROOT | B 全 11 批流+C 父控制 → P05 唯一 Rust Compiler/Arrow/DF 值、身份血缘和真实账 | P05 R2 稳定后 query owner 先交真实 provider 消费者，ROOT 再写有界私有 bridge；现 `execute_fixture(SealedFixture)` 的 0 对象 I/O 账不能包装真源冒充配对；IPC 取消/回收/错尾输入须验 |
 | E / p00 | B located+批流 → 真 BM25/exact 产物；P03 读产物→候选；D 真回表 | B+C；现索引 manifest 仍单 source_version_id，独立 ExecutionScope 仅预计一次/size，须显式迁移并接真实跨 attempt 父账。构建可先于 D，回表完成须 D；保留 100 行/单 shard/1MiB |
@@ -49,7 +49,7 @@
 
 顺序为 P03 M→A→B，P05 R2 可与 A 独立；C 供应方接口可先准备，真实 PG→读取需稳定 A/B；D 需 B+C+P05，E 构建/产物读可在 B/C 后、候选回表需 D，F 先接 D。完整 11 成员在既有 cap 内，但不推出 8192/10k 整链支持；P05 原 8192/32 batch 验收另保留。子期限取父更小者，不能将 P04 页/查询、P06 build/query 和宿主预算相加或重开 TTL。各 M/P/S 结果分别记录，A 通过不省 B–F。
 
-本轮已实际启动 A：从 P03 只读组件 ROOT 确认稳定点 14:57:38 到 P04 首个真实功能命令 15:18:34 约 20.9 分钟，15:20 已清理并释放。该记录只计算这次局部交接等待，不把两端历史模块各绿当配对，也不把 A 内单 SourceVersion 的11行当 B 的 main10+mirror1 两来源。B1已接通真实main10+mirror1与双源130；B2 located和P05 probe修订为当前两项行为在制，再排真实C/D。
+本轮已实际启动 A：从 P03 只读组件 ROOT 确认稳定点 14:57:38 到 P04 首个真实功能命令 15:18:34 约 20.9 分钟，15:20 已清理并释放。该记录只计算这次局部交接等待，不把两端历史模块各绿当配对，也不把 A 内单 SourceVersion 的11行当 B 的 main10+mirror1 两来源。B1已接通真实main10+mirror1与双源130；B2 located首次79及三CLI已通过并释放，当前已独立实物通过并保持冻结，P05 probe已首次实测已获非作者实物审c3dc2e9d通过，随后排真实C/D。
 
 ## 四层验证和 CI
 
@@ -76,6 +76,8 @@
 
 工程优化排独立任务：实际镜像/平台探测与共享夹具、锁缓存/普通编译复用、模块覆盖分母与串行 profile、防重复质量运行、一次清单安全归档、恢复按故障范围处理。SOURCE 交接只核本次源/契约/必要证据，不反复扫描所有历史 profile。进度以[实施事实账本](2026-10-21-delivery-progress.md)为准，不按包数或代码量虚报完成比例。
 
+作者在最终SOURCE冻结前完成目标文件fmt、600行检查和只读镜像身份预检；普通无污染unit/format在既有明确授权内自主执行，不逐次等待PM。PM协调共享native性能、迁移和coverage资源窗口。源码或环境变化只增审必要delta；精确镜像缺失必须停报，不能静默换镜像或跳过原负载/strict。此次648行晚发现和旧镜像缺失分别保留为规模/环境工程成本，将检查前移，不把“先SOURCE再等formatter”固定成新等待流程。
+
 ## 16:34 UTC 可执行检查点
 
 | 当前出口 | 已验事实 / 下一动作与唯一负责人 |
@@ -87,3 +89,11 @@
 | CI / ROOT | `23a2e37`去重工程片已正常hook/post5/5并独审；PR auto/main system/manual/schedule/release保留。15:54仅观测该head的PR run，两个作业0步骤计费失败；16:10:57 fetch主线仍1e4。账户阻断不阻止上述两个本地切片。 |
 
 首轮新增unit时钟oracle失败与后轮外层证据索引失败分别记账；所有实际组件已过，59个原故障.bin按objects.json补索引而未重跑。原window FAIL和系统default bridge ID变化均保留，独立确认自有资源退出；不把补证当作重写绿色。原模块严格100%、完整任务与系统/发布义务保持。
+
+## B2 首次真实 located 检查点（2026-10-21 17:00 UTC 后事实同步）
+
+B2 source33 `a509e6e2` 保持原task4696/base17d、P03七生产源与普通A路径：FIRST79单元通过（内1.150s/外1.400s）；原CLI首次功能`10+located4`、性能`8+located4`、故障`26+located2=28`均通过，分别24.242/17.182/5.993s。原10/8/26与全部输入/cap未替换；全11与双源130定位由独立PyArrow回表，同一父账联合封套A+P≤768KiB。原件532份/14.122MB含65个objects.json逐件绑定的故障.bin；源33/receipt/index未变、Docker三类回基线及自有进程退出，release `cb0b8b4e`。p01独立实物复核`6f5b29dc`通过；这不是P06消费、真实PG/Rust/I1、strict/full或主线验收。B1时钟oracle与旧外层证据FAIL原件保留。
+
+P05四项纯launcher单元首次通过（内0.050s/外0.149s），不计native/perf。历史镜像`debb142e`缺失在只读预检即STOP，无质量命令/镜像替换；后续另行认证实际镜像`c9494374`的Linux aarch64、rustc/Cargo1.90与rustfmt1.8，不声称与旧镜像等价。该新环境单次fmt成功后example实际648行，按600行规模纪律STOP，未build/probe；作者按职责拆分source35并完成两文件fmt（583/78行、无额外字节变化），首次构建与真实组件的后续成功结果和仍缺范围见下段。新8192/两文件/32批/三列1000/5cold+warm、固定256MiB/32MiB试验父预算和10s/RSS512MiB均保持。
+
+本页当前事实快照：2026-10-21 17:13:09 UTC。P05 source35 `4ec8eb51` 的首次offline build13.892s/driver22.801s通过，7个Linux进程、12请求、10性能样本，最大perf样本本体total wall1.661404s、含completion tail1.662153709s/VmHWM56,528,896B；full11、8192/两Parquet/32批/三列1000与no-LIMIT完整读取后资源拒绝均实测，释放`54381502`，p01非作者实物审c3dc2e9d通过。只认证cooperative sealed-fixture真实Arrow/DF，不认证generic Source/PG/bridge、native硬界、full fault、strict/full或I1；上述历史镜像缺失与fmt648 STOP不改绿。17:07:44实际fetch仍main1e4，当前资源窗null，P02等待值及原历史UTC见事实账本/JSON。
