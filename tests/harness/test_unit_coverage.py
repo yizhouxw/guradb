@@ -32,6 +32,7 @@ class CoverageGateTests(unittest.TestCase):
                 path.write_text('value = 1\n')
             output = root/'report'
             output.mkdir()
+            catalog = {'modules/common/a.py': 'fixture', 'clients/cli/b.py': 'fixture'}
             cov = Mock()
             runner = Mock()
             runner.run.return_value.wasSuccessful.return_value = True
@@ -40,13 +41,13 @@ class CoverageGateTests(unittest.TestCase):
                     ({'modules/common/a.py': {}, 'clients/cli/b.py': {}}, 1, False)]:
                 payload = {'files': files, 'totals': {'missing_lines': missing, 'excluded_lines': 0, 'percent_covered': 100.0}}
                 cov.json_report.side_effect = lambda **kwargs: Path(kwargs['outfile']).write_text(json.dumps(payload))
-                with patch.object(gate, 'ROOT', root), patch('coverage.Coverage', return_value=cov), patch.object(gate.unittest, 'TestLoader') as loader, patch.object(gate.unittest, 'TextTestRunner', return_value=runner):
+                with patch.object(gate, 'ROOT', root), patch.object(gate, 'production_sources', return_value=catalog), patch('coverage.Coverage', return_value=cov), patch.object(gate.unittest, 'TestLoader') as loader, patch.object(gate.unittest, 'TextTestRunner', return_value=runner):
                     loader.return_value.discover.return_value = unittest.TestSuite()
                     self.assertEqual(gate.python_coverage(output), passed)
                 self.assertEqual(set(cov.get_data.return_value.touch_files.call_args.args[0]),
                                  {str(root/'modules/common/a.py'), str(root/'clients/cli/b.py')})
             runner.run.return_value.wasSuccessful.return_value = False
-            with patch.object(gate, 'ROOT', root), patch('coverage.Coverage', return_value=cov), patch.object(gate.unittest, 'TestLoader') as loader, patch.object(gate.unittest, 'TextTestRunner', return_value=runner):
+            with patch.object(gate, 'ROOT', root), patch.object(gate, 'production_sources', return_value=catalog), patch('coverage.Coverage', return_value=cov), patch.object(gate.unittest, 'TestLoader') as loader, patch.object(gate.unittest, 'TextTestRunner', return_value=runner):
                 loader.return_value.discover.return_value = unittest.TestSuite()
                 self.assertFalse(gate.python_coverage(output))
 
@@ -59,14 +60,15 @@ class CoverageGateTests(unittest.TestCase):
             output = root/'report'
             output.mkdir()
             name = 'crates/core/src/lib.rs'
+            catalog = {'crates/core/src/lib.rs': 'fixture'}
             (output/'rust.json').write_text(json.dumps({'data': [{'files': [
                 {'filename': '/workspace/'+name, 'summary': {'lines': {'count': 100000000, 'covered': 99999999, 'percent': 100.0}}}]}]}))
             for missing, passed in [(1, False), (0, True)]:
                 summary = {'metric': 'lcov-unique-source-lines', 'totals': {'missing_lines': missing}}
-                with patch.object(gate, 'ROOT', root), patch.object(gate.subprocess, 'run'), patch.object(gate, 'read_lcov', return_value={name: {1: 0}}), patch.object(gate, 'summarize', return_value=summary), patch('builtins.print'):
+                with patch.object(gate, 'ROOT', root), patch.object(gate, 'production_sources', return_value=catalog), patch.object(gate.subprocess, 'run'), patch.object(gate, 'read_lcov', return_value={name: {1: 0}}), patch.object(gate, 'summarize', return_value=summary), patch('builtins.print'):
                     self.assertEqual(gate.rust_coverage(output), passed)
             (output/'rust.json').write_text(json.dumps({'data': [{'files': []}]}))
-            with patch.object(gate, 'ROOT', root), patch.object(gate.subprocess, 'run'), patch.object(gate, 'read_lcov', return_value={name: {1: 1}}):
+            with patch.object(gate, 'ROOT', root), patch.object(gate, 'production_sources', return_value=catalog), patch.object(gate.subprocess, 'run'), patch.object(gate, 'read_lcov', return_value={name: {1: 1}}):
                 with self.assertRaisesRegex(ValueError, 'inventory mismatch'):
                     gate.rust_coverage(output)
 

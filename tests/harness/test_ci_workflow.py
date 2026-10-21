@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 from harnesslib.policy import load
 from harnesslib.runner import check, run_command
+from harnesslib.validation_binding import bound_plan
 
 
 class CIWorkflowTests(unittest.TestCase):
@@ -38,11 +39,25 @@ class CIWorkflowTests(unittest.TestCase):
         self.assertIn("matrix.python", upload["with"]["name"])
         self.assertIn("pull_request", job["concurrency"]["cancel-in-progress"])
 
+    def test_levels_preserve_two_jobs_and_stable_system_release_scheduling(self):
+        workflow = self.workflow
+        job = workflow["jobs"]["quality"]
+        self.assertEqual(job["name"], "quality (Python ${{ matrix.python }})")
+        self.assertEqual(job["strategy"]["matrix"]["python"], ["3.11", "3.14"])
+        self.assertIn("schedule", workflow["on"])
+        self.assertIn("system", workflow["on"]["workflow_dispatch"]["inputs"]["level"]["options"])
+        self.assertIn("refs/heads/main", job["env"]["HARNESS_LEVEL"])
+        self.assertIn("schedule", job["env"]["HARNESS_SCOPE"])
+        run = next(step for step in job["steps"] if step.get("name") == "Run quality harness")
+        self.assertIn('--level "$HARNESS_LEVEL"', run["run"])
+        self.assertIn('--batch "$HARNESS_BATCH"', run["run"])
+        self.assertIn("--base", run["run"])
+
     def assert_job_budgets_fit(self, policy):
         job = self.workflow["jobs"]["quality"]
         self.assertEqual(job["runs-on"], "ubuntu-latest")
         expression = job["timeout-minutes"]
-        match = re.fullmatch(r"\$\{\{ inputs.scope == 'release' && (\d+) \|\| (\d+) \}\}", expression)
+        match = re.fullmatch(r"\$\{\{ \(inputs.scope == 'release' \|\| inputs.level == 'release' \|\| github.event_name == 'schedule'\) && (\d+) \|\| (\d+) \}\}", expression)
         self.assertIsNotNone(match)
         budgets = {"release": int(match[1]) * 60, "change": int(match[2]) * 60}
         # All ready suites conservatively bound any change selection, including
@@ -55,11 +70,25 @@ class CIWorkflowTests(unittest.TestCase):
                              if policy["suites"][name]["state"] == "ready")
             self.assertGreaterEqual(budgets[scope], worst_case + 600, scope)
 
+    def test_every_registered_profile_fits_the_job_without_reducing_commands_or_upload_margin(self):
+        policy, architecture, invariants, *_ = load(ROOT)
+        samples = (["README.md"], ["scripts/harness.py"], ["crates/guradb-query/src/lib.rs"],
+                   ["crates/guradb-storage/src/lib.rs"],
+                   ["crates/guradb-query/src/lib.rs", "crates/guradb-storage/src/lib.rs"],
+                   ["api/cf1a/schema.json"])
+        ready_worst = sum(suite["timeout_seconds"] * len(suite["commands"])
+                          for suite in policy["suites"].values() if suite["state"] == "ready")
+        for paths in samples:
+            profile = bound_plan(ROOT, paths, policy, architecture, invariants)["profile"]
+            self.assertLessEqual(profile["maximum_command_seconds"], ready_worst, paths)
+        self.assert_job_budgets_fit(policy)  # once-only 600s remains required.
+
     def test_job_deadline_can_fit_serial_gate_deadlines_and_evidence_upload(self):
         self.assert_job_budgets_fit(load(ROOT)[0])
 
     def test_job_above_hosted_hard_limit_is_rejected(self):
-        self.workflow["jobs"]["quality"]["timeout-minutes"] = "${{ inputs.scope == 'release' && 367 || 250 }}"
+        job = self.workflow["jobs"]["quality"]
+        job["timeout-minutes"] = re.sub(r"&& \d+ \|\|", "&& 367 ||", job["timeout-minutes"], count=1)
         with self.assertRaisesRegex(AssertionError, "hosted job"):
             self.assert_job_budgets_fit(load(ROOT)[0])
 

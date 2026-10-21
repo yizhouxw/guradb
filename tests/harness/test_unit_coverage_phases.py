@@ -140,7 +140,9 @@ PhaseEvidence(Path(sys.argv[2])).run('blocked_tool', blocked)
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             paths = ['Cargo.lock', 'rust-toolchain.toml', '.coveragerc', 'harness/coverage-exclusions.json',
-                     'tools/test-coverage/Dockerfile', 'scripts/unit_coverage.py', 'requirements-dev.lock']
+                     'tools/test-coverage/Dockerfile', 'scripts/unit_coverage.py', 'requirements-dev.lock',
+                     'scripts/coverage_scope.py', 'scripts/coverage_policy.py', 'scripts/harnesslib/validation_registry.py',
+                     'harness/architecture.toml', 'harness/policy.toml', 'harness/validation.toml']
             for path in paths:
                 target = root/path
                 target.parent.mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,65 @@
+schema_version = 1
+# ready means an executable mapping, not a passing module/pair certification; every gate must still pass.
+engineering_prefixes = ["scripts/harnesslib/", "tests/harness/", ".githooks/", ".github/workflows/"]
+engineering_paths = ["scripts/harness.py", "scripts/unit_coverage.py", "scripts/coverage_policy.py", "scripts/coverage_scope.py", "harness/policy.toml", "harness/validation.toml"]
+system_prefixes = ["api/", "modules/common/", "crates/guradb-common/", "config/", "deploy/", "schemas/", "migrations/", "tools/"]
+system_paths = ["Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "requirements-dev.lock", "requirements-m0.lock", "requirements-m1.lock", ".coveragerc", "harness/architecture.toml", "harness/coverage-exclusions.json", "harness/invariants.toml", "harness/workloads.toml", "harness/faults.toml"]
+
+[components.legacy-m0]
+modules = ["query", "storage"]
+boundary = "legacy fixed Parquet/S3 -> Rust Arrow/DataFusion query, with existing PG wire checks; not CF1-A/I1"
+# References preserve every argv, workload and timeout in the original suite.
+functional_suite = "functional"
+functional_index = 0
+performance_suite = "performance-smoke"
+performance_index = 0
+fault_suite = "stability-component"
+fault_index = 0
+
+[modules.query]
+state = "ready"
+change_suffixes = [".rs"]
+package = "guradb-query"
+component = "legacy-m0"
+python_tests = ["tests/contracts", "tests/unit"]
+reason = "Rust module selection; legacy Python fixture closure executes, entire query Python and Rust source remains strict denominator"
+
+[modules.storage]
+state = "ready"
+change_suffixes = [".rs"]
+package = "guradb-storage"
+component = "legacy-m0"
+python_tests = ["tests/contracts", "tests/unit"]
+reason = "Rust module selection; legacy Python fixture closure executes, entire storage Python and Rust source remains strict denominator"
+
+[pairs.storage-query]
+modules = ["storage", "query"]
+component = "legacy-m0"
+
+[modules.common]
+state = "pending"
+reason = "shared contract requires all consumers/system"
+[modules.catalog]
+state = "pending"
+reason = "fixed PG catalog component is not merged in this baseline"
+[modules.connectors]
+state = "pending"
+reason = "no standalone real source component registered in this baseline"
+[modules.index]
+state = "pending"
+reason = "no standalone real physical index component merged in this baseline"
+[modules.cluster]
+state = "pending"
+reason = "no bounded standalone distributed component profile registered"
+[modules.gateway]
+state = "pending"
+reason = "wire path currently belongs to system/legacy-M0 closure"
+[modules.client-api]
+state = "pending"
+reason = "no independently executable client component profile registered"
+[modules.cli]
+state = "pending"
+reason = "no independently executable CLI component profile registered"
+[modules.mcp]
+state = "pending"
+reason = "no independently executable MCP component profile registered"

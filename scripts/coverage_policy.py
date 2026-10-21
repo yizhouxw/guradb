@@ -35,17 +35,20 @@ def read_lcov(path, sources):
     return files
 
 
-def exclusions(root, files, path):
+def exclusions(root, files, path, universe=None):
     manifest = json.loads(path.read_text())
     if (set(manifest) != {'schema_version', 'rust'}
             or type(manifest['schema_version']) is not int or manifest['schema_version'] != 1):
         raise ValueError('unsupported coverage exclusion schema')
-    excluded = {name: set() for name in files}
+    universe = set(files) if universe is None else set(universe)
+    if not set(files).issubset(universe):
+        raise ValueError("coverage source outside full production inventory")
+    excluded = {name: set() for name in universe}
     for item in manifest['rust']:
         if set(item) != {'path', 'source_sha256', 'category', 'reason', 'evidence', 'lines'}:
             raise ValueError('incomplete coverage exclusion')
         name = item['path']
-        if name not in files or item['category'] not in CATEGORIES:
+        if name not in universe or item['category'] not in CATEGORIES:
             raise ValueError(f'invalid exclusion path/category: {name}')
         if any(not isinstance(item[key], str) or not item[key].strip() for key in ('reason', 'evidence')):
             raise ValueError(f'exclusion requires reason and evidence: {name}')
@@ -59,7 +62,7 @@ def exclusions(root, files, path):
             if set(entry) != {'number', 'text'}:
                 raise ValueError('exclusions require individual line and exact text')
             line = entry['number']
-            if (type(line) is not int or line not in files[name] or line > len(source_lines)
+            if (type(line) is not int or line < 1 or (name in files and line not in files[name]) or line > len(source_lines)
                     or source_lines[line-1] != entry['text'] or line in excluded[name]):
                 raise ValueError(f'invalid/stale/duplicate exclusion line: {name}:{line}')
             if item['category'] == 'llvm-mapping' and entry['text'].strip() not in {'}', ')?;'}:
@@ -67,11 +70,11 @@ def exclusions(root, files, path):
             excluded[name].add(line)
     if any(len(excluded[name]) == len(lines) for name, lines in files.items()):
         raise ValueError('whole-source exclusion is prohibited')
-    return excluded
+    return {name: excluded[name] for name in files}
 
 
-def summarize(root, files, manifest):
-    excluded = exclusions(root, files, manifest)
+def summarize(root, files, manifest, universe=None):
+    excluded = exclusions(root, files, manifest, universe)
     result = {}
     for name, lines in sorted(files.items()):
         missed = {line for line, count in lines.items() if count == 0}

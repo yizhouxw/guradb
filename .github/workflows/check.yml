@@ -3,6 +3,8 @@ name: Quality harness
 on:
   push:
   pull_request:
+  schedule:
+    - cron: "17 3 * * 0"
   workflow_dispatch:
     inputs:
       scope:
@@ -12,6 +14,15 @@ on:
           - change
           - release
         default: change
+      level:
+        description: "auto/module/pair for authors; system for a stable integration batch; release remains complete"
+        type: choice
+        options: [auto, module, pair, system, release]
+        default: auto
+      batch:
+        description: "optional stable integration batch ID (letters, digits, dot, dash, underscore)"
+        type: string
+        default: manual
       base:
         description: "all checks the complete tree; otherwise use an existing base ref"
         type: string
@@ -24,17 +35,19 @@ jobs:
   quality:
     name: quality (Python ${{ matrix.python }})
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ inputs.scope == 'release' && 360 || 250 }}
+    timeout-minutes: ${{ (inputs.scope == 'release' || inputs.level == 'release' || github.event_name == 'schedule') && 360 || 250 }}
     strategy:
       fail-fast: false
       matrix:
         python: ['3.11', '3.14']
     concurrency:
-      group: quality-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.scope || 'change' }}-${{ inputs.base || 'auto' }}-${{ matrix.python }}
+      group: quality-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.scope || 'change' }}-${{ inputs.base || 'auto' }}-${{ inputs.level || 'auto' }}-${{ matrix.python }}
       cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     env:
-      HARNESS_SCOPE: ${{ inputs.scope || 'change' }}
+      HARNESS_SCOPE: ${{ github.event_name == 'schedule' && 'release' || inputs.scope || 'change' }}
       HARNESS_BASE: ${{ inputs.base || 'auto' }}
+      HARNESS_LEVEL: ${{ inputs.level || (github.event_name == 'schedule' && 'release') || (github.event_name == 'push' && github.ref == 'refs/heads/main' && 'system') || 'auto' }}
+      HARNESS_BATCH: ${{ inputs.batch || format('run-{0}-{1}', github.run_id, github.run_attempt) }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -48,7 +61,7 @@ jobs:
       - name: Verify installed dependencies
         run: python -m pip check
       - name: Run quality harness
-        run: python scripts/harness.py check --scope "$HARNESS_SCOPE" --base "$HARNESS_BASE"
+        run: python scripts/harness.py check --scope "$HARNESS_SCOPE" --base "$HARNESS_BASE" --level "$HARNESS_LEVEL" --batch "$HARNESS_BATCH"
       - name: Preserve quality evidence even on failure
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

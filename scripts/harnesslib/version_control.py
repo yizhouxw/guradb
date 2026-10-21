@@ -11,6 +11,7 @@ from uuid import uuid4
 from .policy import HarnessError, git, load
 from .runner import checkout_digest
 from .check_evidence import archive_report, validate_report
+from .validation_binding import claim
 
 
 def status(root: Path) -> dict:
@@ -56,6 +57,7 @@ def checkpoint(root: Path, label: str, policy: dict, report_path: Path | None = 
                 "checkout_digest": checkout_digest(root, policy), "quality": "not_assessed"}
     if report_path is not None:
         report = validate_report(root, report_path, configuration or load(root))
+        metadata["validation"] = claim(report)
         metadata.update(quality="selected_gates_passed", scope=report["scope"],
                         selection_base=report["selection_base"],
                         report_sha256=hashlib.sha256(report_path.read_bytes()).hexdigest(),

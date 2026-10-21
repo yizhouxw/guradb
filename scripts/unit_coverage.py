@@ -14,6 +14,7 @@ import unittest
 import traceback
 from importlib.metadata import version
 from coverage_policy import read_lcov, summarize
+from coverage_scope import coverage_scope, ignore_regex, package_args, python_roots, production_sources
 from harnesslib.policy import load
 from harnesslib.runner import checkout_digest
 
@@ -67,7 +68,9 @@ def measured(evidence, name, operation):
 def evidence_inputs():
     paths = {ROOT/'Cargo.lock', ROOT/'rust-toolchain.toml', ROOT/'.coveragerc',
              ROOT/'harness/coverage-exclusions.json', ROOT/'tools/test-coverage/Dockerfile',
-             ROOT/'scripts/unit_coverage.py', *ROOT.glob('requirements*.lock')}
+             ROOT/'scripts/unit_coverage.py', ROOT/'scripts/coverage_scope.py', ROOT/'scripts/coverage_policy.py',
+             ROOT/'scripts/harnesslib/validation_registry.py', ROOT/'harness/architecture.toml',
+             ROOT/'harness/policy.toml', ROOT/'harness/validation.toml', *ROOT.glob('requirements*.lock')}
     return {path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
             for path in sorted(paths)}
 
@@ -80,8 +83,10 @@ def image_identity(evidence, image):
     evidence.record('tool_identity', image_tag=image, image_id=value, observation='after_image_build')
 
 
-def record_identity(evidence, observation):
+def record_identity(evidence, observation, scope=None):
     value = identity()
+    if scope is not None:
+        value["coverage_scope"] = scope
     evidence.record('source_identity', observation=observation, identity=value, inputs=evidence_inputs())
     return value
 
@@ -100,17 +105,19 @@ def exclusive_run(root):
         yield
 
 
-def python_coverage(directory):
+def python_coverage(directory, scope=None):
     import coverage
-    cov = coverage.Coverage(config_file=str(ROOT/'.coveragerc'), data_file=str(directory/'python.data'))
+    cov = coverage.Coverage(config_file=str(ROOT/'.coveragerc'), data_file=str(directory/'python.data'),
+                            source=python_roots(ROOT, scope))
     cov.start()
     suite = unittest.TestSuite()
-    for path in ('tests/contracts', 'tests/unit'):
+    for path in (scope['python_tests'] if scope else ('tests/contracts', 'tests/unit')):
         suite.addTests(unittest.TestLoader().discover(str(ROOT/path)))
     result = unittest.TextTestRunner(verbosity=1).run(suite)
     cov.stop()
     # Namespace packages and never-imported modules must remain in the denominator.
-    sources = sorted(p for base in ('modules', 'clients') for p in (ROOT/base).rglob('*.py'))
+    sources = ([ROOT/name for name in scope['python_sources']] if scope else
+               [ROOT/name for name in production_sources(ROOT) if name.endswith('.py')])
     cov.get_data().touch_files([str(p) for p in sources])
     cov.save()
     cov.json_report(outfile=str(directory/'python.json'))
@@ -121,7 +128,7 @@ def python_coverage(directory):
     return result.wasSuccessful() and complete and payload['totals']['missing_lines'] == 0 and payload['totals']['excluded_lines'] == 0
 
 
-def rust_coverage(directory, evidence=None):
+def rust_coverage(directory, evidence=None, scope=None):
     image = 'guradb-coverage:1.90.0'
     measured(evidence, 'docker_image_build', lambda: subprocess.run(
         ['docker', 'build', '-q', '-t', image, '-f', 'tools/test-coverage/Dockerfile', '.'], cwd=ROOT, check=True))
@@ -131,20 +138,21 @@ def rust_coverage(directory, evidence=None):
     measured(evidence, 'rust_collect_test_json', lambda: subprocess.run(
                     ['docker', 'run', '--rm', '-v', f'{ROOT}:/workspace', '-w', '/workspace',
                     '-v', 'guradb-cargo-registry:/usr/local/cargo/registry', image,
-                    'cargo', 'llvm-cov', '--workspace', '--locked', '--ignore-filename-regex', '(^|/)tests/', '--json', '--output-path',
+                    'cargo', 'llvm-cov', *package_args(scope), '--locked', '--ignore-filename-regex', ignore_regex(ROOT, scope), '--json', '--output-path',
                     '/workspace/'+output.relative_to(ROOT).as_posix()], cwd=ROOT, check=True))
     lcov = directory/'rust.lcov'
     measured(evidence, 'rust_lcov_export', lambda: subprocess.run(
                     ['docker', 'run', '--rm', '-v', f'{ROOT}:/workspace', '-w', '/workspace',
                     '-v', 'guradb-cargo-registry:/usr/local/cargo/registry', image,
-                    'cargo', 'llvm-cov', 'report', '--locked', '--ignore-filename-regex', '(^|/)tests/',
+                    'cargo', 'llvm-cov', 'report', *(package_args(scope) if scope else []), '--locked', '--ignore-filename-regex', ignore_regex(ROOT, scope),
                     '--lcov', '--output-path', '/workspace/'+lcov.relative_to(ROOT).as_posix()], cwd=ROOT, check=True))
-    return measured(evidence, 'rust_summary', lambda: rust_summary(directory, output, lcov))
+    return measured(evidence, 'rust_summary', lambda: rust_summary(directory, output, lcov, scope))
 
 
-def rust_summary(directory, output, lcov):
+def rust_summary(directory, output, lcov, scope=None):
     payload = json.loads(output.read_text())
-    sources = {p.relative_to(ROOT).as_posix() for p in (ROOT/'crates').glob('*/src/**/*.rs')}
+    all_sources = {name for name in production_sources(ROOT) if name.endswith('.rs')}
+    sources = set(scope['rust_sources']) if scope else all_sources
     files = read_lcov(lcov, sources)
     # A second export must still describe the same source set, never silently
     # dropping an unexecuted file. Retain native totals including closure mappings.
@@ -152,7 +160,10 @@ def rust_summary(directory, output, lcov):
               for datum in payload['data'] for item in datum['files']}
     if set(native) != sources:
         raise ValueError('LLVM JSON source inventory mismatch')
-    summary = summarize(ROOT, files, ROOT/'harness/coverage-exclusions.json')
+    summary = summarize(ROOT, files, ROOT/'harness/coverage-exclusions.json',
+                        universe=all_sources if scope else None)
+    if scope is not None:
+        summary['coverage_scope'] = scope
     summary['llvm_native'] = native
     (directory/'rust-summary.json').write_text(json.dumps(summary, indent=2)+'\n')
     print(json.dumps({'rust_coverage': summary['totals'], 'metric': summary['metric']}, indent=2))
@@ -162,6 +173,7 @@ def rust_summary(directory, output, lcov):
 def identity():
     return {'git_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
             'checkout_digest': checkout_digest(ROOT, load(ROOT)[0]),
+            'production_sources': production_sources(ROOT),
             'python': sys.version, 'coverage': version('coverage'),
             'rust': '1.90.0', 'cargo_llvm_cov': '0.6.21'}
 
@@ -170,23 +182,26 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--language', choices=('python', 'rust', 'all'), default='all')
     parser.add_argument('--run-dir', type=Path, required=True)
+    parser.add_argument('--module', action='append', default=[], help='complete owner denominator; no changed-lines filter')
     args = parser.parse_args()
+    scope = coverage_scope(ROOT, args.module) if args.module else None
     directory = args.run_dir.resolve()
     if not directory.is_relative_to(ROOT):
         parser.error('run directory must be within workspace')
     directory.mkdir(parents=True, exist_ok=False)
     with exclusive_run(ROOT):
         evidence = PhaseEvidence(directory)
-        before = evidence.run('identity_before', lambda: record_identity(evidence, 'before'))
+        before = evidence.run('identity_before', lambda: record_identity(evidence, 'before', scope))
         outcomes = {}
-        for name, driver in (('python', python_coverage), ('rust', lambda path: rust_coverage(path, evidence))):
+        for name, driver in (('python', lambda path: python_coverage(path, scope)),
+                             ('rust', lambda path: rust_coverage(path, evidence, scope))):
             if args.language in (name, 'all'):
                 try:
                     outcomes[name] = evidence.run(name, lambda: driver(directory))
                 except Exception:
                     traceback.print_exc()
                     outcomes[name] = False
-        after = evidence.run('identity_after', lambda: record_identity(evidence, 'after'))
+        after = evidence.run('identity_after', lambda: record_identity(evidence, 'after', coverage_scope(ROOT, args.module) if scope else None))
         outcomes['unchanged_source'] = before == after
         (directory/'identity.json').write_text(json.dumps({'before': before, 'after': after}, indent=2)+'\n')
         (directory/'result.json').write_text(json.dumps(outcomes, indent=2)+'\n')

@@ -12,6 +12,9 @@ from harnesslib.architecture import lint
 from harnesslib.evidence import compare_performance, read_json, verify_stability
 from harnesslib.policy import HarnessError, load, plan
 from harnesslib.runner import check, discover_changes
+from harnesslib.validation import LEVELS
+from harnesslib.validation_binding import bound_plan
+from harnesslib.validation_registry import load_registry
 from harnesslib.version_control import checkpoint, install_hooks, recover, require_committable_tree, status
 from harnesslib.task_state import read_task
 from harnesslib.workflow import abandon_task, finish_task, start_task
@@ -26,9 +29,15 @@ def main() -> int:
     planner = commands.add_parser("plan", help="classify changes; planning is not test evidence")
     planner.add_argument("--base", default="auto")
     planner.add_argument("--path", action="append", help="advisory plan for a repository-relative path")
+    for target in (planner,):
+        target.add_argument("--level", choices=LEVELS, default="auto")
+        target.add_argument("--module", action="append", default=[])
     checker = commands.add_parser("check", help="run required gates and write logs/JSON")
     checker.add_argument("--scope", choices=("bootstrap", "change", "release"), default="change")
     checker.add_argument("--base", default="auto")
+    checker.add_argument("--level", choices=LEVELS, default="auto")
+    checker.add_argument("--module", action="append", default=[])
+    checker.add_argument("--batch", help="stable integration batch identifier; recorded, never a cache key")
     performance = commands.add_parser("compare-performance")
     performance.add_argument("--baseline", type=Path, required=True)
     performance.add_argument("--candidate", type=Path, required=True)
@@ -71,23 +80,29 @@ def main() -> int:
         configuration = load(ROOT)
         policy, architecture, invariants, workloads, faults = configuration
         if arguments.command == "lint":
+            load_registry(ROOT, policy, architecture)
             for message in lint(ROOT, policy, architecture):
                 print("OK:", message)
             print("Runtime invariants are registered obligations, not proven by this lint.")
         elif arguments.command == "plan":
             paths = arguments.path if arguments.path is not None else discover_changes(ROOT, arguments.base)
-            print(json.dumps(plan(ROOT, paths, policy, architecture, invariants), ensure_ascii=False, indent=2))
+            selected = bound_plan(ROOT, paths, policy, architecture, invariants, arguments.level, arguments.module)
+            output = {**selected["legacy_impact"], "validation": selected}
+            print(json.dumps(output, ensure_ascii=False, indent=2))
         elif arguments.command in {"check", "pre-commit"}:
             if arguments.command == "pre-commit":
                 require_committable_tree(ROOT)
                 arguments.scope, arguments.base = "change", "auto"
-            report, path = check(ROOT, arguments.scope, arguments.base, configuration)
+                arguments.level, arguments.module, arguments.batch = "auto", [], None
+            report, path = check(ROOT, arguments.scope, arguments.base, configuration,
+                                 arguments.level, arguments.module, arguments.batch)
             if arguments.command == "pre-commit":
                 require_committable_tree(ROOT)
                 if status(ROOT)["head"] != report["git_commit"]:
                     raise HarnessError("HEAD changed during pre-commit checks; inspect and retry")
             for item in report["results"]:
                 print(f"{item['status'].upper()}: {item['suite']} {item.get('reason', '')}".rstrip())
+            print("Validation:", report["validation"]["profile"]["level"], report["validation"]["profile_sha256"])
             print(f"Report: {path}")
             print("Unimplemented product gates:", ", ".join(report["unimplemented_suites"]) or "none")
             return 0 if report["passed"] else 1

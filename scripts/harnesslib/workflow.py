@@ -9,6 +9,7 @@ from .check_evidence import validate_report
 from .policy import HarnessError, git
 from .task_state import active_base, read_task, task_lock, write_task
 from .version_control import checkpoint, status
+from .validation_binding import claim
 
 
 def start_task(root: Path, label: str, objective: str, configuration: tuple) -> dict:
@@ -44,6 +45,7 @@ def finish_task(root: Path, report_path: Path, review: str, configuration: tuple
             raise HarnessError("task completion needs change/release evidence covering its original base")
         value = read_task(root)
         point = checkpoint(root, value["label"] + "-done", configuration[0], report_path, configuration)
+        value["validation"] = claim(report)
         value.update(status="completed", final_commit=point["commit"], review=review,
                      final_checkpoint=point["checkpoint"], evidence_directory=point["evidence_directory"],
                      finished_at=datetime.now(timezone.utc).isoformat())
