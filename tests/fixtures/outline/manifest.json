@@ -1,0 +1,171 @@
+{
+  "fixture_id": "outline-synthetic-v1",
+  "input_contract": "fixture-private-v1",
+  "evidence_class": "module-only-synthetic",
+  "digest_algorithm": "sha256",
+  "canonicalization": "manifest digest is SHA-256 of exact manifest.json bytes; input digests are exact file bytes",
+  "inputs": [
+    {
+      "path": "LICENSE.txt",
+      "category": "control",
+      "size_bytes": 418,
+      "sha256": "dda6e78c8c8c82648c1711eabb25b5fc4d2e10036722c41a1cd6f33b0657e5c6"
+    },
+    {
+      "path": "README.md",
+      "category": "control",
+      "size_bytes": 448,
+      "sha256": "ab050a3229a982d3ed1d00a0a19d97a4a2a3c0af935a051db18bd725a82f5baf"
+    },
+    {
+      "path": "assets/a.svg",
+      "category": "media",
+      "size_bytes": 282,
+      "sha256": "0c0a13c9059ff4c1042e4f50db82ee848d64359373101998ac626a885cf4e775"
+    },
+    {
+      "path": "assets/a1-v1.txt",
+      "category": "facts",
+      "size_bytes": 61,
+      "sha256": "fba2642c05f418a2e58adb1dfaee99aba093c882e1f84a8f710e43e05121bcdf"
+    },
+    {
+      "path": "assets/a1-v2.txt",
+      "category": "facts",
+      "size_bytes": 58,
+      "sha256": "828f04db43fc4a16d76e95837f940c53fe053fe5b5cb9a4b2177358eeb32574e"
+    },
+    {
+      "path": "assets/a2.txt",
+      "category": "facts",
+      "size_bytes": 58,
+      "sha256": "b93dabacc2e7e7507655462a5188064e8427c16235e145a6049d08805d0deb3a"
+    },
+    {
+      "path": "assets/a3.txt",
+      "category": "facts",
+      "size_bytes": 61,
+      "sha256": "542d9f56f8a3d425b749613f0558df94588a0dc896299e0a19e805cfc3f6bbe9"
+    },
+    {
+      "path": "assets/b.svg",
+      "category": "media",
+      "size_bytes": 282,
+      "sha256": "8fac4d35b53cb3a7de441944fe30740e0e8abc3756d04bee6db5ee4c717b24a7"
+    },
+    {
+      "path": "assets/b1.txt",
+      "category": "facts",
+      "size_bytes": 61,
+      "sha256": "7f51255fd170472d4ec8e5868e3c4278cfee74347ae84321a23b800c82e725cf"
+    },
+    {
+      "path": "assets/b2.txt",
+      "category": "facts",
+      "size_bytes": 49,
+      "sha256": "ad421ed8089e759017c7646d5337482b8df90d8a5866b4252758067206ad72a8"
+    },
+    {
+      "path": "assets/b3.txt",
+      "category": "facts",
+      "size_bytes": 55,
+      "sha256": "bfeb162993814750c6305a81ab1f6b67066f6c59c13d4137533e6d1bec6f0ed1"
+    },
+    {
+      "path": "assets/c.svg",
+      "category": "media",
+      "size_bytes": 282,
+      "sha256": "637ecc6d067cd4aa057f5e37d74740f898a2eafc0ad7325c0a05094abb9b30f2"
+    },
+    {
+      "path": "assets/c1.txt",
+      "category": "facts",
+      "size_bytes": 52,
+      "sha256": "4e4c2e7d72647c87a1e1f80329a276ba89e43b1c7c86f0d8cc6bdf51148f559d"
+    },
+    {
+      "path": "assets/c2.txt",
+      "category": "facts",
+      "size_bytes": 58,
+      "sha256": "0097fc1cc1f5a89550ecac1b114f08af258f4f2777fc22cabab5a75c394a7f3a"
+    },
+    {
+      "path": "assets/c3.txt",
+      "category": "facts",
+      "size_bytes": 52,
+      "sha256": "e9437cdc5e4f7871c90ba0c147eedc795431d791d1ce7e30f75043a52fe4c14c"
+    },
+    {
+      "path": "assets.json",
+      "category": "facts",
+      "size_bytes": 3577,
+      "sha256": "d8782a2912e690c512b4d4f96a9f9659eea821f0d0a793da1cc20a7f43785f04"
+    },
+    {
+      "path": "budgets.json",
+      "category": "control",
+      "size_bytes": 2400,
+      "sha256": "e91d3a745a172e17bbfdbb21efb0aa81902be89501b445ab26cd048fb5cda506"
+    },
+    {
+      "path": "comparisons.json",
+      "category": "control",
+      "size_bytes": 1520,
+      "sha256": "f219bdf95e79f6302fb5d46ecb45cc3d963298af5361edbeddbb43dff67ae01e"
+    },
+    {
+      "path": "corpus.json",
+      "category": "facts",
+      "size_bytes": 8085,
+      "sha256": "7e5e1e98a573f20efb2db4e35a808a707b337553b35ebd91040c4860c431f7ff"
+    },
+    {
+      "path": "edges.json",
+      "category": "facts",
+      "size_bytes": 2172,
+      "sha256": "e67116fb8871130198dcd5d6697ae95fbc0400bc0b7cc98605683c3623035e89"
+    },
+    {
+      "path": "features.json",
+      "category": "vectors",
+      "size_bytes": 4169,
+      "sha256": "7ef6de5137ca51592dcfdc351194d15d801f8cef089a68d3fdc8ca4060603749"
+    },
+    {
+      "path": "fragments.json",
+      "category": "facts",
+      "size_bytes": 4711,
+      "sha256": "c47b88a05f7198d69d2d944d70937b8a19c8e8551081ca2c32a2a85c4f005c7f"
+    },
+    {
+      "path": "golden.json",
+      "category": "control",
+      "size_bytes": 4199,
+      "sha256": "93a34d012bea6ae3b0ab313cadd521577c45025236fc33878d59ba094443406a"
+    },
+    {
+      "path": "groups.json",
+      "category": "facts",
+      "size_bytes": 1706,
+      "sha256": "4eba3358ee7c705d004829cf6bad59f173673b632a794871fcf91e705d66d9a7"
+    },
+    {
+      "path": "negative-cases.json",
+      "category": "control",
+      "size_bytes": 3015,
+      "sha256": "b70587d0a270e9bf0e96c8ab419e3135fb16b655b79932d32065a39a54fee04c"
+    },
+    {
+      "path": "token-index.json",
+      "category": "index",
+      "size_bytes": 2457,
+      "sha256": "01f0815b7d0b0c63f46750134650a95c0eec033f5f97af771ea1425530b9d65c"
+    },
+    {
+      "path": "training.json",
+      "category": "facts",
+      "size_bytes": 4079,
+      "sha256": "771ba8d8f89cbee9b593113271fe044e16620fb254aaf7661544236d14a4a154"
+    }
+  ]
+}

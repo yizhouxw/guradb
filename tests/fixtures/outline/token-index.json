@@ -1,0 +1,142 @@
+{
+  "kind": "synthetic-reference-postings-not-production-index",
+  "view_id": "view-v2",
+  "postings": {
+    "撤销": [
+      {
+        "record_id": "r-a1",
+        "record_version": "2",
+        "tf": 1
+      },
+      {
+        "record_id": "r-a1-copy",
+        "record_version": "1",
+        "tf": 1
+      }
+    ],
+    "权限": [
+      {
+        "record_id": "r-a1",
+        "record_version": "2",
+        "tf": 1
+      },
+      {
+        "record_id": "r-a2",
+        "record_version": "1",
+        "tf": 1
+      },
+      {
+        "record_id": "r-a1-copy",
+        "record_version": "1",
+        "tf": 1
+      }
+    ],
+    "缓存": [
+      {
+        "record_id": "r-a1",
+        "record_version": "2",
+        "tf": 1
+      },
+      {
+        "record_id": "r-a3",
+        "record_version": "1",
+        "tf": 1
+      },
+      {
+        "record_id": "r-a1-copy",
+        "record_version": "1",
+        "tf": 1
+      }
+    ],
+    "申请": [
+      {
+        "record_id": "r-a2",
+        "record_version": "1",
+        "tf": 1
+      }
+    ],
+    "刷新": [
+      {
+        "record_id": "r-a3",
+        "record_version": "1",
+        "tf": 1
+      }
+    ],
+    "备份": [
+      {
+        "record_id": "r-b1",
+        "record_version": "1",
+        "tf": 1
+      },
+      {
+        "record_id": "r-b2",
+        "record_version": "1",
+        "tf": 1
+      }
+    ],
+    "恢复": [
+      {
+        "record_id": "r-b1",
+        "record_version": "1",
+        "tf": 1
+      },
+      {
+        "record_id": "r-b3",
+        "record_version": "1",
+        "tf": 1
+      }
+    ],
+    "保留": [
+      {
+        "record_id": "r-b2",
+        "record_version": "1",
+        "tf": 1
+      }
+    ],
+    "校验": [
+      {
+        "record_id": "r-b3",
+        "record_version": "1",
+        "tf": 1
+      }
+    ],
+    "分组": [
+      {
+        "record_id": "r-c1",
+        "record_version": "1",
+        "tf": 1
+      },
+      {
+        "record_id": "r-c3",
+        "record_version": "1",
+        "tf": 1
+      }
+    ],
+    "训练": [
+      {
+        "record_id": "r-c1",
+        "record_version": "1",
+        "tf": 1
+      },
+      {
+        "record_id": "r-c2",
+        "record_version": "1",
+        "tf": 1
+      }
+    ],
+    "样本": [
+      {
+        "record_id": "r-c2",
+        "record_version": "1",
+        "tf": 1
+      }
+    ],
+    "隔离": [
+      {
+        "record_id": "r-c3",
+        "record_version": "1",
+        "tf": 1
+      }
+    ]
+  }
+}

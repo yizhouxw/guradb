@@ -1,0 +1,41 @@
+{
+  "status": "design-comparison-no-performance-result",
+  "same_input_required": [
+    "manifest digest",
+    "view",
+    "projection",
+    "quality",
+    "cache state",
+    "authorization",
+    "decoder and sampling"
+  ],
+  "alternatives": [
+    {
+      "name": "postgres-plus-object-store-plus-vector-service",
+      "shared": "same synthetic facts/media/query labels",
+      "responsibility": "application owns cross-service version binding, permissions, media retention and training joins",
+      "measurement": "missing; no installed side-by-side system"
+    },
+    {
+      "name": "lake-plus-separate-search-and-training-export",
+      "shared": "same source snapshot and sample set",
+      "responsibility": "pipeline/application owns index freshness, duplicate materializations, group split and export retention",
+      "measurement": "missing; no installed side-by-side system"
+    },
+    {
+      "name": "guradb-target",
+      "shared": "same frozen source and oracle",
+      "responsibility": "database target owns fixed-view evidence, current authorization and sample dependency retention; model training stays consumer-owned",
+      "measurement": "missing; target responsibility is not current runtime support"
+    }
+  ],
+  "required_costs": [
+    "facts/vector/index/media working sets separately",
+    "GET and bytes",
+    "total RSS",
+    "index build",
+    "export and retained bytes",
+    "latency and batch wait at equal quality"
+  ],
+  "business_relevance": "missing independent human judgments"
+}

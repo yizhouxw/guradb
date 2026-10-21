@@ -1,0 +1,7 @@
+SPDX-License-Identifier: CC0-1.0
+
+All text, SVG, tabular metadata, synthetic vectors and role labels in this
+fixture were authored for GuraDB. No customer data or external model weights
+are included. The authors dedicate these fixture assets to the public domain
+under CC0 1.0 Universal: https://creativecommons.org/publicdomain/zero/1.0/
+The vectors and role labels are synthetic test values, not business judgments.
