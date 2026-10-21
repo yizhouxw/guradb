@@ -163,3 +163,48 @@ fn literal_nested_quoted_and_boundary_descriptions() {
     let ast = Expr::Tuple(vec![]);
     assert_eq!(infer(&ast, None, &[], &mut []).unwrap(), None);
 }
+
+#[test]
+fn infers_int8_from_numeric_literals_without_reading_source() {
+    let description = inspect(
+        "SELECT id AS key, title FROM documents WHERE $1 < 9223372036854775807 AND $2 >= 0",
+        &[],
+    )
+    .unwrap();
+    assert_eq!(description.parameter_types, ["int8", "int8"]);
+    assert_eq!(
+        description
+            .columns
+            .iter()
+            .map(|column| (column.name.as_str(), column.r#type.as_str()))
+            .collect::<Vec<_>>(),
+        [("key", "int8"), ("title", "text")]
+    );
+    assert_eq!(
+        serde_json::to_value(&description.columns).unwrap(),
+        json!([
+            {"name":"key","type":"int8"}, {"name":"title","type":"text"}
+        ])
+    );
+}
+
+#[test]
+fn rejects_conflicting_literal_constraints_and_overflow_without_reading_source() {
+    assert_eq!(
+        inspect("SELECT id FROM documents WHERE $1 = 1 AND $1 = 'x'", &[])
+            .err()
+            .unwrap()
+            .code,
+        "invalid_parameter"
+    );
+    assert_eq!(
+        inspect(
+            "SELECT id FROM documents WHERE $1 < 9223372036854775808",
+            &[]
+        )
+        .err()
+        .unwrap()
+        .code,
+        "unsupported"
+    );
+}
