@@ -38,3 +38,9 @@ staging/production 通过独立的 GitHub Environment 绑定授权、环境配�
 当前缺少发布构建/容器registry、目标运行环境、部署身份、健康/数据恢复合同及实际 release gate；这些是进入 CD 的实施前提，不阻止现有文档与 harness 开发。
 
 本地P0/HTTP worker、离线恢复与状态检查曾将job预算更新到change240/release360分钟。本轮覆盖工具watchdog与实际ready执行模型修订后普通job为250分钟；完整suite义务及每项预算未减少，尚未实现的release门禁继续missing。新driver增加实际命令时必须重新核对预算，不能复用旧时限通过结论。远端运行需按当前已授权的提交推送后核对实际结果。
+
+## 模块交付 v2 的调度合同
+
+[策略 v2](../docs/plans/2026-10-21-modular-delivery-v2.md)要求 pre-commit/PR 使用 auto 映射模块或真实配对，工程工具有专属机制自测，系统候选在 main 集成窗口验证；release 仍包含所有 planned 义务并对 missing 失败。gates-v2 的工作流实现必须保留 Python3.11/3.14 两个 quality 名称、当前 test-merge 检查、固定 Actions SHA 和安全证据上传，不通过旧绿/skip 冒充新层级。
+
+手工运行将接受明确 level/modules/base 与可选 batch 标识；实际字段名以独审后的 CLI/workflow 为准。报告记录本次选择原因、完整模块分母/排除、配置/选择算法指纹、真实 argv/timeout、耗时与源码闭包，不能 module→system/release 降级伪造。main 第一版仍执行 system；ROOT 通过批次组织减少无意义候选。未启用定时回归、未运行 release 或未认证远端设置要明确 pending，不仅凭 YAML 存在宣布通过。

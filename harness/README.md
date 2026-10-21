@@ -72,3 +72,7 @@ M0/M1 已接入真实功能、组件基准和故障注入；完整性能、完�
 非小型任务用 task-start 记录目标与原始 base，task-status 恢复上下文，最终提交后 check，再用 task-finish --report/--review 验证整项范围并归档；task-abandon 只停止记录，保留文件与 Git 历史。checkpoint 同样重验报告/全部命令/日志 SHA-256，证据归档到共同 Git 管理目录，不依赖 artifacts 永久留存。
 
 GitHub Actions 在 PR/push/手动运行同一入口，配置 Python 3.11/3.14 和失败证据上传；共享 runner 不用于给数据库性能背书。此前bootstrap远端CI已通过，本轮M0矩阵待推送验证；保护规则未验证，尚不能保证阻止绕过CI。建立远端后将对应 quality jobs 设为必需检查，并对 harness、基线和持久化协议变更设置独立复核；仓库内自检不替代平台合并权限。CD 待服务/产物/环境合同，见 CI/CD 文档。
+
+## 模块交付策略 v2
+
+[执行策略](../docs/plans/2026-10-21-modular-delivery-v2.md)、[需求矩阵](../docs/product/requirements-v2.md)与[模块合同](../docs/design/module-delivery-contracts.md)是本轮入口。gates-v2 正在将默认 plan/check/pre-commit/PR 接到 module/pair/system/release 分层，模块只认证完整 owner 生产源和自身真实依赖；系统/发布各有窗口。未合入机器实现前现有命令保持旧语义，未知映射不能假绿。生产 strict100%、原预算/负例/恢复/追溯保持；工程工具验证另报，不把工具源码强塞入生产覆盖分母。

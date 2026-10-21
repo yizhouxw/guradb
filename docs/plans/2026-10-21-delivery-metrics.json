@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "snapshot": "2026-10-21T13:50Z strategy-v2 actual primitive and bootstrap snapshot",
+  "main_observed_at_utc": "2026-10-21T13:45:00Z",
+  "main_sha": "1e4f6a6c26eb28982f4b61cc75aa05e290211809",
+  "validation_costs": [
+    {
+      "feature": "M-CATALOG",
+      "scope": "normal-hook-and-clean-original-base-post",
+      "head": "86fcaf093deaba98c0495f775ac1d4767bbbf950",
+      "outer_seconds": 1404.3996155420318,
+      "hook_command_seconds": 724.4218112910166,
+      "post_seconds": 673.9457825409481,
+      "reports": [
+        "73e995f9f649a29df1d620680f34c5e97c6de8119e099af8e55f0abec0586a6e",
+        "5b3f0f1f5e90c8a411e4a5dd91890b722b8a41bea0739a9c35bb3a3944e75941"
+      ],
+      "modular_after_seconds": null
+    },
+    {
+      "feature": "V2-GATES",
+      "scope": "bootstrap-only; not module or system",
+      "source_manifest": "dbf112581450230828159a6027368ce967243068e86196c2cb726e60c66caf54",
+      "report": "7ed44decf79d3a4dee26f3d443957e0df4ce39e86f124fd6e9c498ae08dafd73",
+      "outer_seconds": 50.76505187491421,
+      "fresh_commands": 4,
+      "reused_commands": 0,
+      "harness_tests": 132,
+      "contract_tests": 136,
+      "comparable_to_catalog_full_quality": false
+    }
+  ],
+  "first_pass_rate": {
+    "passed_first_complete": null,
+    "complete_attempted": null,
+    "value": null,
+    "reason": "historical first-attempt ledger incomplete; new tasks track by functional ID, no estimate"
+  },
+  "integration_wait_minutes": null,
+  "new_user_journeys": {
+    "I1": "pending",
+    "I2": "pending",
+    "I3": "pending"
+  },
+  "failure_events": [
+    {
+      "feature": "M-STORAGE",
+      "stage": "readonly-image-preflight",
+      "classification": "environment-identity",
+      "quality_tests_executed": 0,
+      "service_mutations": 0,
+      "result": "failed; original retained; actual quiet operator release recorded"
+    },
+    {
+      "feature": "B01-primitives",
+      "stage": "readonly tag@digest image lookup",
+      "classification": "environment-reference-resolution",
+      "quality_tests_executed": 0,
+      "service_mutations": 0,
+      "outer_seconds": 0.151409792015329,
+      "result": "preserved; canonical same repository@digest lookup succeeds; no pull/fallback"
+    }
+  ],
+  "investment_categories": [
+    "rust-behavior",
+    "public-contract",
+    "tests",
+    "engineering-tools"
+  ],
+  "unmeasured": [
+    "after-modular-validation-cost",
+    "complete-historical-first-pass-rate",
+    "integration-wait-starts-for-pending-pairs",
+    "native-process-memory-for-new-fixed-query",
+    "real-cloud-or-independent-physical-three-hosts"
+  ],
+  "primitive_experiments": [
+    {
+      "feature": "B01-primitives",
+      "scope": "stock PG18 format only; not target physical ingest",
+      "server": "PG18.6 Debian aarch64",
+      "rows": 12,
+      "p01_rows": 11,
+      "commands": 34,
+      "outer_seconds": 3.713721042033285,
+      "expected_sqlstates": [
+        "55000",
+        "55000",
+        "23505"
+      ],
+      "independent_actual_review": "049cbb9838b9ddc82f4c41d644e43f3ea4b26cd6a69d8d9199bf8f01b3f1956e",
+      "runtime_released": true,
+      "module_pair_system_pass": false
+    }
+  ],
+  "remote": {
+    "catalog_pr": "https://github.com/yizhouxw/guradb/pull/14",
+    "head": "86fcaf093deaba98c0495f775ac1d4767bbbf950",
+    "ci": "pending actual verification",
+    "main_integrated": false
+  }
+}
