@@ -1,5 +1,22 @@
 # P02 固定目录场景与验证
 
+## C1 父控制增量（有限客户端控制已验证）
+
+| 场景 | 必须独立核对 |
+| --- | --- |
+| CC1 最初锚点 | bind前已耗时后期限只缩短；wire deadline-bound=ttl；同query/view/pin/epoch。 |
+| CC2 PG等待 | 100ms父控制黑洞/paused SQL/held rowlock≤150ms返回且socket关闭；同取消和更小page/cohort，PGattempt/真实wait不填0。 |
+| CC3 最后边界 | authority/取消callback后fresh clock，连接/SQL/COMMIT检查；COMMIT尝试后中断只unknown，无绑定/epoch成功输出。 |
+| CC4 原request清理 | 无binding且已过期/撤权found可精确released；错主体/delegation/完整request拒绝，原pin/query计数、metadata bytes/epoch不变。 |
+| CC5 unknown/absence | 真实bind及cleanup COMMIT等待/响应丢失后SQL仅0或1query；同原身份清理；absent永远unconfirmed，无自动第二bind，无伪墓碑。 |
+| CC6 成本与回归 | 固定32新parent/1000ms读+独立≤5s cleanup，control≤120s；真实invoice+T0，原3mode工作量/7quota/阈值/单位完整保留。 |
+
+本次SOURCE13 `98b7032d` 下 CC1–CC6：39纯单元和control42case（含32query）、原三模式实际PASS；control SQL记录/100raw及费用边界获P01有限独审c8f3c52a。证据索引 `artifacts/c1-parent-control-source/real-first/evidence-index.json`（7ca85c56）。32query读最大25.704ms、cleanup最大11.456ms；blackhole100.262ms、paused SQL客户端100.228ms、行锁deadline95.554ms/cancel26.722ms。paused整段夹具恢复178.019ms独列；真实COMMIT generator wait已发生后返回unknown，found只精确released，absent仍unconfirmed。
+
+CC2/CC3这里只验证客户端返回与FDclose，未确认serverbackend停止或PG cancel确认；完整server成本、PGnative memory未测。严格覆盖/完整任务/真实pair/I1未通过，不以旧组件或当前有限独审替代。原失败日志保留。
+
+这是C1 catalog模块定义，不是PG→P03/P04共同memory/对象输出、Rust/bridge/公共客户端或I1证明；C2持久closed-request/schema迁移未做。旧86fc本地证据不能替代本次源码/新control mode结果，远端CI阻塞与禁止合main保留。
+
 状态：恢复树运行前34文件清单下，26项针对性单元、232项Python测试/4028行零排除与真实PG七容量performance组件、独立语义和原件复核PASS。下表其余完整验证义务及新functional/fault、Rust、完整原base门禁和提交/CI/main仍pending；本次仅修订结果文档。手册：[固定目录](../user/fixed-catalog.md)，计划：[P02 首片](fixed-catalog-change-plan.md)。
 
 | 场景 ID / 目标 | 操作和独立成功断言 | 失败/恢复断言 | 验证入口与当前证据 |

@@ -116,40 +116,48 @@ def run(output, mode):
         with patch.object(cf1a_store, 'connect', side_effect=observed_connect):
             catalog.initialize(); catalog.initialize()
             cases = Cases(catalog, authority, principal, dsn)
-            cases.functional()
-            cases.race_and_fence()
-            if mode in ('all', 'fault'):
-                cases.admin_and_unknown()
-                cases.fresh_time_and_expired_cleanup()
-                result['transport'] = [blackhole(principal), *paused_and_locked(catalog, principal, dsn, name, docker)]
-            if mode in ('all', 'performance'):
-                cases.capacity(); cases.byte_capacity()
-            if mode == 'performance':
-                from tests.catalog_support.pg_quota_cases import remaining_capacities
-                remaining_capacities(cases)
-            cases.audit_metadata()
-            # New connections after a real PG restart recover immutable persisted bytes.
-            stable = catalog.port(principal).bind(request(principal, 'restart-query', dataset='dataset-functional'))
-            docker('restart', name)
-            result['published_ports']['after_restart'] = int(docker('port', name, '5432').stdout.strip().rsplit(':', 1)[1])
-            if result['published_ports']['after_restart'] != port:
-                raise RuntimeError('owned PG published endpoint changed after restart')
-            ready = time.monotonic() + 15
-            while True:
-                try:
-                    catalog.initialize()
-                    break
-                except Exception:
-                    if time.monotonic() >= ready:
-                        raise
-                    time.sleep(.05)
-            assert catalog.port(principal).bind(request(principal, 'restart-query', dataset='dataset-functional')).encoded == stable.encoded
-            catalog.port(principal).release_pin(stable)
-            cases.event('real-pg-restart-immutable-binding', state='pass', binding_sha256=stable.sha256)
-            result['sql_state'] = cases.sql('SELECT dataset,generation,policy_epoch,owner_epoch,metadata_bytes '
-                                            'FROM gura_cf1a.datasets ORDER BY dataset')
-            write(output / 'restart-binding.json', stable.document)
-            write(output / 'actual-pg-records.json', cases.dump(output))
+            if mode == 'control':
+                from tests.catalog_support.pg_control_cases import controlled
+                result['control'] = controlled(cases, name, docker, output)
+                cases.audit_metadata()
+                result['sql_state'] = cases.sql('SELECT dataset,generation,policy_epoch,owner_epoch,metadata_bytes '
+                                                'FROM gura_cf1a.datasets ORDER BY dataset')
+                write(output / 'actual-pg-records.json', cases.dump(output))
+            else:
+                cases.functional()
+                cases.race_and_fence()
+                if mode in ('all', 'fault'):
+                    cases.admin_and_unknown()
+                    cases.fresh_time_and_expired_cleanup()
+                    result['transport'] = [blackhole(principal), *paused_and_locked(catalog, principal, dsn, name, docker)]
+                if mode in ('all', 'performance'):
+                    cases.capacity(); cases.byte_capacity()
+                if mode == 'performance':
+                    from tests.catalog_support.pg_quota_cases import remaining_capacities
+                    remaining_capacities(cases)
+                cases.audit_metadata()
+                # New connections after a real PG restart recover immutable persisted bytes.
+                stable = catalog.port(principal).bind(request(principal, 'restart-query', dataset='dataset-functional'))
+                docker('restart', name)
+                result['published_ports']['after_restart'] = int(docker('port', name, '5432').stdout.strip().rsplit(':', 1)[1])
+                if result['published_ports']['after_restart'] != port:
+                    raise RuntimeError('owned PG published endpoint changed after restart')
+                ready = time.monotonic() + 15
+                while True:
+                    try:
+                        catalog.initialize()
+                        break
+                    except Exception:
+                        if time.monotonic() >= ready:
+                            raise
+                        time.sleep(.05)
+                assert catalog.port(principal).bind(request(principal, 'restart-query', dataset='dataset-functional')).encoded == stable.encoded
+                catalog.port(principal).release_pin(stable)
+                cases.event('real-pg-restart-immutable-binding', state='pass', binding_sha256=stable.sha256)
+                result['sql_state'] = cases.sql('SELECT dataset,generation,policy_epoch,owner_epoch,metadata_bytes '
+                                                'FROM gura_cf1a.datasets ORDER BY dataset')
+                write(output / 'restart-binding.json', stable.document)
+                write(output / 'actual-pg-records.json', cases.dump(output))
         result['image_identity'] = json.loads(docker('inspect', '--format', '{{json .Image}}', name).stdout)
         result['status'] = 'pass'
     except BaseException:
@@ -205,7 +213,7 @@ def run(output, mode):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--run-dir', type=Path, required=True)
-    parser.add_argument('--mode', choices=('all', 'functional', 'performance', 'fault'), default='all')
+    parser.add_argument('--mode', choices=('all', 'functional', 'performance', 'fault', 'control'), default='all')
     args = parser.parse_args()
     result = run(args.run_dir, args.mode)
     print(json.dumps({'status': result['status'], 'elapsed_seconds': result['elapsed_seconds'],

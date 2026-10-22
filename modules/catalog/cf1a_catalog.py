@@ -4,6 +4,7 @@ from modules.common.cf1a_primitives import require
 from modules.catalog.cf1a_admin import AdminOperations
 from modules.catalog.cf1a_auth import FixedInputAuthority, TrustedPrincipal
 from modules.catalog.cf1a_binding import Bindings
+from modules.catalog.cf1a_controlled import ControlledReads
 from modules.catalog.cf1a_mutation import Mutations
 from modules.catalog.cf1a_store import CatalogStore
 
@@ -50,3 +51,6 @@ class FixedCatalog:
             publish=lambda intent, auth, target: self._mutation(principal, 'publish_intent', intent, auth, target),
             release_pin=lambda binding: self.bindings.release(principal, binding),
             reconcile=lambda intent, auth: self.mutations.reconcile(principal, intent, auth))
+
+    def controlled_reads(self, principal, control):
+        return ControlledReads(self.bindings, principal, control)

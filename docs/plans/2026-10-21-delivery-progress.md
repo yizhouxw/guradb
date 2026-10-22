@@ -29,7 +29,7 @@
 | P00 | CF1-A/1.0首片经PR#9合入4d6baca，精确主线10项门禁、12golden/23拒绝码双向互通、两版本PR/主线CI闭合；B/C仍待下游反馈与独立验收 |
 | P01 | synthetic图文/组真值首片已合入84c07af2并完成本地/远端主线验收；业务样本/人工相关性、真实模型/框架及生产规模预算未完成 |
 | P02 | 新恢复树运行前2432清单已通过26targeted、232Python/4028行零排除和PG七容量performance组件，独立实际4516文件/4509正文及语义复核PASS；完整原4d门禁、Rust、新functional/fault及提交/PR/main仍pending；保护fixture与I1/HA边界保持 |
-| P03 | 待CF1-A固定ObjectRef，先认证对象后端的range/version/checksum |
+| P03 | 固定ObjectRef本机读取恢复树已通过原4d完整INITIAL九项门禁（232项Python/3804行零排除、Rust3323行与原21行豁免、真实三driver），报告0e436457及作者外复核；结果文档更新后的正常hook/提交后原范围检查、PR与精确main验证待完成，PG/P04/I1未接通 |
 | P04 | 待P03/CF1-A/P01，先固定源ReadBatch；生命周期部分依赖B |
 | P05 | 待CF1-A/P01，先共同请求/关系/精确计划；训练选择依赖C |
 | P06 | 待CF1-A/P01，先固定revision产物与覆盖证明 |
@@ -53,9 +53,13 @@
 
 对象后端预探测使用既有固定SeaweedFS 3.97镜像、同一测试bucket：两次写取得不同VersionId，覆盖后旧版本整对象与Range读取的字节、206、Content-Range及返回版本匹配。仅为P03前置后端探测，不证明P03权限/完整性/累计预算/缓存/故障通过。早先第二bucket超时的日志定位为`volume.max=1`不能分配第二collection；未据此误判为不支持版本控制，也未修改基线配置消除产品回归。产物在原工作区`/Users/chad/dev/guradb/artifacts/local-cloud-single-collection-20261021/backend-capabilities.json`；失败日志为`artifacts/local-cloud-probe-20261021/gura-4b8dd55626d6-0.log`及`artifacts/local-cloud-probe-direct-20261021/`，复现脚本为`artifacts/local_cloud_pinned_probe.py`。这些是本地前置记录，P03正式driver须重新创建隔离环境并归档本片证据，不能复用为模块验收。
 
-P00首次完整检查记录在其worktree的`artifacts/harness/20261021T001010Z-2bffa650/`。已发现Rust Clippy的`int_plus_one`与`large_enum_variant`诊断；失败现场保留，不能将同次其他suite通过拼成修复后报告。修复需独立复核并重新编译、跨语言互通、覆盖率及完整门禁，提交与主线交付仍待完成。
+P00首次完整检查记录在其worktree的`artifacts/harness/20261021T001010Z-2bffa650/`。历史Rust Clippy的`int_plus_one`与`large_enum_variant`诊断已修复，失败现场保留；该失败报告没有用于通过结论。修后独立复核、重新编译、互通、覆盖率与完整门禁以及PR/主线交付均已另行完成，精确证据如下。
+
+P03任务为`653a8ca54b7845ccb03ecf777afbaf36`，分支`codex/p03-fixed-objects`，目录`/Users/chad/dev/guradb-p03-fixed-objects`，原始base为4d6baca，checkpoint为`checkpoints/20261021T015433Z-before-p03-fixed-objects-dd387582`。p01_oracles独占storage fixed_*、对应unit/support与driver/三份先行文档；root在明确交权后串行接用户导航、此追踪与harness/architecture/policy及防漏选测试。R1修订的19文件清单SHA为`aa42b5f1b7a34adb560764ca889338179c9de53899109d65828ca04dc8738d3b`；root已实际读源码与新负例并重算全部摘要。旧18项单元只绑定历史SHA。后续telemetry候选25文件清单7fd121054724d2697997b9b88958e6204a9ed616bdf14254d5d441063237b97c已重新验收26项单元、230项Python测试/3804行零排除及三种真实本机driver，精确报告SHA/路径见[变更计划](../design/fixed-objects-change-plan.md)，root已独立读原始记录并核验。以上为旧树历史局部证据；恢复树后续已重新完成原4d范围INITIAL九项门禁，精确结果见本页末段，不能把旧checkout或本轮更新后的文档SHA当新检查通过。
 
 ## 已验收的W0首片
+
+CF1-A [PR#9](https://github.com/yizhouxw/guradb/pull/9) head为`e0abf74728e8797133268a3ab020c4369dc36f6e`，合并前main为`8198658bc768a96638ad70a12948f3775a5cbab2`，merge为`4d6baca888421d90f146679ef71b0e555fe60881`。精确主线报告`artifacts/harness/20261021T013721Z-42424eaa/report.json`的10项/26命令全通过，报告SHA为`1ac66d36a01bb586e309d38ae31d5718e164cc5d863f1a6e7d8553213b4a0225`，checkout为`1695dea8b5192f908521aa42ebffa14d6113acbefa1bc0f45f4ca4a74bc4ef35`；checkpoint为`checkpoints/20261021T015015Z-p00-cf1a-main-verified-5ce1adab`。真实跨语言互通重新编译运行，raw archive位于共同Git的`guradb/roundtrip/5ef9a7e666765046be75ee59f7f553d7abbc4f99f0ac7cd5a08736987f5a421e`；[PR CI](https://github.com/yizhouxw/guradb/actions/runs/39525801267)和[精确主线push CI](https://github.com/yizhouxw/guradb/actions/runs/39528308712)的Python3.11/3.14均success。此片仅为离线合同，不证明PG/对象/源/索引已真实接线。
 
 | 交付 | 精确代码、检查与恢复证据 | 已验证边界 / 未完成项 |
 | --- | --- | --- |
@@ -84,3 +88,8 @@ P02恢复承接：新 `/Users/chad/dev/guradb-p02-fixed-catalog-recovered`、bra
 P02恢复树新增五项行容量的直接补证已完成：64grant、256identity、128target、1024query和16dataset，并保留原512operation及8MiB字节负载，原120秒上限不变。performance报告c49472bc用时31.526968秒、独立combined审查03b40a46逐核4516原件/4509正文；两历史grant仅重建，不计作历史raw。当前结果属于运行前2432清单，随后仅结果/导航文字更新，新完整checkout门禁仍pending。旧595551失败、旧c480局部结果及旧08a abandoned现场保留；实际命令、路径和未覆盖项见[目录变更计划](../design/fixed-catalog-change-plan.md#恢复树-fc10-七容量的实际结果与独立复核)。
 
 P02已从原4d在全新/Users/chad/dev/guradb-p02-fixed-catalog-main1（codex/p02-fixed-catalog-main1/taskb826fc2af8cf4ebcbf2142ec6b6913f8）先clean task-start再cleanFF已闭合1e4，34源码/模式等09856备份；root逐实物复核receipt/5上游/empty index后只补内部状态。旧5d1/08a与raw留原位；新checkout正常hook/完整原base freshpost、PR/main仍pending，不将2432七容量组件当新整项通过。
+P03原始范围恢复：旧dirty树与task653a及全部局部raw保留；新 `/Users/chad/dev/guradb-p03-fixed-objects-recovered`、branch `codex/p03-fixed-objects-recovery`、task `aa7ad841fd3a456ea99eb2e1ddcfd8ca` 在clean原4d先启动，再FF合入PR10的17d。19独占源码逐字转移，root串行合成6共享域，保留900秒coverage工程watchdog。增加3条driver后普通CI按实际ready命令重算为275分钟，并明确排除Lab两份私有测试配置；各产品/组件预算、原负例及覆盖豁免不变。恢复当时，完整原4d范围的新checkout验收与实际上传边界均待运行；现本地INITIAL见下，实际上传边界仍待验证。旧26/230/3804与三driver结果不能代替新fullcheck。恢复当时PR10双版本PR CI已成功、精确main验证仍进行中；现root已核验merge17d的main报告044402-982e5f80（SHA6d0e4932cf0c34fc263caf526ad00c013ad640ca4ae28adccaeea3d91ffe45ec）、checkpoint044927-pr10-main-verified-935740fd及PR39544118302/main push39545360623两Python版本均SUCCESS，已闭合。P03首次新INITIAL原472440范围运行9suites/33paths，报告b76b292d保留FAIL：八suite分别通过，仅既有hosted-limit负例的change250夹具前提未适配新272最低预算而失败。按先行计划仅修该夹具并冻结28文件后重新执行完整INITIAL；首FAIL原样保留，不拼其它局部结果为通过。
+
+本轮新28文件manifest64f1cd3a在独占窗口先跑完整CIworkflow模块5tests，再以matching新venv运行原4d完整INITIAL九套件/33paths/26命令，全PASS；报告 `artifacts/harness/20261021T053114Z-e7619721/report.json` SHA `0e4364576a90dc69331eca368367e25f42eed3590d3ba251572338c5f28f965b`、checkout `e8798305c8b4fd87d31296e8c42fe3b94386c1432c3ae2ec52a4e3c04af59998`。Python232项/3804行零排除、Rust3323/3323和原21行豁免、9phase起止与3真实driver均重测。root匹配解释器validate_report、完整argv/log/hash/输入身份及28scope累计计量和期限/关闭记录已独立核验，review8ccce124；新790 profiles在任何后续cargo前保全，旧首FAIL/793profiles保留。本轮随后只更新结果文档和导航，新的docSHA仍需最终commit精确原范围postcheck。正常hook/commit/task-finish/公开raw归档、当前PR双Python CI/实际上传ZIP私有配置排除、merge后精确main本地及双CI仍待完成；PG/P04/I1、真实云、多机与完整产品门禁仍missing。
+
+P03当前source-only接续树为/Users/chad/dev/guradb-p03-fixed-objects-main1（codex/p03-fixed-objects-main1/task55eb29fb62c645c48dc205760a089a2c），clean原4d先receipt再cleanFF1e4，完整28源码/模式等7ba8备份、5上游P05文件未变，root已复核；仅内部状态文字更新。旧aa7现场/receipt仍待确认全部承接后abandon，保留首次FAIL及原9suite INITIAL。新checkout正常hook/原base提交后检查、PR/ZIP排除认证及I1仍pending；PR11精确main本地已过，双mainCI尚运行，禁止下一PR提前合入。
