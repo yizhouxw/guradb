@@ -4,7 +4,7 @@
 
 ## 1. 当前实物与下一出口
 
-本表为2026-10-21 17:13:09 UTC已收交接快照；完整历史/精确报告见[实施事实账本](../plans/2026-10-21-delivery-progress.md)及其JSON。组件、真实配对、完整模块、主线分别记账，不在本次文字同步重跑历史证据。
+下表实测仍绑定2026-10-21 17:13:09 UTC已收交接快照；2026-10-22正在实施的C1/D1不得沿用旧源报告作为新候选通过。完整历史/精确报告见[实施事实账本](../plans/2026-10-21-delivery-progress.md)及其JSON。组件、真实配对、完整模块、主线分别记账，不在本次文字同步重跑历史证据。
 
 | 实物 | 可直接复用的稳定面 | 尚不能声称 |
 | --- | --- | --- |
@@ -20,7 +20,7 @@
 
 ## 2. 模块合同与唯一开发 owner
 
-下表 owner 是本轮模块开发 DRI，不表示同时开工；具体文件写权必须由 ROOT 逐树交接，当前保留树不被新职责自动覆盖。P00 完成 harness 后才接 query；plan_audit 完成架构复核后可临时兼任 storage/connectors 实现，其自写部分改由 P00/ROOT 独审。P01 保持需求/独立真值，ROOT 保持 PM/组合与共享协调；最多两项行为实现在制，留一个独立审查槽，不能让四个角色都变成管理而无人开发。
+下表 owner 是本轮唯一模块开发 DRI，不表示同时开工；具体文件写权由 ROOT 逐树交接。旧会话2026-10-22已交p00 catalog C1；plan_audit临时接query D1唯一DRI与P05写权，原storage/connectors冻结。D1出口复核后再显式交回，不能由角色表自动恢复第二writer。P00已交付harness及query既有补测；plan_audit的D1实现改由p01/ROOT独审。P01 保持需求/独立真值，ROOT 保持 PM/组合与共享协调；最多两项行为实现在制，留一个独立审查槽，不能让四个角色都变成管理而无人开发。
 
 | 模块 / 唯一 owner | 职责；输入 → 输出 | 错误与依赖边界 | 本轮资源与验收出口 |
 | --- | --- | --- | --- |
@@ -29,12 +29,16 @@
 | storage / plan_audit | 固定对象寻址、传输、完整性与缓存；binding+ObjectRef+父控制 → bytes+真实账 | 仅 common；不解释 Parquet/SQL、决定租户权限或 GC 资格；missing/corrupt/unavailable/auth/cancel/deadline 分开 | 真固定 Seaweed/S3；原8MiB输入/256KiB cache/≤3attempt、700ms停顿和100ms取消目标保留；冷/暖、失败 attempt 与清理分别核 |
 | connectors / plan_audit | 格式/源版本能力、field ID 映射、稳定身份、批次；固定 SourceVersion+对象 port → ReadBatch/源回执 | common/storage；不重绑 published，不发 view；unsupported codec/delete/schema 不静默跳过 | P04 真对象+独立 PyArrow writer/reader；4文件/16rowgroup/1000行/4MiB输入/8MiB解码、64行页/768KiB封包、页1s/cohort5s/RSS512MiB保留 |
 | index / P00 | 固定源派生物、覆盖/模型/ID映射与候选；batch/config → artifact；IndexQuery → candidates | common/storage；不拥有目录发布/业务写，不把 locator 当身份，缺覆盖不得 complete | 真文件/实际算法，原100行/单shard/1MiB、build5s/query1s/RSS512MiB保留；独立分数/排序/NULL/损坏/全覆盖，ANN/Graph另立功能点 |
-| query / P00 | 唯一 parser/Compiler/关系和检索选择、Arrow/DF执行/回表；固定binding+typed request+ports → typed result+lineage | common/catalog/storage/connectors/index/cluster；不另造授权/最新目录/SQL parser；完整输入与未知失败账不抹零 | 真 Arrow/DF50.3；保留8192行/32批、完整int8/NULL/参数、输入32MiB/Arrow64MiB/DF32MiB/结果2MiB及1000行宿主cap；联合父预算更小者优先，RSS另测 |
+| query / plan_audit（D1临时交权） | 唯一 parser/Compiler/关系和检索选择、Arrow/DF执行/回表；固定binding+typed request+ports → typed result+lineage | common/catalog/storage/connectors/index/cluster；不另造授权/最新目录/SQL parser；完整输入与未知失败账不抹零 | 真 Arrow/DF50.3；保留8192行/32批、完整int8/NULL/参数、输入32MiB/Arrow64MiB/DF32MiB/结果2MiB及1000行宿主cap；联合父预算更小者优先，RSS另测 |
 | cluster / plan_audit（I1仅监督私有本机 bridge） | 分配/取消/背压/worker生命周期；可信任务 → 带 attempt 的回执 | common/storage；不能解释 SQL/排名/目录授权；unknown attempt 不能免费重试 | I1仅本机独占进程组/有界 IPC；硬停止须 wait/reap、晚到/退出/失败计费实测。真实三机/TLS/调度仍单独任务 |
 | gateway / ROOT | HTTP/PG wire、认证、会话、参数映射、请求生命周期；认证请求 → 同一个 query 调用 | common/query/catalog/cluster；不增第二 SQL/检索语义，不代理用户 SQL 到元数据库 | 新入口真 HTTP/psql/Psycopg、SQLSTATE/NULL/参数/撤权/取消；旧 alpha 显式回归；端点名在 P08 小合同冻结 |
 | client-api/CLI/MCP / ROOT | 同一版本远程合同的薄封装 | client-api只依赖common，cli/mcp仅common/client-api；不得读内部PG/索引 | 与真实gateway成对测试；相同错误、参数与能力发现；不为首个真实SQL链路等待全部客户端 |
 
 表中旧 cap 是有限组件边界，**不是可叠加的父预算或产品规模承诺**。query当前宿主10秒与A更小期限不变，新入口总时限从排队/绑定前开始，子预算只能缩短；缺少某项测量仍为 missing。新增导入/同步/训练各有独立参数、吞吐、延迟、恢复子需求，由 P01矩阵→对应模块 owner；不能用上述窄 reader 范围代替。
+
+当前C1保留原A wire/PG持久schema；trusted父checkpoint只做有界内存检查并传递已缩小的绝对期限，真实PG调用另记费用/native内存缺口。unknown bind按完整原request对账；found校验主体/委派、request SHA和原pin/lease后清理，absence不代表阻止迟到bind，C2持久终态另设计。D1只补query私有受控字节端口、单次strict和Owner pending，不引入第二SQL/源解释器。schema每次strict仍重解析，预约模型单列其费用；不虚构共享cache或native硬界。C1现已获SOURCE和有限客户端控制实物独审c8f3c52a；它只证明客户端返回/连接关闭，不证明远端PG backend停止、PG cancel确认、完整server成本或native memory。D1修复后76项lib与原sealed回归已通过，源40经ROOT非作者审，实物独审`1d333d65`有限通过；新port性能/真实P04配对和完整模块仍缺。旧组件报告及系统状态不被升级。
+
+恢复说明：上述具名owner为历史交权记录；旧agent全部停止，当前模块行为源码冻结。新会话由ROOT按独立审查结果重新指定唯一实现writer，不能让历史角色表自动恢复写权。
 
 ## 3. 共享文件、合同与交权
 

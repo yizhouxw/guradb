@@ -8,16 +8,29 @@
 
 工作单位改为“需求 ID + 可消费接口 + 可验证出口”，不等待整个 P 包完成。边界经架构与消费者必要复核即实现；模块稳定即约真实配对，配对中发现的接口问题回到唯一 owner 修订。完整合同、模拟互通、模块实测、真实配对和用户系统结果分别记账。
 
-## 四个有效槽位
+## 四个槽位与交接前职责
 
-| 槽位 / 具名负责人 | 当前任务及唯一文件域 | 下一职责 / 独立审查 |
+| 交接前槽位 / 具名负责人 | 旧会话任务及唯一文件域 | 下一职责 / 独立审查 |
 | --- | --- | --- |
-| ROOT：项目经理、集成与文档 | `codex/strategy-v2` 两片已结项至 `6a56e54`、[PR15](https://github.com/yizhouxw/guradb/pull/15)；前片已结项至`8823331`；本轮 task `0185061d57e74bed82c6aa571aff39ee` 从`1eb19ed`续记四份事实文档，临时writer为plan_audit、ROOT/p01非作者审；ROOT协调共享写权 | 维护关键路径、接受交接、排资源与批次、消除阻塞；入口/组合根实现；不自批自己的实现 |
-| p01_oracles：产品经理、测试 | 需求粒度/正负验收、独立真值、物理 PG 官方研究及有界原型；当前只在其独占 ignored 目录准备，tracked 由 ROOT 整合 | 独审架构/用户合同，随后承担真实配对与用户系统验证；自己写的 oracle/原型由 ROOT 或架构师审 |
-| plan_audit：架构师、模块开发 | P03 只读组件已验；`codex/p04-fixed-source-p03` task `4696bbe16be041d3b900019fe2fd08b3` 的原真实对象→源配对已重新实测；B1双源及B2显式located已完成首次79单元和三组真实组件，当前已获p01独立实物复核6f5b29dc、保持冻结 | storage/connectors 单一 writer；其实现由 p01 与 ROOT 审。P03/P04 原 receipt 的 strict/full/提交出口尚未完成，不并开两套行为修改 |
-| p00_cf1a：模块开发、工程工具 | 工具 PR16 与 query 补测 task7c822 已结项，补测 [Draft PR17](https://github.com/yizhouxw/guradb/pull/17) 依赖 PR16；当前 P05 task `bc81c2ae8eb94fb99a646c061a61c35c` 首次完整 Rust lib 55 项已验 | 新M1 probe四项launcher单元已验；旧镜像缺失另记，新镜像版本已实测，单次fmt后648行触规模STOP，按职责拆分并fmt后583/78行，首次build及真实sealed Arrow/DF组件通过、非作者实物审c3dc2e9d通过；随后提供真实 Source 消费接口。common/catalog/index 按稳定点顺序接权 |
+| ROOT：项目经理、集成与文档 | `codex/strategy-v2` 已结项至 `d48a645`、[PR15](https://github.com/yizhouxw/guradb/pull/15)；本轮 task `4f36dc7140274d578ba88507369aa483` 从 `d48a645` 续记四份事实文档，ROOT独占写入 | 优先级/共享文件/资源/阻塞与组合根；四槽位最多两项行为实现，独审与作者分开 |
+| p01_oracles：产品经理、测试 | 42条需求与独立真值；C1方案及D1单次strict/父预约增审已通过，当前保留独审槽接冻结SOURCE | 审C1/D1边界、真实性能/恢复与随后真实配对；自身oracle由ROOT或非作者审 |
+| plan_audit：架构师、模块开发 | P03/P04源码与已验B2冻结；已临时接P05 query D1唯一DRI/写权，原task `bc81c2ae8eb94fb99a646c061a61c35c`、base `1e4f6a6`不变，原35逐字节/mode保留 | 实现私有真实Source消费者；其实现由p01/ROOT审。不得同时修改storage/connectors行为；D1稳定后再显式交权 |
+| p00_cf1a：模块开发、工程工具 | catalog C1唯一DRI/写权；`codex/p02-fixed-catalog-main1` 新task `a4ddd8fafdf04304a24bd4f474831ca5` 从已验 `86fcaf0` 续做父期限/取消与原request清理 | 新control及原三模式已实测，p01完成客户端控制有限独审；窗口00:14:46 UTC已交D1。当前只读准备C3真实读取接口，不并开第三项实现 |
 
 同时最多两项行为实现，保留审查能力；角色数不等于并发数。普通无污染单元、源码审查和隔离功能夹具可并行；性能测量独占同一物理资源，coverage 互斥其 target/profile，迁移/组合根有唯一窗口。端口、网络、对象前缀和数据目录必须各自隔离，不把所有测试长期串成整库窗口。
+
+旧会话上表中的具名agent已全部停止，保留其历史DRI及文件归属供追溯；恢复时不继续旧agent。当前ROOT独占四事实文档，新的`c3_review`仅独审C3候选，`d2_plan`仅调查D2接口，`facts_review`独审本轮文字；三者均显式medium、无行为源码写权。C3实现由ROOT在共享审通过后另行交权。
+
+## 当前本地派发与集成窗口（2026-10-22）
+
+用户明确选择继续本地及任务分支，保留GitHub账户计费/CI阻塞；不豁免双版本PR检查，不合入main。最新fetch为2026-10-21 23:52:46 UTC，origin/main仍`1e4f6a6`。本轮两个小片如下：C1客户端控制组件已独审通过，D1修复后76项lib与原sealed回归已通过、实物独审`1d333d65`已有限通过；完整模块与系统仍未通过：
+
+| 小片 / 唯一实现DRI | 已复核边界与本轮出口 | 下一验收 / 消费者 |
+| --- | --- | --- |
+| C1 / p00_cf1a | 私有父control从bind前起算；原request一次bind、真实PG invoice、found精确lease清理；A/schema不变。absence保持cleanup_unconfirmed、不自动rebind，durable闭合另列C2 | 32个1000ms父请求及边界实测已获有限独审c8f3c52a；客户端返回/FD关闭通过，远端PG停止确认、完整server成本/原生内存未证；下一C3真PG→P03/P04配对 |
+| D1 / plan_audit（临时query DRI） | 同一Rust Compiler/Arrow/DF；单次strict解码Contract+父lease驻留，前置按锁定纯字节模型预约，unknown费用/close credit留Owner至可信ack。原55及sealed8192/32负载不变 | 受控byte-provider模块fixture+真Arrow/DF；不是P04 pair。随后ROOT装配D2真实P04桥，补原T0/父账、失败尾账和kill/wait/reap |
+
+作者可自主完成范围内普通单元、格式/600行与只读环境预检；SOURCE冻结后独审可与实际组件测试重叠。真实性能/Cargo共享窗由C1先用，明确释放后D1直接接权；HOLD未清不交窗。首次FAIL保留并定位，有新修改/风险才重跑相关测试。原strict100%、21有限排除、旧receipt全范围和最终M/P/S/R义务不变。
 
 ## 首批任务与集成检查点
 
@@ -27,7 +40,7 @@
 | V2-PRODUCT | ROOT；42 条需求、唯一 owner、预算/错误与版本研究已交 PR15，非作者产品/架构审查及两轮文档检查完成 | 每个开发 DRI；未冻参数/预算的具体需求先交冻结小片，其他已闭合小片继续 |
 | M-CATALOG | ROOT 闭合已验 P02 分支：`86fcaf0`，真实 PG 六轮证据已独审、task-finish/正常推送已完成；[PR14](https://github.com/yizhouxw/guradb/pull/14)已创建，双 CI/main 待闭合 | PG 父期限与对象授权配对；连接器 HTTP429仍保留；ROOT已用现有认证的标准API解除PR创建阻塞，继续跟踪CI，不阻止本地模块 |
 | M-STORAGE | plan_audit；原诊断 FAIL 保留。新 source44 `2d1dfa7d` 已通过 60 项单元及原只读功能12/性能4/故障12，ROOT与p01独立核原件；原 4d receipt 的 strict/full/提交仍待完成 | 已解除 P04 配对等待；全部合法 special key 固定 GET、0IO dot 拒绝、预算/费用均保留；SDK 写入诊断仍不改 8 为 7、不标绿 |
-| M-QUERY | p00；Describe 补测 `ad5c9fe` 的正常 hook/clean post 均 9 suite/11 命令、完整12生产源 strict 与原三个 M0 已验，task7c822 已结项。P05 新 source31 `c32f44b6` 首次完整 lib 55/55，经 p01 非作者实物复核 | P05新sealed Arrow/DF组件性能已首次实测、非作者实物审c3dc2e9d通过；strict/full fault及真实Source消费者仍缺；保留全11成员/8192原负载，不以旧M0证据代验新M1 |
+| M-QUERY | plan_audit当前接D1；p00历史Describe 补测 `ad5c9fe` 的正常 hook/clean post 均 9 suite/11 命令、完整12生产源 strict 与原三个 M0 已验，task7c822 已结项。P05 新 source31 `c32f44b6` 首次完整 lib 55/55，经 p01 非作者实物复核 | P05新sealed Arrow/DF组件性能已首次实测、非作者实物审c3dc2e9d通过；strict/full fault及真实Source消费者仍缺；保留全11成员/8192原负载，不以旧M0证据代验新M1 |
 | P-OBJECT-SOURCE | plan_audit 实现、p01与ROOT独审：新 source28 `51601127` 的 44单元、原6功能/4性能/23故障实际通过，真实 P03→P04 单 SourceVersion 读取；资源已释放 | A 本地配对稳定点；不是完整多来源 B、整项 strict、PG/Rust、主线或 I1。下一消费者先实现完整两来源及 located 出口 |
 | P-CONTROL-READ | ROOT 装配、catalog/storage owner 修各自实现：真实 PG 绑定/reauth→对象，同父 deadline/cancel/ledger | Source/Rust；真实暂停 PG、对象故障与撤权；同步 trait 或内存 callback 不能充当网络期限认证 |
 | P-SOURCE-QUERY | ROOT 组合、两端 owner 实现：有界私有 bridge，Python 真源→Rust 唯一 SQL/Arrow/DF，完整两来源 11 成员/稳定 ID | 正式 HTTP/PG；限定 IPC/错误费用/取消与 reap 证明先复核，不另建 Python SQL 引擎 |
@@ -97,3 +110,7 @@ B2 source33 `a509e6e2` 保持原task4696/base17d、P03七生产源与普通A路�
 P05四项纯launcher单元首次通过（内0.050s/外0.149s），不计native/perf。历史镜像`debb142e`缺失在只读预检即STOP，无质量命令/镜像替换；后续另行认证实际镜像`c9494374`的Linux aarch64、rustc/Cargo1.90与rustfmt1.8，不声称与旧镜像等价。该新环境单次fmt成功后example实际648行，按600行规模纪律STOP，未build/probe；作者按职责拆分source35并完成两文件fmt（583/78行、无额外字节变化），首次构建与真实组件的后续成功结果和仍缺范围见下段。新8192/两文件/32批/三列1000/5cold+warm、固定256MiB/32MiB试验父预算和10s/RSS512MiB均保持。
 
 本页当前事实快照：2026-10-21 17:13:09 UTC。P05 source35 `4ec8eb51` 的首次offline build13.892s/driver22.801s通过，7个Linux进程、12请求、10性能样本，最大perf样本本体total wall1.661404s、含completion tail1.662153709s/VmHWM56,528,896B；full11、8192/两Parquet/32批/三列1000与no-LIMIT完整读取后资源拒绝均实测，释放`54381502`，p01非作者实物审c3dc2e9d通过。只认证cooperative sealed-fixture真实Arrow/DF，不认证generic Source/PG/bridge、native硬界、full fault、strict/full或I1；上述历史镜像缺失与fmt648 STOP不改绿。17:07:44实际fetch仍main1e4，当前资源窗null，P02等待值及原历史UTC见事实账本/JSON。
+
+C1本轮真实PG新增control外5.327s、原功能/性能/故障外2.047/30.263/8.146s全部rc0；独审核新control100原件、42case/32query，不重扫原4515容量raw。D1首次完整lib为73项/72通过/1失败，旧55全过；8192/32新frame用例触费用上限，保留FAIL并定位，不抬预算。两片当前结果与完整模块/真实pair/I1分别记账。
+
+D1最新源40 `564efef7`已获ROOT非作者SOURCE审`6f8c01d4`；全76 lib通过（外16.103s），原sealed回归5进程10性能样本通过（外21.850s）。新port独立性能、真实P04/PG/IPC、严格模块出口仍未认证。C3已建独立本地SOURCE候选`codex/c3-controlled-read-pair`、task`a8bd6e41`，P00唯一writer合成共享冲突后才实现；旧两树不变，新会话独立reviewer审共享8文件及67路径闭包，不把未提交快照称上游已交付commit。

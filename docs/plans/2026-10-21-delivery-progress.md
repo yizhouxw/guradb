@@ -1,6 +1,6 @@
 # 实施事实账本
 
-2026-10-21 17:13:09 UTC B2独立实物通过 / P05新组件首次实测检查点（P05非作者实物复核c3dc2e9d通过）；15:25快照保存在8823331。执行[策略 v2](2026-10-21-modular-delivery-v2.md)，需求见[矩阵](../product/requirements-v2.md)，机器度量见[JSON](2026-10-21-delivery-metrics.json)。14:43 快照保存在前一 commit；本页按新源码/实际命令续记，旧失败原件保留。合同、模块、真实配对与主线用户能力分别验收。
+2026-10-22本地C1/D1派发快照；上一17:13实测快照保存在`d48a645`。2026-10-21 17:13:09 UTC B2独立实物通过 / P05新组件首次实测检查点（P05非作者实物复核c3dc2e9d通过）；15:25快照保存在8823331。执行[策略 v2](2026-10-21-modular-delivery-v2.md)，需求见[矩阵](../product/requirements-v2.md)，机器度量见[JSON](2026-10-21-delivery-metrics.json)。14:43 快照保存在前一 commit；本页按新源码/实际命令续记，旧失败原件保留。合同、模块、真实配对与主线用户能力分别验收。
 
 ## 已验出口与真实链路
 
@@ -30,7 +30,7 @@ P04实际fixture认证包含固定镜像请求和Docker实测ID/platform、SDK�
 | CI及主线集成 | ROOT集成；用户管理账户 | PR15/16及其依赖PR17、P02等候选按依赖串行；解锁后读实际CI，再做合并后system/checkpoint。等待不能全归因CI，真实消费者仍有接口缺口 |
 | P03/P04分支完整出口 | plan_audit实现；ROOT/p01非作者审 | 新组件与A已验，原始receipt范围保留；门禁映射未进入这些旧基点，strict/full/hook/post尚未做，不缩base或复用历史绿冒充fresh |
 | B2：显式located出口 | plan_audit | B1实际main10+mirror1与双源130已独审通过；B2首次79与三CLI通过并获独立实物审6f5b29dc，源码冻结，原父账及普通A不重开；P06消费者仍缺 |
-| P05新M1模块出口 | p00 | cooperative sealed-fixture真实Arrow/DF probe首次通过，5进程cold/warm共10性能样本；非作者实物审c3dc2e9d通过。generic Source/PG、native硬界、全fault、strict/full仍缺，legacy-M0不代验 |
+| P05新M1模块出口 | plan_audit（D1临时DRI） | cooperative sealed-fixture真实Arrow/DF probe首次通过，5进程cold/warm共10性能样本；非作者实物审c3dc2e9d通过。generic Source/PG、native硬界、全fault、strict/full仍缺，legacy-M0不代验 |
 | C：真实PG父控制→读取 | ROOT装配；接口由原模块owner供应 | catalog受控调用与storage/source父控制接入口缺；PG网络reauth不能塞进仅认证内存callback。实际暂停PG/撤权/对象故障须验证同父期限/取消/lease清理 |
 | D：真实Source→Rust | ROOT组合；query owner实现消费者 | B+C+P05模块稳定后接有界bridge；禁止以SealedFixture的0对象IO包装真实源。保留全11成员、失败attempt已知性、背压/取消/kill-wait-reap |
 | E/F：索引回表与正式入口 | p00负责E；ROOT负责F | E接B/C located及真实跨attempt父账，再由D回表；F正式HTTP/PG只调用同一Rust facade，先S-SCAN再补完整I1 |
@@ -38,7 +38,7 @@ P04实际fixture认证包含固定镜像请求和Docker实测ID/platform、SDK�
 
 A的稳定交接从P03 ROOT释放14:57:38到P04首功能命令15:18:34约20.9分钟；15:20确认资源回基线。这个时间只说明局部模块稳定后尽早配对，不认证全模块/M→S。P02从12:55:43 task-finish至15:25历史快照约149分钟；历史16:34快照约218.6分钟仍未main集成，精确分钟见JSON；其中也有接口等待，不能全部归因账户。
 
-四个实际槽位：ROOT负责PM/共享/组合与事实；p01产品及独立测试/文档审查；plan_audit负责storage/connectors；p00负责query/工程工具。当前两个稳定候选交接后，B2当前组件已独立实物验收并停止写入，P05首次native组件已释放已获非作者实物审c3dc2e9d通过；旧P03/P06/P08现场保留但未同时派发行为写入。SOURCE-only准备、复核、文档不冒充额外开发并发。
+四个实际槽位：ROOT负责PM/共享/组合与事实；p01产品及独立测试/文档审查；plan_audit临时接query D1唯一DRI、storage/connectors保持冻结；p00接catalog C1。该派发时为两项行为实现；恢复时旧agent全部停止，新C3审查与D2接口方案并行，行为写入暂为0。旧P03/P04/P06/P08现场与原receipt保留，不同时派发其它行为写入；方案、测试与文档不冒充新增用户能力。
 
 ## 验证成本、首次结果和工程优化
 
@@ -79,3 +79,25 @@ P05 source35 `4ec8eb51`：机械拆分经ROOT逆合并全文复核`e2e395c3`，�
 这认证cooperative SealedFixture与真实Arrow/DataFusion组件；provider对象IO为0与宿主Parquet/ledger/输出真实IO分域，不能包装真实P03/P04/PG调用。最大性能样本本体total wall1.661404s、含completion tail为1.662153709s，进程VmHWM56,528,896B；actual Arrow/DF pool peak仍未知，非native内存/取消硬隔离。256MiB/32MiB事前trial、原Arrow64/DF32/结果2MiB/1000行、10s/RSS512MiB均未改；OS缓存未控。p01非作者实物复核`c3dc2e9d`通过（245份/27,964,031B当前安全原件、12全ledger与10×1000结果/lineage逐值核），generic Source/PG/bridge、native硬界、full fault、strict/registered模块出口和I1五项missing保留，完整模块/系统/主线用户链不升级。
 
 ROOT实际fetch时刻17:07:44.138186 UTC，17:07:52读main仍`1e4f6a6`且rootmain干净；本页不把PR分支绿当主线。P02从12:55:43 task-finish至本17:13快照约257.436分钟未main集成，历史108/149/218分钟观测按原UTC保留；其中包括真实消费者接口等待，不全部归因CI。当前无native/service/perf资源窗口在用，B2/P05均在稳定点停止写入，下一C/D由ROOT排供应方与消费者。
+
+## 2026-10-22 本地继续与C1/D1交权（以下保留逐次历史，最新状态见末段）
+
+用户明确答复“暂时继续本地和任务分支，保留远端CI阻塞”。不再等待账户处理才开发，不更改付款/远端设置、CI结果或合入条件。23:52:46 UTC实际fetch main仍`1e4f6a6`；PR15已正常推至`d48a645`，17:19:09 UTC最新API观测的PR/push run `39642553286`/`39642540142`四个quality作业仍0步骤计费失败。这是保留的远端观测，不声称本轮又查CI或远端已恢复。
+
+C1从已验目录`86fcaf0`启动独立follow-up receipt `a4ddd8fa`，p00唯一writer；方案`6fe1d5a7`经p01独审`f08ffa52`通过后，三leaf文档先行再实现。私有父control、真实PG计量与found原request清理不改变A/schema；absence保持cleanup_unconfirmed且不允许自动rebind，持久关闭另列C2。该派发时运行结果待验；后续结果见下文，不能借原目录六轮绿替代C1。
+
+D1方案`e53136f7`/清单`5e71a49b`经ROOT和p01有限增审`971988cc`通过；plan_audit接P05唯一writer，原task`bc81c2ae`/base`1e4f6a6`、原35源`4ec8eb51`及mode已保留，三leaf先行记录`5963d865`后才实现。每页一次strict、Contract+lease驻留，首次decode前锁定字节上界预约；unknown费用及未close credit在Owner中持续可对账，不因局部drop退款。原55/8192/32/sealed性能负载保留；该派发时新候选尚未运行，后续有限结果见下文，真实P04配对仍未认证。
+
+共享实际运行窗预排C1真实PG→D1 Cargo/Arrow/DF，release直接交权；两作者自主局部验证，独审可重叠冻结组件运行。下一真实消费者仍需Source受控PG authority和ROOT D2 bridge原T0/失败尾账/背压/进程wait-reap。此处只改变排程/状态，不改变strict100%、原排除、预算、源码范围或完整receipt义务；尚无新S-SCAN/I1/main结果。
+
+C1最新稳定点：source13 `98b7032d`/delta`f97f36de`，原18保护文件及旧三mode body不变。39纯测通过前的新增13首轮7error保留；39属于Mock/SQLite，未保存完整13源pre-run清单，不把它当严格覆盖或完整源码绑定证明。实际PG每轮source-before/after匹配，control外5.327315s、功能2.047123s、性能30.262958s、故障8.145848s均rc0；最后00:14:46 UTC source13冻结/4自有PID退出/容器空，无HOLD，索引`7ca85c56`。新control为42case（含32父请求），bind+reauth最大25.704ms/1000ms，cleanup最大11.456ms/5000ms。
+
+p01有限实物独审`c8f3c52a`核新control100原件、36条规范query与224121目录字节，未重扫旧4515容量raw。blackhole100.262ms、pausedSQL100.228ms、锁deadline95.554ms、锁cancel26.722ms为客户端调用/FD关闭观测；paused整个故障夹具含unpause约178.019ms，分开记录。远端PG backend停止/PG cancel确认、完整server成本及PG原生内存仍missing；不将此认证升级为真实PG→P03/P04配对、strict/full或I1。C3只读方案正在补原T0、显式网络authority与逐页更小期限，以及精确源码组合闭包。
+
+D1已接共享窗口；首次完整query lib73项中72通过、1失败，原55全通过，实际外16.8525s。新增8192/32受控frame用例在provider费用结算触resource_limit，原日志及冻结源码保留，后续sealed probe尚未执行；作者仅定位收费模型，不抬预算或把失败改绿。这是首轮失败，不纳入新组件通过数。
+
+D1后续有限修复保留首次FAIL：32批调用不等于32 GET，原超8请求用例保留为负例，另用明确无对象I/O的内存byte-provider完整消费8192/32后执行真Arrow/DF。ROOT源码独审另闭合跨页logical_id_asc与close失败尾耗时两项；最终源40 `564efef7`/ROOT审`6f8c01d4`，原55不变、完整76/76通过，外16.102537s。原sealed probe首轮rc0/21.849967s、5进程10性能样本；实物独审`1d333d65`已有限通过。该sealed性能只作共享执行回归，新port独立性能/P04/PG/IPC/native硬界及strict/full仍missing。
+
+C3本地候选已按独审`0a328cf5`建立新树`/Users/chad/dev/guradb-c3-controlled-read`、branch`codex/c3-controlled-read-pair`、task`a8bd6e4158e448298bf3016dead9b43e`，原base`86fcaf0`，正常merge --no-commit精确`b3dd39f`；六共享冲突已保全stage1/2/3，P00唯一writer合成。以最新C1完整13 `c2f3bdc0`及B2非共享26逐SHA恢复，八个共享文件保留两边命令/预算，恢复会话已派独立审查；两旧脏树与receipt不动。这是已标识SOURCE快照集成例外，不是依赖commit、pair或main通过；正常门禁、hook/post及依赖合入后精确HEAD复验不免除。
+
+恢复核对：main干净且仍`1e4f6a6`；策略receipt`4f36dc71`与C3 receipt`a8bd6e41`保持active。旧agent已停止，新会话只读核对现物后接续；C3候选67路径/共享8文件仍待新独审，冲突index与旧stage原件保留。D1独审`1d333d65`绑定源40及释放`5281f76c`，有限确认76 lib和原sealed回归；新port性能、真实PG/P04/IPC、完整模块/系统仍未通过。D2仅接口方案，未开始真实bridge实现。

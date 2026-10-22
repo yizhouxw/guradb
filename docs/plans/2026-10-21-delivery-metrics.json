@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "snapshot": "2026-10-21T17:13:09.185015+00:00 B2 real P03/source and cooperative sealed-fixture P05 component independently actual accepted; full module/system pending",
-  "main_observed_at_utc": "2026-10-21T17:07:44.138186+00:00",
+  "snapshot": "2026-10-22T00:39:21.342265+00:00 C1 limited client-control accepted; D1 lib/sealed independently accepted; C3 shared-source review pending; D2 plan only",
+  "main_observed_at_utc": "2026-10-21T23:52:46.564881+00:00",
   "main_sha": "1e4f6a6c26eb28982f4b61cc75aa05e290211809",
   "validation_costs": [
     {
@@ -372,6 +372,52 @@
       "reviewed_safe_bytes": 27964031,
       "projection_columns": 3,
       "sort_keys": 2
+    },
+    {
+      "feature": "C1-parent-catalog-control",
+      "scope": "limited client control component; no remote backend stop/strict/full/pair",
+      "source_manifest": "98b7032dce03f53f5f308f4e3607ce27f32a25cad10d42aaa247d863db21cfd6",
+      "evidence_index": "7ca85c56d7ac2889f367621c13cfde954d55d9f6d359fa85d179b708bfe05362",
+      "modes": [
+        {
+          "mode": "control",
+          "outer_seconds": 5.327315249945968,
+          "report": "a387c3799860eb4cf1f5f2ca8b771c1474e26152237fad70a70f1a5d558e82ba"
+        },
+        {
+          "mode": "functional",
+          "outer_seconds": 2.047123125055805,
+          "report": "24dd6ae5c669622f3cbc21c5284814062bdc3f618b8c0e46aee6532e6bd751d2"
+        },
+        {
+          "mode": "performance",
+          "outer_seconds": 30.262957917060703,
+          "report": "9dea744a0e256ffee2651ec550973e199e90267484c9376199051a95ed4cdb98"
+        },
+        {
+          "mode": "fault",
+          "outer_seconds": 8.145847667008638,
+          "report": "73de0b39e779d237ad605531a7389f06a329a9539c345adf7d471b42c82cb67d"
+        }
+      ],
+      "first_control_command_result": "passed",
+      "new_control_cases": 42,
+      "performance_queries": 32,
+      "independent_actual_review": "c8f3c52a729a35f403d5f0771a41f33ed922a81b73238f639ad181559ead394d",
+      "remote_backend_stop_confirmed": false,
+      "full_module_pass": false
+    },
+    {
+      "feature": "D1-query-source-consumer",
+      "scope": "native lib functionality and original sealed shared-execute regression; not port performance or real P04 pair",
+      "source_manifest": "564efef750ee2af697914bfc72ac271134947316f1c2827ff7e82b534b7bd689",
+      "tests_passed": 76,
+      "lib_outer_seconds": 16.1025371249998,
+      "sealed_regression_outer_seconds": 21.849966874928214,
+      "sealed_performance_samples": 10,
+      "first_failure_preserved": true,
+      "full_module_pass": false,
+      "independent_actual_review": "1d333d653131e6bb1f399053e8cf8b47307513d1b4b9f90c687297fe61ef5feb"
     }
   ],
   "first_pass_rate": {
@@ -586,11 +632,11 @@
     "external_owner": "user account administration",
     "local_owner": "ROOT PR integration",
     "query_owner_pr": "https://github.com/yizhouxw/guradb/pull/17",
-    "strategy_head": "88233310a398dfa150e6a72204e14eabbf836d3b",
+    "strategy_head": "d48a645236644f32d58b82e09e704f42ea5aa943",
     "gates_head": "23a2e374d779af3881bb17b46698fd08a673cd37",
     "query_owner_head": "ad5c9fe1dcaf887362eef0908715e6fa1e2b96ba",
-    "latest_snapshot": "3e12e6e7c09bd502a3a619473f63d7bc256a790de404e66afc076769e3212991",
-    "latest_observed_at_utc": "2026-10-21T15:54:00Z",
+    "latest_snapshot": "02c8efff12015db1705c4667973978c253ae3d26167c2c0866a99260e54a450e",
+    "latest_observed_at_utc": "2026-10-21T17:19:09.681196+00:00",
     "jobs_not_started": 8,
     "new_run_ids": [
       39626691839,
@@ -600,7 +646,20 @@
     "feature_push_run_observed_for_23a2": false,
     "pr_run_observed_for_23a2": true,
     "previous_snapshot": "099b49b1fc234c7b01e1082dab6dcbb4a0b5b0f74259f5475aba9302e161b74a",
-    "latest_snapshot_path": "/Users/chad/dev/guradb/artifacts/gates-v2-main-only-pr-update/result.json"
+    "latest_snapshot_path": "/Users/chad/dev/guradb/artifacts/strategy-v2-module-pr-update/task-branch/result.json",
+    "strategy_latest_observed_at_utc": "2026-10-21T17:19:09Z",
+    "strategy_latest_run_ids": [
+      39642553286,
+      39642540142
+    ],
+    "user_decision": "continue local development and task branches; retain remote CI block; no merge or waiver",
+    "user_decision_received_date": "2026-10-22 Asia/Shanghai",
+    "gates_snapshot_preserved": {
+      "latest_snapshot": "3e12e6e7c09bd502a3a619473f63d7bc256a790de404e66afc076769e3212991",
+      "latest_observed_at_utc": "2026-10-21T15:54:00Z",
+      "latest_snapshot_path": "/Users/chad/dev/guradb/artifacts/gates-v2-main-only-pr-update/result.json"
+    },
+    "latest_snapshot_scope": "strategy PR15 at head d48a645 only; older gates/pr observations remain historical"
   },
   "integration_wait_observations": [
     {
@@ -638,31 +697,54 @@
   ],
   "active_tasks": [
     {
-      "id": "0185061d57e74bed82c6aa571aff39ee",
-      "owner": "plan_audit temporary writer; ROOT PM and non-author reviewer",
-      "scope": "exact four fact documents; no behavior or budget changes",
-      "original_base": "1eb19ed1703bdb539a41ad729eaee8c106e93cb8",
-      "behavior_writer_dispatched": false
+      "id": "4f36dc7140274d578ba88507369aa483",
+      "owner": "ROOT",
+      "scope": "exact four fact documents; retain all behavior and acceptance obligations",
+      "original_base": "d48a645236644f32d58b82e09e704f42ea5aa943",
+      "behavior_writer_dispatched": false,
+      "owner_status": "current ROOT document writer; active follow-up receipt; no behavior source write"
     },
     {
       "id": "476c1fbff60a40a9944eb56036716375",
       "owner": "plan_audit",
       "scope": "P03 recovery component stable, old-base strict/full/commit still pending",
       "original_base": "4d6baca888421d90f146679ef71b0e555fe60881",
-      "behavior_writer_dispatched": false
+      "behavior_writer_dispatched": false,
+      "owner_status": "historical DRI; old agent stopped; source frozen pending explicit new-session writer handoff"
     },
     {
       "id": "4696bbe16be041d3b900019fe2fd08b3",
       "owner": "plan_audit",
       "scope": "B2 FIRST79/10+4/8+4/28 independently actual accepted; source33 STOP, original strict/full/commit pending",
       "original_base": "17d66c66a067eebe73280ce8d3488fb4f7cdcfe9",
-      "behavior_writer_dispatched": false
+      "behavior_writer_dispatched": false,
+      "owner_status": "historical DRI; old agent stopped; source frozen pending explicit new-session writer handoff"
     },
     {
       "id": "bc81c2ae8eb94fb99a646c061a61c35c",
+      "owner": "plan_audit temporary query D1 DRI/writer",
+      "scope": "D1 source40 and 76 lib/original sealed independently accepted; new-port performance/full module/real P04 bridge pending",
+      "behavior_writer_dispatched": false,
+      "original_base": "1e4f6a6c26eb28982f4b61cc75aa05e290211809",
+      "owner_status": "historical DRI; old agent stopped; source frozen pending explicit new-session writer handoff"
+    },
+    {
+      "id": "a4ddd8fafdf04304a24bd4f474831ca5",
       "owner": "p00_cf1a",
-      "scope": "source35 split, native build and cooperative sealed component first independently actual accepted; source STOP, generic source/full module pending",
-      "behavior_writer_dispatched": false
+      "scope": "C1 source13/client-control component accepted; source frozen, strict/full/commit pending; C3 plan only",
+      "original_base": "86fcaf093deaba98c0495f775ac1d4767bbbf950",
+      "behavior_writer_dispatched": false,
+      "new_runtime_pass": "limited client-control component only",
+      "owner_status": "historical DRI; old agent stopped; source frozen pending explicit new-session writer handoff"
+    },
+    {
+      "id": "a8bd6e4158e448298bf3016dead9b43e",
+      "owner": "p00_cf1a temporary C3 integration writer",
+      "scope": "local SOURCE snapshot integration exception; shared conflicts preserved, exact upstream closure, no pair pass",
+      "original_base": "86fcaf093deaba98c0495f775ac1d4767bbbf950",
+      "merge_head": "b3dd39f68511558d86753f3148e1b9731bcde622",
+      "behavior_writer_dispatched": false,
+      "owner_status": "historical DRI; old agent stopped; source frozen pending explicit new-session writer handoff"
     }
   ],
   "critical_pair_slices": [
@@ -703,7 +785,7 @@
         "B"
       ],
       "real_output": "real PG reauthorize/cancel/deadline to read with precise pin cleanup",
-      "status": "architecture source only; parent PG deadline/cancel/invoice and unknown-bind cleanup missing",
+      "status": "C1 limited client-control independently accepted; C3 controlled storage/source implementation and real PG pair pending",
       "architecture_review": "7a2c1a5328782042b3d973feb969b0097b3f711f91424a30b46d563623b597c2"
     },
     {
@@ -716,7 +798,7 @@
         "query-real-provider-interface"
       ],
       "real_output": "real full Source -> Rust bridge; no SealedFixture substitution",
-      "status": "pending"
+      "status": "D1 byte-provider lib/sealed regression independently accepted; D2 real P04 bridge plan only"
     },
     {
       "id": "E",
@@ -776,11 +858,15 @@
     "behavior_limit": 2,
     "running_behavior_at_snapshot": 0,
     "next_behavior_tasks": [
-      "C-controlled-real-PG-interface",
-      "query-real-source-provider-interface"
+      "C3 controlled PG-to-source after shared-source review",
+      "D2 real P04-to-Rust controlled bridge"
     ],
     "runtime_window_owner": null,
-    "role_count_is_not_concurrency": true
+    "role_count_is_not_concurrency": true,
+    "next_window_owner": "C3 after shared-source review and implementation SOURCE approval",
+    "author_autonomous_module_verification": true,
+    "source_review_can_overlap_frozen_component_run": true,
+    "current_agents": "new medium C3 independent reviewer and D2 read-only interface planner; old agents stopped"
   },
   "investment_observations": {
     "scope": "this strategy delivery window only; phase/module/system counts kept separate",
@@ -879,6 +965,81 @@
       "actual_release": "543815025cc0bf12c891acb5b79dca107dfc2b6e0a746072d825093bf7b8635f",
       "independent_actual_review": "c3dc2e9d97b0a26bbc24d79ad16ea964db8e15eeadc97bdfc6e78b638e1abb72",
       "initial_changes_required_source_review": "167176007e1051a8f918b9ef745cd174c4f4c6e11f70ac67d5006637dd970e9f"
+    },
+    {
+      "id": "C1-parent-catalog-control",
+      "owner": "p00_cf1a",
+      "state": "SOURCE_PASS_AND_LIMITED_CLIENT_CONTROL_ACTUAL_PASS; strict/full/pair pending",
+      "task": "a4ddd8fafdf04304a24bd4f474831ca5",
+      "plan_manifest": "ce77fcf86192765630945b0f2db4b6db4cb0859ee154128d64769d2c172d4864",
+      "plan_source": "6fe1d5a71b5f0ae6f643472c1160741e56c0e2e509d5e7516b5acb7f12ef4ac3",
+      "independent_plan_review": "f08ffa52a23911d531d245205ed043406d3ef75e70924f8c3c86c8d89e41f390",
+      "actual_new_tests": {
+        "passed": 39,
+        "scope": "Mock/SQLite only; no full13 pre-run manifest",
+        "first_new13_errors": 7,
+        "first_failure_preserved": true
+      },
+      "actual_performance": {
+        "queries": 32,
+        "read_max_ms": 25.704,
+        "query_budget_ms": 1000,
+        "cleanup_max_ms": 11.456,
+        "cleanup_budget_ms": 5000
+      },
+      "full_module_pass": false,
+      "pair_pass": false,
+      "absence_terminal": false,
+      "source_manifest": "98b7032dce03f53f5f308f4e3607ce27f32a25cad10d42aaa247d863db21cfd6",
+      "evidence_index": "7ca85c56d7ac2889f367621c13cfde954d55d9f6d359fa85d179b708bfe05362",
+      "independent_actual_review": "c8f3c52a729a35f403d5f0771a41f33ed922a81b73238f639ad181559ead394d",
+      "remote_pg_backend_stop_confirmed": false,
+      "complete_pg_server_cost_known": false,
+      "pg_native_memory_measured": false
+    },
+    {
+      "id": "D1-query-controlled-source-consumer",
+      "owner": "plan_audit temporary query DRI",
+      "state": "76 lib and original sealed regression independently accepted; full module/new port performance pending",
+      "task": "bc81c2ae8eb94fb99a646c061a61c35c",
+      "plan_source": "e53136f78543e007f5af8a32a308acf253947198a7eec613032f589693781f36",
+      "plan_manifest": "5e71a49b5de4004c30a652be069d7ff9cfcae111e118a7eadcef125c818f636f",
+      "independent_plan_review": "971988cceb6a9dd544423b033d811e1e4d2f6cbb9dedf05bebf057dd42f16c66",
+      "before35_manifest": "e7351edeefc9ad0eece1c33ecbfec9f6dd61b6ec675f535bd49475dd8663f5ca",
+      "docs_first_manifest": "5963d865120ab9fad81fb582825bbcb8e9cfb027a2824315418fefbbfbeabadc",
+      "strict_decodes_per_page": 1,
+      "schema_cache": false,
+      "pending_credit_owner": "Admission Owner until matching trusted acknowledgement",
+      "actual_new_tests": {
+        "definitions": 73,
+        "passed": 72,
+        "failed": 1,
+        "original55_passed": 55,
+        "result": "failed",
+        "author_reported": true,
+        "outer_seconds": 16.8525
+      },
+      "actual_performance": null,
+      "full_module_pass": false,
+      "real_p04_pair_pass": false,
+      "native_hard_memory_pass": false,
+      "source_manifest": "564efef750ee2af697914bfc72ac271134947316f1c2827ff7e82b534b7bd689",
+      "independent_source_review": "6f8c01d4813300d3290b8c28b46d5638d521e191d6f2ddb0741c66056fda90b7",
+      "actual_latest_tests": {
+        "passed": 76,
+        "failed": 0,
+        "ignored": 0,
+        "filtered": 0,
+        "outer_seconds": 16.1025371249998
+      },
+      "sealed_regression": {
+        "passed": true,
+        "performance_processes": 5,
+        "samples": 10,
+        "outer_seconds": 21.849966874928214
+      },
+      "new_port_performance_pass": false,
+      "independent_actual_review": "1d333d653131e6bb1f399053e8cf8b47307513d1b4b9f90c687297fe61ef5feb"
     }
   ],
   "b1_failures_retained": {
