@@ -75,6 +75,17 @@ class PolicyTests(unittest.TestCase):
                 self.assertIn(suite, result["required_suites"])
                 self.assertFalse({"performance", "stability", "soak"}.intersection(result["required_suites"]))
 
+    def test_fixed_indexes_driver_changes_require_all_component_evidence(self):
+        required = {"python", "functional", "performance-smoke", "stability-component", "unit-coverage"}
+        for path in ("scripts/fixed_indexes_acceptance.py", "tests/index_support/__init__.py",
+                     "tests/index_support/fixed_audit.py"):
+            with self.subTest(path=path):
+                result = plan(ROOT, [path], *self.config[:3])
+                self.assertTrue(required.issubset(result["required_suites"]))
+                self.assertFalse({"performance", "stability", "soak"}.intersection(result["required_suites"]))
+        docs = plan(ROOT, ["tests/index_support/README.md"], *self.config[:3])
+        self.assertFalse(required.intersection(docs["required_suites"]))
+
     def test_release_keeps_component_and_complete_engine_obligations(self):
         self.assertTrue({"performance-smoke", "stability-component", "performance", "stability", "soak"}
                         .issubset(self.config[0]["release_suites"]))

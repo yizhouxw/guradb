@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "mode": "local_only",
+  "decision_date": "2026-10-24",
+  "decision": "User paused GitHub Actions CI/CD and PR CI requirements; use local self-tests and independent review until a new explicit decision.",
+  "local_quality_required": true,
+  "github_actions_enabled": false,
+  "pr_remote_ci_required": false,
+  "workflow_ids": [
+    387490345,
+    390094932
+  ],
+  "resume_requires_explicit_user_decision": true
+}

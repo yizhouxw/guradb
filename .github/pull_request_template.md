@@ -4,6 +4,7 @@
 
 ## 并行任务与合入顺序
 
+- 独立任务 Issue / 主 module:* 标签 / role:* 标签 / 唯一 DRI与GitHub assignee：
 - task ID / owner / 分支 / worktree：
 - PR base（默认 main）/ 原始 task base SHA / 合同版本：
 - 允许文件域、共享热点 owner 与交权情况：
@@ -23,7 +24,7 @@
 ## 复核与合入条件
 
 - [ ] 文件范围/合同一致，依赖已合入；分支包含最新 main，冲突处理已复核。
-- [ ] 当前 PR 候选的 `quality (Python 3.11)` 和 `quality (Python 3.14)` 均 success，附 head/base SHA 和 run URL；不以 push/旧 head/missing 检查代替。
+- [ ] 当前候选适用本机自测/真实配对或系统检查与独审证据完整；远端Actions/PR CI当前暂停，记录PAUSED_BY_USER/NOT_RUN，历史失败不写PASS。
 - [ ] 单独复核发现与处置已记录；高风险/门禁/持久协议由独立审查轮次或人工复核。单人记录不冒充 GitHub Approval。
 - [ ] 由集成者串行使用 merge commit 合入，不 bypass、不直接 push main、不强推。
 
@@ -33,6 +34,6 @@
 
 ## 合并后交付记录（合并后补齐）
 
-合并前 main SHA / 审查 head SHA / merge SHA / 完整合入范围 check 报告与主线 checkpoint / 主线 push CI URL及结论：
+合并前 main SHA / 审查 head SHA / merge SHA / 完整合入范围 check 报告与主线 checkpoint / 本机验证及远端CI暂停状态：
 
 失败停止下一 PR，修复或 revert 也走 PR；未填完本节只算分支验收，不算主线交付完成。

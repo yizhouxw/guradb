@@ -80,6 +80,31 @@ class ArchitectureTests(unittest.TestCase):
             with self.assertRaisesRegex(HarnessError, 'dependency cycle'):
                 lint(root, self.policy, self.architecture)
 
+    def test_importlib_metadata_only_direct_version_read_is_safe(self):
+        valid = "import importlib.metadata\nvalue = importlib.metadata.version('psycopg')\n"
+        unsafe = [
+            "import importlib\nimportlib.import_module('modules.query.hidden')\n",
+            "import importlib.util\n",
+            "from importlib import metadata\n",
+            "from importlib.metadata import version\n",
+            "import importlib.metadata as metadata\nmetadata.version('x')\n",
+            "import importlib.metadata\ngetattr(importlib, 'import_module')('x')\n",
+            "import importlib.metadata\nvalue = importlib.metadata\n",
+            "import importlib.metadata\nvalue = importlib.metadata.version\n",
+            "import importlib.metadata\nimportlib.metadata.version = lambda x: x\n",
+            "import importlib.metadata\nimportlib.metadata.distribution('x')\n",
+            "import importlib.metadata\n__import__('modules.query.hidden')\n",
+        ]
+        for source in [valid] + unsafe:
+            with self.subTest(source=source), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                self.write(root, 'modules/query/service.py', source)
+                if source == valid:
+                    lint(root, self.policy, self.architecture)
+                else:
+                    with self.assertRaisesRegex(HarnessError, 'importlib|dynamic code'):
+                        lint(root, self.policy, self.architecture)
+
     def test_generated_root_data_does_not_hide_nested_source(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

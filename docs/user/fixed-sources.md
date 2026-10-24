@@ -142,3 +142,58 @@ V1页头还允许已观测PyArrow22写出的可选**空**`Statistics`结构；�
 前两轮FAIL完整保留：第一轮旧P04观察器把bind后剩余TTL错误加到C3的bind前T0；只新增pair观察器，保留实际T0/原parent截止/绝对wall映射，旧helper与原79单元不改。第二轮新fixture把撤grant的`unauthorized`误期待成epoch变化的`revoked`；普通最小复现确认既有语义后，仅修精确期望并保存expected/observed诊断。三轮闭包JSON实际路径数为75/76/76；此前口头73/74计数有误，以保全JSON为准。前两失败不是通过，第三轮也未抹去它们。
 
 原P04普通79、对象26、目录39单元均已通过；定向parent/child/组合/启动留证单元另有日志。这些及本次pair不替代原functional/performance/fault三mode或完整原base门禁。独立证据审、strict coverage、整项原base check、正常hook/提交后验证、上游依赖/PR/远端CI/精确main仍未闭合；PG远端停止确认、完整server费用、PG/native内存、单故障域以外/真实云/HA/生产规模仍缺失，不能据此声明完整产品支持或可发布。
+
+
+## 受控 producer 与 Rust 真实 IPC（规划，待实现及验证）
+
+本片目标是固定 PG 真实发行身份→P04 真对象读取→逐页真实 IPC→Rust 唯一 SQL 执行；尚未提供可运行的新用户入口。后续显式组合入口必须先固定 derivative Linux runtime、真实镜像身份与同 Linux 单调时钟；不能将 host Python 和容器 Rust 时钟直接拼接。首次输入沿用完整11事实及双源130行64/64/2，不使用模拟 Source 代替真实链。
+
+查询在 bind 前取得原始 T0、取消与总截止。先唯一 SQL claim/prepare，实际授权完成后，才预授 producer/resident 与 receiver/decode 信用并 OPEN。OPEN 从真实生产计划报告可信 total_rows/page_count，数据仍经既有白名单校验，不返回内部 state 或整 rows 指针。发送 DATA 前 receiver 必须已持许可并直接填其预授缓冲；不足明确 resource_limit，不先收完整 payload 再申请。普通 A 字节及签名语义不改；located 在新 IPC profile 暂拒绝，现有直接路径不变。
+
+新真实 PG BindRequest 事前申请已批准 P05 trial 全 query managed256MiB/output32MiB；producer 是同父一次收费的≤8MiB子cap，不另开账本重复扣费。所有 binding/host/page/cohort 截止及预算继续逐项 min。该组合合同不是产品默认或原 C3 同预算性能。保留 P04 原2源、64KiB metadata、4文件/4MiB、16RG/1000行、总32物理字段、64行/768KiB A、1s/page和5s/cohort；新 IPC 联合 profile 若受 Rust32页限制，超32真实页明确拒绝，不截断。768KiB A 仍需实际 credit 可承受，不能自动加预算。
+
+不可变 A 的 page-prefix 与实际执行累计分账：open费用独立，后续 finalization/delivered/传输 tail 不回写 A；逻辑 A output 与 IPC 控制/物理重传另栏。OPEN/READ 期间只作 local checkpoint，不递归向同一阻塞 worker 发 AUTH；完整 PG ticket settle 后再真实授权与 fresh 时钟。所有未知费用保留已知下界，native/server 费用仍缺失。
+
+一 query 一个 owned worker。close 只归还自己 mint 且对象引用销毁的 logical leases，不手减旧 Scope.memory_current；Rust 持有的 raw/Contract/Arrow/result 仍各自计费。成功要求正常 worker exit+wait/reap、完整费用确认及 exact pin release；超时按启动代际精确 TERM/KILL/wait/reap，丢响应先同 seq 对账，不重复 bind/read。bind unknown 仅原完整 request close，absence 仍 cleanup_unconfirmed；杀进程不证明远端 PG 停止。兼容与恢复保持原直接 P04/C3 路径及失败原件，验证缺失时本节持续标待实现。
+
+
+### 受控 producer slice1 本地普通验证（2026-10-23）
+
+新任务9558d0ea的本地生命周期/同点witness/子信用切片完成首轮普通验证：新producer16/16与原7leaf direct source79/79通过，结果`artifacts/p04-controlled-producer/slice1/ordinary-first/result.json` SHA256 `52cb9ae48af7a74031616165ec3fa93c062fdda2de96078b7e11ec1d12ba897a`，分别实际进程2.816s/1.429s。48相关路径前后SHA一致，绑定源码修复清单`5fe26bc5`；ROOT独立核95项逐test、日志和进程终态，审查SHA `02ee3c3635cd2bd82c817371aa1c37f0622bf80464076d4fdda5a416a4a23b66`。本结果文字在测试后追加，不冒充已跑源码身份。
+
+验证使用真实PyArrow写出的有界Parquet fixture与mock对象transport，覆盖实际load后11/130 rows/pages、64/64/2、open成本不再写入首page A、精确usage_point/at_a/tail、单父子lease与ACK/close时consumer输出仍live；新增并发release确定性barrier及safe generation边界也通过。它只证明本地实现及原direct回归，不证明PG发行、跨进程Rust权威、实际IPC/receiver预授、worker kill/wait/reap或真实完整链。第一SOURCE审发现release竞态/generation无上界并保留，窄修后SOURCE增审通过；没有通过加预算/删原测试消除失败。
+
+该片仍未完成socket adapter、Linux PG/S3 namespace与实际query binary对接；实际PG→P04→Rust全11/130、新组合256MiB/32MiB真实binding、性能/故障与全原base门禁、正常hook/commit/post、task-finish/checkpoint、依赖PR18/双版本CI/main仍missing。close仅本地logical状态，旧Scope保守账未手减，native/server费用缺口保留；上节规划中这些行为仍待实现与验证。
+
+
+### Linux 原始 anchor 导入切片（待实现、待独立 SOURCE 审与容器验证）
+
+可信父进程先预付 bootstrap，再从固定继承配置上下文导入 exact80B GLNA v2/clock1/unit2；本片只提供 storage typed 一次消费入口，不实现 FD/worker/BIND arena。Python 新建 ReadParent 保留 Rust 原始 u64 T0_ns、boot/session/nonce/代际，fresh Linux CLOCK_MONOTONIC 与 boot 验证；不修改既有 parent.started、不注入伪 clock、不声称两个进程共享 ledger。ns 时间域不套 safeint 计数上限，query 截止只取 min，C1 秒投影向下不延长。
+
+每个本地执行操作携原始 operation/PG seq 与绝对 ns 截止，effective deadline 为 query/operation/page/cohort 最小值；原250ms准入及200ms清理余量同样约束更短 operation，退出操作不延长 query。错误/取消/重复消费/错 boot 或身份/未来 T0/过期/时钟回退明确拒绝，原 memory/直接读取路径保留。Rust 是唯一信用权威，Python 仅预授子分配与本地观察；native/server/完整 IPC 费用仍未知。
+
+验证映射：新 test_fixed_linux_anchor 结构/边界/一次消费/min/slack/浮点舍入负例及原 producer16+direct79 回归须在独立 SOURCE 审后经固定本地容器执行；实际同 Linux boot 跨进程时钟、真实 PG→P04→Rust full11/130、完整 harness/PR/CI 另片，当前均未认证。先行计划与 before 指纹见 artifacts/p04-controlled-producer/storage-linux-anchor-plan 和 storage-linux-anchor-implementation。
+
+
+### Linux anchor 本地容器 ordinary 结果（2026-10-23）
+
+本片实际源码先经 ROOT 独立 SOURCE 审（0196214a），随后固定本地 dev image `sha256:b12433266fb4c63839b077165bee7c770ab8c0d3321d42b817b35232eb020350`、network none、rootfs/工作树只读、临时 /tmp 首轮执行全部115单元：新anchor13、原producer16、原direct79、原parent完整7，115逐项ok，unittest1.648秒、Docker attach2.078秒、容器退出0。106相关源码/测试/锁/文档前后指纹相同；本轮nonce与exactCID、终态、8个Docker客户端PID/PGID及精确删除回读保存在 `artifacts/p04-controlled-producer/storage-linux-anchor-implementation/ordinary-first`，result SHA `4a3ccfb5fda92a82bca55489ca1863a5a0c2eaf82e50337c2903bdd04faec301`，无HOLD。
+
+这些结果只认证typed token结构、原T0/截止/slack/一次消费等本地合同和普通回归；其中Linux真实测试只在Python自身读boot/clock并导入，不证明Rust跨进程anchor来源。实际FD/bootstrap/BIND arena/PG→P04→Rust full11/130、query ABI与完整原基点门禁/正常提交/PR/CI仍待后续，native/driver/server费用未知边界不变。上方pending为测试前先行合同，此处只追加本次已执行范围，原C3与slice1历史证据分别保留。
+
+
+### 私有 FD 实际接线开发（NOT_CERTIFIED，待实现与独立审查）
+
+本次仅实现实验性 Python worker/protocol Source 接缝：可信继承三 FD、GFD2、80B GLNA v2 原始 Linux ns/T0、同一 ControlledReads/ReadParent/FixedProducer；它不是可用产品入口或验收通过。仅可信 composition root 可提供实际 PG C1、固定 backend 与事先由 Rust 原Owner预授的信用；缺 launcher/config/新target 时明确拒绝，不用模拟 authority 替代。完整原11/130与新6字段/2新metadata、固定256MiB/32MiB、producer8MiB、原1000/64/1s/5s及115回归仍为后续实证义务。
+
+DATA 前必须接收许可/预约，短包、超额、hash/序号/身份冲突拒绝并停止输出；已发/未确认费用保留未知。ACK只销毁 producer cache/payload 引用，不释放消费者输出或整个Root grant。DF与结果编码后 CLOSE_PREPARE 仅停源、保留C1/pin与8MiB/W；最后同C1 AUTH_RETIRE 后退出，由Rust exact wait/reap及独立pin cleanup确认后才可释放父预约并fresh检查取消/原截止交付。最后AUTH之后不声称再观察远端撤权。旧本地close语义保持；当前无FD/PG/S3/native测试或兼容认证，完整原base门禁/PR/CI不可豁免。
+
+
+#### FD 首片独审待修（未运行）
+
+首冻结1aa0ec69保留。独审发现ACK函数局部A引用须在输出lease退款前销毁，以及CALL/PERMIT信用需严格safeint上界。仅窄修这两项与新负例；raw ns仍u64，原115定义/预算/launcher域保持。revision2 SOURCE独审后方可由ROOT安排普通运行，当前不标通过。
+
+
+### 私有fd0入口与新target装配（待实现，NOT_CERTIFIED）
+
+本片拟实现PCF2固定配置/原80B Linux anchor一次导入、同C1实际PG与FixedBackend、实测runtime HELLO；同类fixture-only SHA allowlist不是真实I1认证。新SQL target只改逻辑schema/映射与新SourceVersions/两metadata，保本轮原两Parquet raw/ref和全部11/130 cells；不重写旧dataset/metadata、不造binding。现revision2/实际142保留，新增接线与负例待独立Source审和ROOT实际运行。原预算/完整门禁/PR/CI不减，W/native/256和完整FD链仍未认证。

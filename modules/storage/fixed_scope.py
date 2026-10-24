@@ -57,11 +57,13 @@ class ReadScope:
 
     def effective_deadline(self):
         self.check()
+        if self.parent is not None and self.parent.linux_origin is not None:
+            return min(self.deadline, self.parent.effective_deadline())
         return self.deadline
 
     def check(self, *, slack=0):
         if self.parent is not None:
-            self.parent.checkpoint()
+            self.parent.checkpoint(slack=slack)
         try:
             cancelled = self.cancelled()
         except Exception:

@@ -24,6 +24,8 @@ ADR 用来记录已经比较过的方案和取舍。编号只表示记录顺序�
 | [0019](0019-pr-parallel-development.md) | GitHub PR 与多分支并行开发 | 已采用工程约定；远端保护设置待另行授权和核验 |
 | [0020](0020-product-review-and-vertical-delivery.md) | 图文到训练样板与提前纵向验收 | 接受产品/实施原则；新增schema、功能、规模和生产证据待验证 |
 | [0021](0021-cf1a-fixed-catalog.md) | CF1-A 固定目录与计划发布 | 提案；独立持久布局、真实 PG 与恢复边界待实现验证 |
+| [0022](0022-module-delivery-and-validation-levels.md) | 模块交付、真实配对与四层验证 | 接受用户实施原则；机器接线/用户能力分别以报告验收 |
+| [0024](0024-controlled-worker-catalog-dependency.md) | 私有受控worker读取catalog | 已有受控C1依赖边；不新增公开入口或认证完整FD预算 |
 | [模板](0000-template.md) | 后续决策的记录格式 | 模板 |
 
 ## 优先讨论的问题
@@ -46,3 +48,5 @@ ADR 用来记录已经比较过的方案和取舍。编号只表示记录顺序�
 2026-10-18 的[功能与架构复审](../reviews/2026-10-18-capability-architecture.md)和[行动计划](../plans/2026-10-18-next-stage.md)不替代上述历史决定。后续执行面、持久布局或跨机运行时的选型经实测后再形成新ADR。
 
 - [ADR 0015：严格生产源行覆盖与双接口场景](0015-unit-coverage-and-dual-interface-scenarios.md)：已采用测试门禁，覆盖率目标仍需实际证据达标；不扩展SQL产品白名单。
+
+- [ADR0023：固定模块团队、独立Issue与本机质量阶段](0023-team-issues-and-local-quality.md)：7个核心模块DRI、产品/架构/专职系统测试/集成/PM分责；暂停GitHub Actions与PR CI准入，保留本机质量。

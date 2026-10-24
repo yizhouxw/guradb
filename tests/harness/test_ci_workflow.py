@@ -1,4 +1,5 @@
 import copy
+import json
 import os
 from pathlib import Path
 import re
@@ -14,11 +15,57 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 from harnesslib.policy import load
 from harnesslib.runner import check, run_command
+from harnesslib.validation_binding import bound_plan
 
 
 class CIWorkflowTests(unittest.TestCase):
     def setUp(self):
         self.workflow = yaml.load((ROOT / ".github/workflows/check.yml").read_text(), Loader=yaml.BaseLoader)
+        hosted_capacity_tests = {
+            "test_job_deadline_can_fit_serial_gate_deadlines_and_evidence_upload",
+            "test_every_registered_profile_fits_the_job_without_reducing_commands_or_upload_margin",
+        }
+        if self._testMethodName in hosted_capacity_tests:
+            state = json.loads((ROOT / "harness/ci-state.json").read_text())
+            self.assertIn(state["mode"], ("local_only", "github_actions"))
+            self.assertTrue(state["local_quality_required"])
+            if state["mode"] == "local_only":
+                self.assertFalse(state["github_actions_enabled"])
+                self.assertFalse(state["pr_remote_ci_required"])
+                self.assertTrue(state["resume_requires_explicit_user_decision"])
+                self.skipTest("User-paused hosted CI capacity; local suites and negative CI tests remain required")
+            self.assertTrue(state["github_actions_enabled"])
+
+
+    def assert_trigger_contract(self, workflow):
+        events = workflow["on"]
+        self.assertEqual(set(events), {"push", "pull_request", "schedule", "workflow_dispatch"})
+        self.assertEqual(events["push"], {"branches": ["main"]})
+        # No base/path filter: stacked PRs targeting a feature branch still run.
+        request = events["pull_request"]
+        self.assertTrue(request is None or request == "" or request == {})
+
+    def test_only_main_pushes_and_unfiltered_prs_schedule_the_matrix(self):
+        self.assert_trigger_contract(self.workflow)
+
+    def test_duplicate_push_or_missing_pr_release_paths_are_rejected(self):
+        for push in ("", {"branches": ["**"]},
+                     {"branches": ["main"], "tags": ["v*"]},
+                     {"branches": ["main"], "paths": ["scripts/**"]}):
+            candidate = copy.deepcopy(self.workflow)
+            candidate["on"]["push"] = push
+            with self.subTest(push=push), self.assertRaises(AssertionError):
+                self.assert_trigger_contract(candidate)
+        for request in ({"branches": ["main"]}, {"paths": ["crates/**"]}):
+            candidate = copy.deepcopy(self.workflow)
+            candidate["on"]["pull_request"] = request
+            with self.subTest(request=request), self.assertRaises(AssertionError):
+                self.assert_trigger_contract(candidate)
+        for event in ("pull_request", "workflow_dispatch", "schedule"):
+            candidate = copy.deepcopy(self.workflow)
+            del candidate["on"][event]
+            with self.subTest(missing=event), self.assertRaises(AssertionError):
+                self.assert_trigger_contract(candidate)
 
     def test_manual_checks_and_tokens_cannot_silently_skip_quality(self):
         workflow = self.workflow
@@ -38,15 +85,31 @@ class CIWorkflowTests(unittest.TestCase):
         self.assertIn("matrix.python", upload["with"]["name"])
         self.assertIn("pull_request", job["concurrency"]["cancel-in-progress"])
 
+    def test_levels_preserve_two_jobs_and_stable_system_release_scheduling(self):
+        workflow = self.workflow
+        job = workflow["jobs"]["quality"]
+        self.assertEqual(job["name"], "quality (Python ${{ matrix.python }})")
+        self.assertEqual(job["strategy"]["matrix"]["python"], ["3.11", "3.14"])
+        self.assertIn("schedule", workflow["on"])
+        self.assertIn("system", workflow["on"]["workflow_dispatch"]["inputs"]["level"]["options"])
+        self.assertIn("refs/heads/main", job["env"]["HARNESS_LEVEL"])
+        self.assertIn("schedule", job["env"]["HARNESS_SCOPE"])
+        run = next(step for step in job["steps"] if step.get("name") == "Run quality harness")
+        self.assertIn('--level "$HARNESS_LEVEL"', run["run"])
+        self.assertIn('--batch "$HARNESS_BATCH"', run["run"])
+        self.assertIn("--base", run["run"])
+
     def assert_job_budgets_fit(self, policy):
         job = self.workflow["jobs"]["quality"]
         self.assertEqual(job["runs-on"], "ubuntu-latest")
         expression = job["timeout-minutes"]
-        match = re.fullmatch(r"\$\{\{ inputs.scope == 'release' && (\d+) \|\| (\d+) \}\}", expression)
+        match = re.fullmatch(r"\$\{\{ \(inputs.scope == 'release' \|\| inputs.level == 'release' \|\| github.event_name == 'schedule'\) && (\d+) \|\| (\d+) \}\}", expression)
         self.assertIsNotNone(match)
         budgets = {"release": int(match[1]) * 60, "change": int(match[2]) * 60}
         # All ready suites conservatively bound any change selection, including
         # Python plus Rust. Planned gates record missing without executing work.
+        for seconds in budgets.values():
+            self.assertLessEqual(seconds, 360 * 60, "hosted job exceeds the platform hard limit")
         ready = [name for name, suite in policy["suites"].items() if suite["state"] == "ready"]
         for scope, names in (("change", ready), ("release", policy["release_suites"])):
             self.assertLessEqual(budgets[scope], 360 * 60, "hosted job exceeds the platform hard limit")
@@ -54,6 +117,19 @@ class CIWorkflowTests(unittest.TestCase):
                              len(policy["suites"][name]["commands"]) for name in names
                              if policy["suites"][name]["state"] == "ready")
             self.assertGreaterEqual(budgets[scope], worst_case + 600, scope)
+
+    def test_every_registered_profile_fits_the_job_without_reducing_commands_or_upload_margin(self):
+        policy, architecture, invariants, *_ = load(ROOT)
+        samples = (["README.md"], ["scripts/harness.py"], ["crates/guradb-query/src/lib.rs"],
+                   ["crates/guradb-storage/src/lib.rs"],
+                   ["crates/guradb-query/src/lib.rs", "crates/guradb-storage/src/lib.rs"],
+                   ["api/cf1a/schema.json"])
+        ready_worst = sum(suite["timeout_seconds"] * len(suite["commands"])
+                          for suite in policy["suites"].values() if suite["state"] == "ready")
+        for paths in samples:
+            profile = bound_plan(ROOT, paths, policy, architecture, invariants)["profile"]
+            self.assertLessEqual(profile["maximum_command_seconds"], ready_worst, paths)
+        self.assert_job_budgets_fit(policy)  # once-only 600s remains required.
 
     def test_job_deadline_can_fit_serial_gate_deadlines_and_evidence_upload(self):
         self.assert_job_budgets_fit(load(ROOT)[0])

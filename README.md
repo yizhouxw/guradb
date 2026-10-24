@@ -1,5 +1,7 @@
 # GuraDB
 
+2026-10-21 起按[模块交付策略 v2](docs/plans/2026-10-21-modular-delivery-v2.md)组织开发：[细粒度需求矩阵](docs/product/requirements-v2.md)、[模块 owner/输入输出/运行时权威](docs/design/module-delivery-contracts.md)与四层验证共同约束实施。机器门禁由独立 `gates-v2` 任务落地，文档不表示新用户能力已通过；当前先交真实共同视图查询，再推进图文和训练。
+
 面向 **AI 训练、推理与 AI 应用** 的分布式多模态一体化数据库。
 
 GuraDB 的目标是在对象存储与开放湖上统一管理结构化数据、文本、图像、音频、视频、向量及关系数据，在同一查询体系内组合 SQL、全文检索、向量检索与 Graph 检索，并服务数据准备与可复现训练读取。
@@ -84,4 +86,4 @@ make check
 
 版本追溯已接入 [Git 工作流](harness/version-control.md)：切片提交、提交前检查、checkpoint 与独立目录恢复。已配置私有远端 [yizhouxw/guradb](https://github.com/yizhouxw/guradb)；用户已授权后续开发提交经验证后推送任务分支到现有 `origin`，并通过 [GitHub PR 并行流程](harness/parallel-development.md) 审查、验证后合入 `main`；不直接推送主线，不强推，远端设置与部署另行授权。
 
-后续开发使用[任务与验收闭环](harness/development-workflow.md)，CI/CD 采用 [GitHub Actions 方案](harness/ci-cd.md)。此前 bootstrap CI 已远端通过；本轮 M0 工作流尚待推送后远端验证，CD 待发布产物和环境合同。
+后续开发使用[固定模块团队与独立Issue](harness/team-collaboration.md)和[任务验收闭环](harness/development-workflow.md)。2026-10-24起按用户决定[暂停GitHub Actions CI/CD与PR远端CI准入](harness/ci-cd.md)，当前以本机自测、独立系统测试/复核和精确main证据保障合入；恢复CI/CD待项目完整度与环境条件明确后重新讨论。

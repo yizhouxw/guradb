@@ -17,7 +17,18 @@ def check(root, paths, policy, architecture, cycle_check):
             tree = ast.parse(path.read_text(),filename=str(path))
         except SyntaxError as error:
             raise HarnessError(f'{path}: invalid Python syntax') from error
+        parents = {child: parent for parent in ast.walk(tree) for child in ast.iter_child_nodes(parent)}
         for node in ast.walk(tree):
+            if isinstance(node, ast.Name) and node.id == 'importlib':
+                metadata = parents.get(node)
+                version = parents.get(metadata)
+                call = parents.get(version)
+                if not (isinstance(node.ctx, ast.Load)
+                        and isinstance(metadata, ast.Attribute) and metadata.attr == 'metadata'
+                        and isinstance(version, ast.Attribute) and version.attr == 'version'
+                        and isinstance(version.ctx, ast.Load)
+                        and isinstance(call, ast.Call) and call.func is version):
+                    raise HarnessError(f'{path}: importlib bypasses checked production graph')
             if isinstance(node,ast.Call) and isinstance(node.func,ast.Name) and node.func.id in ('__import__','eval','exec'):
                 raise HarnessError(f'{path}: dynamic code/import bypasses checked Python graph')
             imports = []
@@ -43,7 +54,9 @@ def check(root, paths, policy, architecture, cycle_check):
                         raise HarnessError(f'{path}: unresolved local Python import {target}')
                 elif top not in sys.stdlib_module_names and top not in external:
                     raise HarnessError(f'{path}: undeclared external Python import {top}')
-                if top=='importlib':
+                if top=='importlib' and not (target == 'importlib.metadata'
+                        and isinstance(node, ast.Import)
+                        and all(alias.name != target or alias.asname is None for alias in node.names)):
                     raise HarnessError(f'{path}: importlib bypasses checked production graph')
     cycle_check(graph)
     return f'Python AST import DAG checked for {len(sources)} production modules'

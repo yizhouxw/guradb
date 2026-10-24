@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "repository": "yizhouxw/guradb",
+  "required_primary_module_labels": 1,
+  "labels": [
+    {
+      "name": "module:common",
+      "color": "1d76db",
+      "description": "架构师：公共合同与跨语言编码"
+    },
+    {
+      "name": "module:catalog",
+      "color": "1d76db",
+      "description": "目录负责人：身份、版本、发布和pin"
+    },
+    {
+      "name": "module:storage",
+      "color": "1d76db",
+      "description": "对象存储负责人：版本、传输、完整性和预算"
+    },
+    {
+      "name": "module:connectors",
+      "color": "1d76db",
+      "description": "源适配负责人：格式、快照、批次和接入"
+    },
+    {
+      "name": "module:query",
+      "color": "1d76db",
+      "description": "查询负责人：SQL、Arrow/DataFusion和执行"
+    },
+    {
+      "name": "module:index",
+      "color": "1d76db",
+      "description": "索引负责人：构建、覆盖和候选"
+    },
+    {
+      "name": "module:cluster",
+      "color": "1d76db",
+      "description": "运行时负责人：worker、取消、背压和资源"
+    },
+    {
+      "name": "module:gateway",
+      "color": "1d76db",
+      "description": "入口负责人：HTTP/PG、客户端、CLI/MCP"
+    },
+    {
+      "name": "module:harness",
+      "color": "1d76db",
+      "description": "工程负责人：本地门禁、依赖和协作规范"
+    },
+    {
+      "name": "module:system",
+      "color": "1d76db",
+      "description": "专职系统测试负责人：真实配对和系统验收"
+    },
+    {
+      "name": "module:project",
+      "color": "1d76db",
+      "description": "产品/PM/集成负责人：需求、排程和跨模块交付"
+    },
+    {
+      "name": "role:product",
+      "color": "5319e7",
+      "description": "产品经理"
+    },
+    {
+      "name": "role:architecture",
+      "color": "5319e7",
+      "description": "架构师"
+    },
+    {
+      "name": "role:development",
+      "color": "5319e7",
+      "description": "模块开发负责人"
+    },
+    {
+      "name": "role:system-test",
+      "color": "5319e7",
+      "description": "专职系统测试负责人"
+    },
+    {
+      "name": "role:integration",
+      "color": "5319e7",
+      "description": "集成与工程负责人"
+    },
+    {
+      "name": "role:pm",
+      "color": "5319e7",
+      "description": "项目经理"
+    }
+  ]
+}

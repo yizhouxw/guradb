@@ -15,6 +15,7 @@ from uuid import uuid4
 
 from .policy import HarnessError, changed_paths, files, git, plan
 from .task_state import active_base
+from .validation_binding import bound_plan
 
 
 def write_json(path: Path, value: dict) -> None:
@@ -128,7 +129,7 @@ def selection_base(root: Path, base: str | None) -> str | None:
         return "all"
     if before:
         return selection_base(root, before)
-    if os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch":
+    if os.environ.get("GITHUB_EVENT_NAME") in {"workflow_dispatch", "schedule"}:
         return "all"
     raise HarnessError("unsupported CI event: cannot determine changed paths")
 
@@ -141,7 +142,9 @@ def discover_changes(root: Path, base: str | None) -> list[str]:
     return changed_paths(root, selected)
 
 
-def check(root: Path, scope: str, base: str | None, configuration: tuple) -> tuple[dict, Path]:
+def check(root: Path, scope: str, base: str | None, configuration: tuple,
+          level: str | None = None, modules=(), batch: str | None = None) -> tuple[dict, Path]:
+    started = time.monotonic()
     root = root.resolve()
     policy, architecture, invariants, _, _ = configuration
     selected_base = selection_base(root, base)
@@ -150,6 +153,16 @@ def check(root: Path, scope: str, base: str | None, configuration: tuple) -> tup
     suites = policy["bootstrap_suites"] if scope == "bootstrap" else selected["required_suites"]
     if scope == "release":
         suites = policy["release_suites"]
+    validation = None
+    suite_map = policy["suites"]
+    if level is not None:
+        validation = bound_plan(root, changes, policy, architecture, invariants, level, modules, scope)
+        suite_map = validation["profile"]["suites"]
+        suites = list(suite_map)
+    if batch is not None:
+        import re
+        if validation is None or not re.fullmatch(r"[A-Za-z0-9._-]{1,80}", batch):
+            raise HarnessError("batch needs a v2 report and a 1..80 character identifier")
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid4().hex[:8]
     run_directory = root / "artifacts" / "harness" / stamp
     run_directory.mkdir(parents=True)
@@ -160,12 +173,15 @@ def check(root: Path, scope: str, base: str | None, configuration: tuple) -> tup
               "checkout_digest": digest, "plan": selected, "results": [],
               "unimplemented_suites": [name for name, item in policy["suites"].items() if item["state"] == "planned"],
               "product_quality": "not_assessed_by_bootstrap" if scope == "bootstrap" else "only_selected_gates"}
-    if scope == "release" and not selected["runtime_present"]:
+    if validation is not None:
+        report.update(schema_version=2, validation=validation, batch=batch,
+                      product_quality="only_" + validation["profile"]["level"] + "_profile")
+    if (scope == "release" or validation is not None and validation["profile"]["level"] == "release") and not selected["runtime_present"]:
         report["results"].append({"suite": "runtime-present", "status": "missing",
                                   "reason": "no database/client runtime implementation exists"})
     report_path = run_directory / "report.json"
     for name in suites:
-        suite = policy["suites"][name]
+        suite = suite_map[name]
         if suite["state"] != "ready":
             report["results"].append({"suite": name, "status": "missing", "reason": suite["reason"]})
             write_json(report_path, report)
@@ -183,6 +199,16 @@ def check(root: Path, scope: str, base: str | None, configuration: tuple) -> tup
         passed = all(result["status"] == "passed" for result in results)
         report["results"].append({"suite": name, "status": "passed" if passed else "failed", "commands": results})
         write_json(report_path, report)
+    if validation is not None:
+        try:
+            after = bound_plan(root, discover_changes(root, selected_base), policy, architecture,
+                               invariants, level, modules, scope)
+            unchanged = after == validation
+        except (HarnessError, OSError):
+            unchanged = False
+        if not unchanged:
+            report["results"].append({"suite": "validation-unchanged", "status": "failed",
+                                      "reason": "selection logic/profile/source closure changed while checks ran"})
     if checkout_digest(root, policy) != digest:
         report["results"].append({"suite": "checkout-unchanged", "status": "failed",
                                   "reason": "source/config changed while checks ran; run again"})
@@ -190,5 +216,12 @@ def check(root: Path, scope: str, base: str | None, configuration: tuple) -> tup
         report["results"].append({"suite": "head-unchanged", "status": "failed",
                                   "reason": "HEAD changed while checks ran; inspect task base and rerun"})
     report["passed"] = all(item["status"] == "passed" for item in report["results"])
+    if validation is not None:
+        commands = [command for item in report["results"] for command in item.get("commands", [])]
+        report["validation_cost"] = {"fresh_commands": len(commands), "reused_commands": 0,
+            "command_seconds": round(sum(item["duration_seconds"] for item in commands), 3),
+            "wall_seconds": round(time.monotonic()-started, 3),
+            "log_bytes": sum((root/item["log"]).stat().st_size for item in commands),
+            "maximum_command_seconds": validation["profile"]["maximum_command_seconds"]}
     write_json(report_path, report)
     return report, report_path
