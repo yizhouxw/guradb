@@ -1,5 +1,8 @@
 """Closed change selection and level-bound execution profiles (report schema 2)."""
-from coverage_policy import THRESHOLDS
+if __package__ == "scripts.harnesslib":
+    from ..coverage_policy import THRESHOLDS
+else:
+    from coverage_policy import THRESHOLDS
 from pathlib import PurePosixPath
 
 from .policy import HarnessError, normalize_path, owner, plan as legacy_plan

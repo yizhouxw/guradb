@@ -178,3 +178,19 @@ class ValidationLevelsTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ThresholdPackageEntryTests(unittest.TestCase):
+    def test_threshold_imports_from_both_supported_entry_roots(self):
+        import subprocess
+        import sys
+        for root, module in ((ROOT, "scripts.harnesslib.runner"),
+                             (ROOT / "scripts", "harnesslib.runner")):
+            with self.subTest(module=module):
+                code = ("import sys; sys.path.insert(0, " + repr(str(root)) + "); "
+                        "import " + module + "; "
+                        "from " + module.rsplit(".", 1)[0] + ".validation import THRESHOLDS; "
+                        "assert THRESHOLDS == {'python': 80, 'rust': 100}")
+                result = subprocess.run([sys.executable, "-I", "-c", code],
+                                        cwd=ROOT, capture_output=True, text=True, timeout=10)
+                self.assertEqual(result.returncode, 0, result.stderr)
