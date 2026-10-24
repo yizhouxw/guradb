@@ -73,3 +73,12 @@ I/O在原deadline之前预留200ms同步处理/清理余量，不足250ms准入�
 锁定 signer 的 DEBUG 会记录 canonical request/session token/signature。实际组合根必须在首次签名前固定配置禁止 botocore.auth 调试输出；storage 库不永久或临时修改全局 logger。验收在 root DEBUG 与失败路径捕获 canary secret/token/签名及 URL 密钥泄露，代理不落原始请求首部；此日志配置是认证前提。
 
 本片只读，不写生产对象、发布、GC 或删除；旧 M0/M1/M2 读取保持兼容。丢弃缓存后重新校验同一固定版本；对象消失或校验失败不切 latest。失败保存脱敏报告和故障 trace，Lab 的测试 PUT 与容器资源独立清理，不把代码回退当作撤销外部副作用。
+
+## CI fixture错误诊断补充（单元通过，完整门禁待验）
+
+旧PR12两版CI在dot fixture PUT捕获ClientError后未满足精确SignatureDoesNotMatch/403要求，裸断言丢失了实际code/status；CI具体错误仍未知。本机同固定index的linux/amd64窄诊断仍得到该精确403，没有复现CI失败，也不能据此断言架构或SDK根因。已完成本地读取证据与旧PR失败都保留。
+
+本轮仅调整验收fixture：四个特殊key和原负载/门限不变；只有dot的精确SignatureDoesNotMatch/403可进入原negative-only模块拒绝路径。其它ClientError继续失败，但通过既有脱敏FixturePutFailure写下受限case、stage、后端code和HTTP status；任何dot PUT意外成功仍失败。不会记录原始异常、URL、SDK响应/Message/headers/operation_name、签名或凭据，也不扩大固定对象读取能力。新增7项单元已在本树新venv实际通过，真实CI诊断与完整门禁待运行；修复诊断丢失不等于CI原因或失败已解决。
+
+
+本树首次定向单元窗口（2026-10-21）：独立新venv按三锁安装并pip check通过；`.venv/bin/python -m unittest -v tests.unit.test_fixed_object_fixture_put` 实际7项全部通过（unittest3.658s，外部3.810795s）。结果位于 `artifacts/p03-ci-fixture-diagnostics/unit-first-20261021T095157Z-790e530e/result.json` SHA `1c4d2676f5c6cb8d15ae5fb399439b3bb1c2864b9d6cc890cb4fc9d6e4a9024a`，window-result SHA `61911659d9ef5c05202725572b457654845ef1ead15491ed6429b1f6ee84d286`。39源码/5dirty/receipt/index前后未变，随后仅更新本三结果文档。单元使用真实ClientError类和mocked服务/driver环境，未运行实际S3/SDK网络、Rust或完整门禁；target仍不存在。原4d完整normalhook/post、私有raw保全、PR与精确main/双CI待验，PR12实际后端code/status与根因仍未知。

@@ -150,3 +150,16 @@ PR11私有Compiler提取已合入精确1e4f6a6c26eb28982f4b61cc75aa05e290211809�
 本片现恢复至/Users/chad/dev/guradb-p03-fixed-objects-main1，branch codex/p03-fixed-objects-main1；clean原4d先task-start55eb29fb62c645c48dc205760a089a2c、checkpoint checkpoints/20261021T070858Z-before-p03-fixed-objects-main1-6e4b4e37，再cleanFF1e4，原base仍完整4d。P05五上游路径与P03二十八路径无交集，28bytes/mode逐项等7ba8备份，index为空；恢复记录af21c21a及原argv/时序留本树artifacts/p03-main1-source-recovery/。旧aa7恢复树、653a原树dirty/raw/首次FAIL/成功INITIAL/profile全部保留；aa7尚active，只有全部承接复核后才abandon，不标完成。
 
 root核对新receipt/28实物/5上游字节后，只追加本状态和进度说明，生产/测试/门禁接线保持原28冻结语义。新matchingvenv/full plan、正常hook、提交与原4d cleanHEAD freshpost、task-finish/显式raw归档/双PRCI/ZIP排除检查/主线验收仍待执行。正常hook将作为当前新checkout首次完整检查，不再另跑同输入INITIAL；旧9suite报告只保留其原HEAD/checkout含义，不挪给新树。所有产品/组件预算、strict100%、原21排除和900工程watchdog不改，实际plan选取及ready预算按当前policy重核。
+
+## PR12 CI fixture诊断后续：新恢复任务与先行合同
+
+在原checkpoint `checkpoints/20261021T070858Z-before-p03-fixed-objects-main1-6e4b4e37` recover到全新 `/Users/chad/dev/guradb-p03-ci-fixture-diagnostics`、分支 `codex/p03-ci-fixture-diagnostics`；clean原4d上先task-start，再cleanFF到b3dd。新task `616ed8ca962d427dbd1f0d4d68425c8f` 原base仍 `4d6baca888421d90f146679ef71b0e555fe60881`，checkpoint `checkpoints/20261021T093805Z-before-p03-ci-fixture-diagnostics-a1ee9f64`；旧55eb任务completed/旧树clean不动，不abandon或覆盖。新任务完整承接原P03与原base全部义务，不缩为五文件增量门禁。源码恢复序列SHA `85b0f84b62fc9296d671e933871dd78b8ea442d1d2f47466cabdb718ee2770e7`。
+
+当前已知：两版PR12 CI均在验收functional函数的特殊PUT分类裸assert处失败，已有安全异常先构造但未传播，外层只写AssertionError因而无actualcode/status。准确位置为 `tests/storage_support/acceptance.py` 原153行，不是生产读取已经证实失败。三SDK锁版本一致，不继续无证据版本假说。经root独占授权的同bb05固定index/linux-amd64子manifest窄诊断，控制PUT成功、dot仍SignatureDoesNotMatch/403，source28不变且资源零剩余（OLDP06 `artifacts/p03-amd64-dot-diagnostic-20261021T0932Z/window-result.json` SHA `ec65cc26a7a086ab02d919d12f9fffa6463e3dd6f309e2474e4c9570b7bb8fbb`，实际SDKreport `faac95230bd51c8bdcb86af97df68d74c929348ffe164c09f4e65f3d8d90585f`）。它未复现完整Linux CI，不证明架构或SDK是根因。
+
+先更新本节/用户leaf/场景表，再只改 `tests/storage_support/acceptance.py`：可抽fixture-only唯一特殊PUT helper，把原四case成功/错误分类集中；只有dot SignatureDoesNotMatch/403可返回negative分类，其余ClientError `raise FixturePutFailure from None`，让原外层driver写既有受限诊断。dot意外成功、非dot失败、缺固定版本仍失败。原negative-only描述符/unsupported_capability/0GET/output分支原义保留；没有第二套生产签名或请求语义。只新增 `tests/unit/test_fixed_object_fixture_put.py`，用真实botocore ClientError经过helper再穿driver失败artifact，覆盖400/404/非预期403/恶意SDK字段、三个合法key错误拒绝及dot意外成功/精确403负例；不改原单位用例。
+
+作者只有上述helper、新unit和三leaf写域。shared导航/CI/harness/锁/coverage与全部生产P03模块保持b3dd；该先行SOURCE阶段尚无新venv/target或运行。源码完成后保存完整原base路径清单/模式/SHA与patch，再独立复核并另排运行窗口。所有旧FAIL/PASS和PR12失败状态保留，新补丁只修复诊断丢失，实际CI错误与根因仍未知；不能因本机403把后续CI或I1标通过。
+
+
+本树首次定向单元窗口（2026-10-21）：独立新venv按三锁安装并pip check通过；`.venv/bin/python -m unittest -v tests.unit.test_fixed_object_fixture_put` 实际7项全部通过（unittest3.658s，外部3.810795s）。结果位于 `artifacts/p03-ci-fixture-diagnostics/unit-first-20261021T095157Z-790e530e/result.json` SHA `1c4d2676f5c6cb8d15ae5fb399439b3bb1c2864b9d6cc890cb4fc9d6e4a9024a`，window-result SHA `61911659d9ef5c05202725572b457654845ef1ead15491ed6429b1f6ee84d286`。39源码/5dirty/receipt/index前后未变，随后仅更新本三结果文档。单元使用真实ClientError类和mocked服务/driver环境，未运行实际S3/SDK网络、Rust或完整门禁；target仍不存在。原4d完整normalhook/post、私有raw保全、PR与精确main/双CI待验，PR12实际后端code/status与根因仍未知。

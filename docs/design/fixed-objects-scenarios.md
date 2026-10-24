@@ -20,3 +20,17 @@
 所有输入为分发合成字节与本机Lab资源，许可/生产凭据不入库；大型对象按固定规则生成并冻结manifest摘要。报告绑定当前commit/checkout、依赖、image/config/seed与输入摘要，未跑项保持missing；synthetic与本机结果不作产品baseline。
 
 兼容/迁移：新增模块口，不改变旧M0/M1/M2；无生产数据迁移。取消/失败清理同一owned连接，缓存可丢弃，重新读仍固定原版本。真实 PG目录、P04/P10接线、媒体代理、GC/pin执行、TLS/真实云/多机仍缺证据。完成前逐项补实际报告、成功/负例与独立review，不只链接测试文件。
+
+## PR12后续：特殊PUT唯一分类与失败落盘（单元已测）
+
+| 场景 | 正常/负例及独立断言 | 当前证据 |
+| --- | --- | --- |
+| P03-FIXTURE-CLASSIFY | space、unicode-percent-plus、repeated-separator成功返回固定版本；各自任何ClientError均不可接受，即便是SignatureDoesNotMatch/403；dot仅该精确元组返回负例分类，不返回后端版本 | 新7unit实际通过 |
+| P03-FIXTURE-DIAGNOSTIC | 真实ClientError先经过同一fixture-only helper再进入外层driver失败落盘；dot400/404/非预期403均exit1，安全code/status实际存在 | 新7unit实际通过；旧CI实际元组仍未知 |
+| P03-FIXTURE-REDACT | 恶意Message/Resource/headers/operation_name/超长或URL式code/bool status不能进入artifact/stdout/stderr；只保留既有allowlist形状 | 新7unit实际通过 |
+| P03-FIXTURE-DOT-SUCCESS | dot PUT意外成功仍失败；合法403仍是negative-only而非支持GET，原0 GET/0output分支保持 | 历史403与amd64窄诊断保留；新7unit通过，真实backend/CI待验 |
+
+本轮不删除四special-key、不接受任意ClientError、不改原组件预算、deadline/取消门限或生产模块。既有PR12失败保留；安全诊断修复尚无新CI actualcode/status，不声称根因已解决。
+
+
+本树首次定向单元窗口（2026-10-21）：独立新venv按三锁安装并pip check通过；`.venv/bin/python -m unittest -v tests.unit.test_fixed_object_fixture_put` 实际7项全部通过（unittest3.658s，外部3.810795s）。结果位于 `artifacts/p03-ci-fixture-diagnostics/unit-first-20261021T095157Z-790e530e/result.json` SHA `1c4d2676f5c6cb8d15ae5fb399439b3bb1c2864b9d6cc890cb4fc9d6e4a9024a`，window-result SHA `61911659d9ef5c05202725572b457654845ef1ead15491ed6429b1f6ee84d286`。39源码/5dirty/receipt/index前后未变，随后仅更新本三结果文档。单元使用真实ClientError类和mocked服务/driver环境，未运行实际S3/SDK网络、Rust或完整门禁；target仍不存在。原4d完整normalhook/post、私有raw保全、PR与精确main/双CI待验，PR12实际后端code/status与根因仍未知。
