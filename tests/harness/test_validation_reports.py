@@ -210,6 +210,78 @@ reason = "real_driver_missing"
             with self.subTest(mutate=mutate), self.assertRaises(HarnessError):
                 validate_report(self.root, path, self.config)
 
+    def test_failed_prefix_and_blocked_v2_cost_cannot_finish_or_checkpoint(self):
+        # New tool commands have <=2s limits; these are not production budgets.
+        for suite in self.config[0]["suites"].values():
+            suite["timeout_seconds"] = 2
+        marker = "from pathlib import Path; Path('artifacts/forbidden').write_text('bad')"
+        first = self.config[0]["suites"]["repository"]
+        first["commands"] = [["{python}", "-c", "print('completed prefix')"],
+                             ["{python}", "-c", "print('original failure'); raise SystemExit(7)"],
+                             ["{python}", "-c", marker]]
+        report, path = check(self.root, "change", "auto", self.config, "auto")
+        self.assertFalse(report["passed"])
+        self.assertFalse((self.root/"artifacts/forbidden").exists())
+        self.assertEqual(report["results"][0]["commands"][0]["status"], "passed")
+        self.assertEqual(report["results"][0]["commands"][1]["returncode"], 7)
+        self.assertEqual(report["results"][0]["not_run"][0]["command_index"], 2)
+        self.assertTrue(all(row["status"] == "blocked" for row in report["results"][1:]))
+        self.assertEqual(report["validation_cost"]["fresh_commands"], 2)
+        self.assertEqual(report["validation_cost"]["maximum_command_seconds"],
+                         report["validation"]["profile"]["maximum_command_seconds"])
+        self.assertEqual(len(list(path.parent.glob("*.log"))), 2)
+        for command in report["results"][0]["commands"]:
+            self.assertEqual(hashlib.sha256((self.root/command["log"]).read_bytes()).hexdigest(), command["log_sha256"])
+        with self.assertRaises(HarnessError):
+            validate_report(self.root, path, self.config)
+        with self.assertRaises(HarnessError):
+            finish_task(self.root, path, "must reject failed dispatch evidence", self.config)
+        from harnesslib.version_control import checkpoint
+        with self.assertRaises(HarnessError):
+            checkpoint(self.root, "must-not-complete", self.config[0], path, self.config)
+        for delete_blocked in (False, True):
+            forged = copy.deepcopy(report)
+            forged["passed"] = True
+            if delete_blocked:
+                forged["results"] = forged["results"][:1]
+            else:
+                for row in forged["results"]:
+                    row["status"] = "passed"
+            path.write_text(json.dumps(forged))
+            with self.assertRaises(HarnessError):
+                validate_report(self.root, path, self.config)
+
+    def test_v2_release_level_missing_kernel_blocks_even_with_change_scope(self):
+        # A tiny real empty-owner registry covers the level=release branch with
+        # real profile binding; it does not claim a database implementation.
+        self.config[1]["modules"] = {}
+        self.write("harness/validation.toml", '''schema_version = 1
+engineering_prefixes = []
+engineering_paths = []
+system_prefixes = []
+system_paths = []
+[modules]
+[components]
+[pairs]
+''')
+        # Remove only this temporary fixture's production files, never repo sources.
+        for base in (self.root/"modules", self.root/"clients", self.root/"crates"):
+            if base.exists():
+                shutil.rmtree(base)
+        self.git("add", "-A")
+        self.config[0]["release_suites"] = ["repository"]
+        self.config[0]["suites"]["repository"] = {"state": "ready", "timeout_seconds": 2,
+            "commands": [["{python}", "-c", "from pathlib import Path; Path('artifacts/forbidden').touch()"]]}
+        report, path = check(self.root, "change", "auto", self.config, "release")
+        self.assertFalse(report["passed"])
+        self.assertEqual(report["results"][0]["suite"], "runtime-present")
+        self.assertEqual(report["results"][0]["status"], "missing")
+        self.assertEqual(report["results"][1]["status"], "blocked")
+        self.assertEqual(report["results"][1]["blocked_by"], {"suite": "runtime-present", "status": "missing"})
+        self.assertEqual(report["validation_cost"]["fresh_commands"], 0)
+        self.assertFalse((self.root/"artifacts/forbidden").exists())
+        self.assertEqual(list(path.parent.glob("*.log")), [])
+
     def test_serial_wall_rejects_impossible_cost_but_allows_rounding_tolerance(self):
         report, path = self.report()
         commands = [command for result in report["results"] for command in result["commands"]]

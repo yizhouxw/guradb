@@ -1,13 +1,20 @@
 import copy
+import hashlib
+import json
+import os
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 from harnesslib.evidence import compare_performance, read_json, sha256, verify_stability
 from harnesslib.policy import HarnessError, load
+from harnesslib.check_evidence import validate_report
+from harnesslib.runner import check
 
 
 def report_fixture(kind="performance"):
@@ -21,6 +28,54 @@ def report_fixture(kind="performance"):
 
 
 class EvidenceTests(unittest.TestCase):
+    def test_v1_blocked_obligations_cannot_be_removed_or_invented_as_pass(self):
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.dict(os.environ, {"PATH": os.environ["PATH"]}, clear=True):
+            root = Path(temporary).resolve()
+            for args in (["init", "-b", "main"], ["config", "user.name", "Evidence fixture"],
+                         ["config", "user.email", "evidence@example.invalid"]):
+                subprocess.run(["git", *args], cwd=root, capture_output=True, check=True, timeout=2)
+            (root/".gitignore").write_text("artifacts/\n")
+            (root/"README.md").write_text("Temporary evidence protocol only\n")
+            for args in (["add", "."], ["commit", "-m", "fixture baseline"]):
+                subprocess.run(["git", *args], cwd=root, capture_output=True, check=True, timeout=2)
+            configuration = copy.deepcopy(load(ROOT))
+            policy = configuration[0]
+            policy["bootstrap_suites"] = ["a-fail", "z-blocked"]
+            policy["suites"]["a-fail"] = {"state": "ready", "timeout_seconds": 2,
+                "commands": [["{python}", "-c", "print('original failure', flush=True); raise SystemExit(7)"]]}
+            policy["suites"]["z-blocked"] = {"state": "ready", "timeout_seconds": 2,
+                "commands": [["{python}", "-c", "from pathlib import Path; Path('artifacts/forbidden').touch()"]]}
+            report, path = check(root, "change", None, configuration)
+            self.assertEqual(report["schema_version"], 1)
+            self.assertFalse(report["passed"])
+            self.assertFalse((root/"artifacts/forbidden").exists())
+            failed, blocked = report["results"]
+            original = failed["commands"][0]
+            log = root/original["log"]
+            self.assertIn("original failure", log.read_text())
+            self.assertEqual(hashlib.sha256(log.read_bytes()).hexdigest(), original["log_sha256"])
+            self.assertEqual(blocked["status"], "blocked")
+            self.assertNotIn("commands", blocked)
+            for attack in ("passed", "drop-blocked", "invent-blocked-pass"):
+                value = copy.deepcopy(report)
+                value["passed"] = True
+                if attack == "drop-blocked":
+                    value["results"].pop()
+                if attack == "invent-blocked-pass":
+                    # Even forging prefix status cannot supply the unexecuted
+                    # command's required real log/identity; no fake log is written.
+                    value["results"][0]["status"] = "passed"
+                    value["results"][0]["commands"][0].update(status="passed", returncode=0)
+                    value["results"][1].update(status="passed", commands=[{
+                        "argv": blocked["not_run"][0]["argv"], "status": "passed", "returncode": 0,
+                        "log": str(path.parent/"never-executed.log"), "log_sha256": "0"*64}])
+                path.write_text(json.dumps(value))
+                with self.subTest(attack=attack), self.assertRaises(HarnessError):
+                    validate_report(root, path, configuration)
+            path.write_text(json.dumps(report))
+            self.assertEqual(list(path.parent.glob("*.log")), [log])
+
     def setUp(self):
         *_, self.workloads, self.faults = load(ROOT)
         self.baseline = dict(report_fixture(), workload_id="retrieval.hybrid",
