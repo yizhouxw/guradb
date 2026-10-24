@@ -75,12 +75,49 @@ def evidence_inputs():
             for path in sorted(paths)}
 
 
-def image_identity(evidence, image):
-    value = subprocess.check_output(['docker', 'image', 'inspect', '--format', '{{.Id}}', image],
-                                    cwd=ROOT, text=True).strip()
+def checked_image_id(raw):
+    value = raw.removesuffix(b'\n').decode('ascii')
     if len(value) != 71 or not value.startswith('sha256:') or any(c not in '0123456789abcdef' for c in value[7:]):
         raise ValueError('Docker image identity is not a SHA-256 ID')
-    evidence.record('tool_identity', image_tag=image, image_id=value, observation='after_image_build')
+    return value
+
+
+def build_image(directory, evidence):
+    path = directory/'coverage-image.id'
+    if path.exists() or path.is_symlink():
+        raise FileExistsError('preserve the existing coverage image identity')
+    argv = ['docker', 'build', '-q', '--iidfile', str(path), '-t', 'guradb-coverage:1.90.0',
+            '-f', 'tools/test-coverage/Dockerfile', '.']
+    if evidence is not None:
+        evidence.record('tool_invocation', phase='docker_image_build', phase_id=evidence.sequence,
+                        argv=argv, iidfile=str(path))
+    subprocess.run(argv, cwd=ROOT, check=True)
+    if path.is_symlink() or not path.is_file():
+        raise ValueError('build did not produce a regular coverage image identity file')
+    with path.open('rb') as stream:
+        return checked_image_id(stream.read(73))
+
+
+def image_identity(evidence, image):
+    argv = ['docker', 'image', 'inspect', '--format', '{{.Id}}', image]
+    if evidence is not None:
+        evidence.record('tool_invocation', phase='docker_image_identity', phase_id=evidence.sequence,
+                        argv=argv, image_id=image)
+    value = checked_image_id(subprocess.check_output(argv, cwd=ROOT))
+    if value != image:
+        raise ValueError('inspected image differs from the captured build identity')
+    if evidence is not None:
+        evidence.record('tool_identity', image_id=value, image_reference=image, observation='after_image_build')
+    return value
+
+
+def run_coverage_tool(evidence, phase, argv, image):
+    def execute():
+        if evidence is not None:
+            evidence.record('tool_invocation', phase=phase, phase_id=evidence.sequence,
+                            argv=argv, image_id=image)
+        return subprocess.run(argv, cwd=ROOT, check=True)
+    return measured(evidence, phase, execute)
 
 
 def record_identity(evidence, observation, scope=None):
@@ -135,23 +172,20 @@ def python_coverage(directory, scope=None):
 
 
 def rust_coverage(directory, evidence=None, scope=None):
-    image = 'guradb-coverage:1.90.0'
-    measured(evidence, 'docker_image_build', lambda: subprocess.run(
-        ['docker', 'build', '-q', '-t', image, '-f', 'tools/test-coverage/Dockerfile', '.'], cwd=ROOT, check=True))
-    if evidence is not None:
-        evidence.run('docker_image_identity', lambda: image_identity(evidence, image))
+    captured = measured(evidence, 'docker_image_build', lambda: build_image(directory, evidence))
+    image = measured(evidence, 'docker_image_identity', lambda: image_identity(evidence, captured))
     output = directory/'rust.json'
-    measured(evidence, 'rust_collect_test_json', lambda: subprocess.run(
+    run_coverage_tool(evidence, 'rust_collect_test_json',
                     ['docker', 'run', '--rm', '-v', f'{ROOT}:/workspace', '-w', '/workspace',
                     '-v', 'guradb-cargo-registry:/usr/local/cargo/registry', image,
                     'cargo', 'llvm-cov', *package_args(scope), '--locked', '--ignore-filename-regex', ignore_regex(ROOT, scope), '--json', '--output-path',
-                    '/workspace/'+output.relative_to(ROOT).as_posix()], cwd=ROOT, check=True))
+                    '/workspace/'+output.relative_to(ROOT).as_posix()], image)
     lcov = directory/'rust.lcov'
-    measured(evidence, 'rust_lcov_export', lambda: subprocess.run(
+    run_coverage_tool(evidence, 'rust_lcov_export',
                     ['docker', 'run', '--rm', '-v', f'{ROOT}:/workspace', '-w', '/workspace',
                     '-v', 'guradb-cargo-registry:/usr/local/cargo/registry', image,
                     'cargo', 'llvm-cov', 'report', *(package_args(scope) if scope else []), '--locked', '--ignore-filename-regex', ignore_regex(ROOT, scope),
-                    '--lcov', '--output-path', '/workspace/'+lcov.relative_to(ROOT).as_posix()], cwd=ROOT, check=True))
+                    '--lcov', '--output-path', '/workspace/'+lcov.relative_to(ROOT).as_posix()], image)
     return measured(evidence, 'rust_summary', lambda: rust_summary(directory, output, lcov, scope))
 
 

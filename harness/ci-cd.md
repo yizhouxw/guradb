@@ -73,3 +73,11 @@ CD仍需明确不可变构建物、版本/摘要、部署目标、身份与授�
 保留auto/module/pair/system/release选择、完整生产分母、选择器/配置指纹、真实argv/timeout、前后源码与证据绑定。workflow保留main-only push、无过滤PR、手动及定时release、双Python矩阵、固定Actions SHA和既有私配排除；配置不表示启用或运行，未来上传范围/脱敏仍需验收。
 
 历史36命令timeout合同为19620+600=20220秒；当前policy新增P06原900/300/300秒三driver后，10个ready suite共39命令，串行timeout合计21120秒，另600秒上传余量，共21720秒=362分钟，尚未计setup。这是容量合同而非实测耗时；setup实际成本未知。保留YAML普通340/release360分钟均不满足此合同，不能仅enable、调到360或缩命令/预算恢复。两个CI容量test入口在暂停时如实SKIP，不得称PASS。本地原39命令、timeout和release missing保持；现行覆盖阈值见上节，历史strict100%报告不改写。容量及证据闭包由台账CI-3后续有限任务解决，不在本片新增分片工具。
+
+## CI-2首片：coverage构建身份绑定（Refs #60）
+
+本片目标待验证：每个新coverage run独立保存`coverage-image.id`，由本次`docker build --iidfile`写出；严格校验后按捕获的不可变ID inspect，再以同一ID执行JSON collect与LCOV export，包含无PhaseEvidence的直接调用。旧run/预存文件不覆盖；缺失/坏/多行ID、inspect失败或错配、任一命令失败均拒绝后续，不能fallback到可变tag。phases保存真实argv及其对应ID，不将仅记录tag的日志当执行身份证明。
+
+A函数fixture、B适用engineering门禁、C独立真实daemon竞争/取消观测和D外层原900秒完整coverage均为合入前必要证据，结果见任务Issue/PR。本段先行描述工程合同，不预填PASS。C仅两微fixture/测试专用tag，10秒握手、每条30秒、整轮180秒含最多30秒owned-CID收尾；D必须经现有runner读取policy900秒约束，不以裸CLI冒限时。unknown CID/退出/残留保原件并停后续重任务交PM，不把宿主进程组停止当daemon回收。
+
+首片不改普通cargo/M0消费者、target/计数目录、registry缓存、跨树锁或daemon监督；不开放并行重编译/coverage。完整源、未导入文件、JSON/LCOV分母、原参数/预算、Python80%/Rust100%和原21排除保持，失败/raw保留；CI仍暂停。本片不认证数据库system/release或其它CI-2能力。

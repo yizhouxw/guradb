@@ -80,10 +80,10 @@ class CoverageGateTests(unittest.TestCase):
             for missing, passed in [(1, False), (0, True)]:
                 summary = {'metric': 'lcov-unique-source-lines', 'totals': {'missing_lines': missing, 'eligible_lines': 100000000,
                                                                        'eligible_covered': 100000000-missing}}
-                with patch.object(gate, 'ROOT', root), patch.object(gate, 'production_sources', return_value=catalog), patch.object(gate.subprocess, 'run'), patch.object(gate, 'read_lcov', return_value={name: {1: 0}}), patch.object(gate, 'summarize', return_value=summary), patch('builtins.print'):
+                with patch.object(gate, 'ROOT', root), patch.object(gate, 'production_sources', return_value=catalog), patch.object(gate.subprocess, 'run'), patch.object(gate, 'build_image', return_value='sha256:'+'a'*64), patch.object(gate, 'image_identity', return_value='sha256:'+'a'*64), patch.object(gate, 'read_lcov', return_value={name: {1: 0}}), patch.object(gate, 'summarize', return_value=summary), patch('builtins.print'):
                     self.assertEqual(gate.rust_coverage(output), passed)
             (output/'rust.json').write_text(json.dumps({'data': [{'files': []}]}))
-            with patch.object(gate, 'ROOT', root), patch.object(gate, 'production_sources', return_value=catalog), patch.object(gate.subprocess, 'run'), patch.object(gate, 'read_lcov', return_value={name: {1: 1}}):
+            with patch.object(gate, 'ROOT', root), patch.object(gate, 'production_sources', return_value=catalog), patch.object(gate.subprocess, 'run'), patch.object(gate, 'build_image', return_value='sha256:'+'a'*64), patch.object(gate, 'image_identity', return_value='sha256:'+'a'*64), patch.object(gate, 'read_lcov', return_value={name: {1: 1}}):
                 with self.assertRaisesRegex(ValueError, 'inventory mismatch'):
                     gate.rust_coverage(output)
 
@@ -94,3 +94,48 @@ class CoverageGateTests(unittest.TestCase):
                 self.assertIn('unit-coverage', plan(ROOT, [path], *config[:3])['required_suites'])
         self.assertIn('unit-coverage', config[0]['release_suites'])
         self.assertNotIn('unit-coverage', plan(ROOT, ['README.md'], *config[:3])['required_suites'])
+
+    def test_build_identity_requires_one_strict_id_from_this_build(self):
+        valid = b'sha256:' + b'a'*64
+        for raw in (None, b'', valid+b'\n\n', b' '+valid, valid+b'\r\n',
+                    valid+b'\nother', b'sha256:'+b'A'*64, b'\xff', b'a'*200):
+            with self.subTest(raw=raw), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+
+                def build(argv, **kwargs):
+                    path = Path(argv[argv.index('--iidfile')+1])
+                    if raw is not None:
+                        path.write_bytes(raw)
+
+                with patch.object(gate.subprocess, 'run', side_effect=build):
+                    with self.assertRaises((ValueError, UnicodeError)):
+                        gate.build_image(directory, None)
+        for raw in (valid, valid+b'\n'):
+            self.assertEqual(gate.checked_image_id(raw), valid.decode())
+
+    def test_build_preserves_preexisting_file_or_symlink(self):
+        for link in (False, True):
+            with self.subTest(link=link), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                path = directory/'coverage-image.id'
+                target = directory/'original'
+                target.write_bytes(b'old evidence')
+                if link:
+                    path.symlink_to(target)
+                else:
+                    path.write_bytes(b'old evidence')
+                with patch.object(gate.subprocess, 'run') as build:
+                    with self.assertRaises(FileExistsError):
+                        gate.build_image(directory, None)
+                    build.assert_not_called()
+                self.assertEqual(path.read_bytes(), b'old evidence')
+                self.assertEqual(target.read_bytes(), b'old evidence')
+
+    def test_inspect_rejects_invalid_or_different_identity_without_fallback(self):
+        image = 'sha256:'+'a'*64
+        for output in (b'sha256:'+b'b'*64, image.encode()+b'\n\n', b'not-an-id'):
+            with self.subTest(output=output), patch.object(gate.subprocess, 'check_output', return_value=output) as inspect:
+                with self.assertRaises(ValueError):
+                    gate.image_identity(None, image)
+                self.assertEqual(inspect.call_args.args[0][-1], image)
+                self.assertEqual(inspect.call_count, 1)

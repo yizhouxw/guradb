@@ -115,13 +115,16 @@ PhaseEvidence(Path(sys.argv[2])).run('blocked_tool', blocked)
             def execute(command, **kwargs):
                 commands.append(command)
                 if command[:2] == ['docker', 'build']:
+                    Path(command[command.index('--iidfile')+1]).write_bytes(b'sha256:'+b'a'*64+b'\n')
                     return subprocess.CompletedProcess(command, 0)
                 self.assertEqual(records(directory)[-1]['phase'], 'rust_collect_test_json')
-                self.assertEqual(records(directory)[-1]['event'], 'started')
+                self.assertEqual(records(directory)[-2]['event'], 'started')
+                self.assertEqual(records(directory)[-1]['event'], 'tool_invocation')
+                self.assertEqual(records(directory)[-1]['argv'], command)
                 raise subprocess.CalledProcessError(23, command)
 
             with patch.object(gate, 'ROOT', root), patch.object(gate.subprocess, 'run', side_effect=execute), \
-                    patch.object(gate.subprocess, 'check_output', return_value='sha256:'+'a'*64), \
+                    patch.object(gate.subprocess, 'check_output', return_value=b'sha256:'+b'a'*64), \
                     patch.object(gate, 'rust_summary') as summary:
                 with self.assertRaises(subprocess.CalledProcessError):
                     gate.rust_coverage(directory, evidence)
@@ -135,6 +138,95 @@ PhaseEvidence(Path(sys.argv[2])).run('blocked_tool', blocked)
             tool = next(row for row in persisted if row['event'] == 'tool_identity')
             self.assertEqual(tool['image_id'], 'sha256:'+'a'*64)
             self.assertEqual(tool['observation'], 'after_image_build')
+
+    def test_retag_cannot_replace_captured_collect_or_export_identity(self):
+        first, second = 'sha256:'+'a'*64, 'sha256:'+'b'*64
+        for with_evidence in (False, True):
+            with self.subTest(evidence=with_evidence), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                directory = root/'run'
+                directory.mkdir()
+                evidence = gate.PhaseEvidence(directory) if with_evidence else None
+                tag = {'current': first}
+                calls = []
+
+                def execute(argv, **kwargs):
+                    calls.append(list(argv))
+                    if argv[:2] == ['docker', 'build']:
+                        Path(argv[argv.index('--iidfile')+1]).write_text(first+'\n')
+                        tag['current'] = second  # Another build won the shared tag.
+                    else:
+                        self.assertEqual(argv[argv.index('cargo')-1], first)
+                        self.assertEqual(tag['current'], second)
+                        self.assertIn('--locked', argv)
+                    return subprocess.CompletedProcess(argv, 0)
+
+                def inspect(argv, **kwargs):
+                    self.assertEqual(argv[-1], first)
+                    self.assertEqual(tag['current'], second)
+                    return first.encode()+b'\n'
+
+                with patch.object(gate, 'ROOT', root), patch.object(gate.subprocess, 'run', side_effect=execute), \
+                        patch.object(gate.subprocess, 'check_output', side_effect=inspect), \
+                        patch.object(gate, 'rust_summary', return_value=True) as summary:
+                    self.assertTrue(gate.rust_coverage(directory, evidence))
+                    summary.assert_called_once()
+                self.assertEqual(len(calls), 3)
+                self.assertIn('--workspace', calls[1])
+                self.assertIn('--json', calls[1])
+                self.assertIn('--lcov', calls[2])
+                self.assertEqual(calls[1][calls[1].index('--ignore-filename-regex')+1], '(^|/)tests/')
+                if with_evidence:
+                    invokes = [row for row in records(directory) if row['event'] == 'tool_invocation']
+                    self.assertEqual([row['phase'] for row in invokes],
+                                     ['docker_image_build', 'docker_image_identity', 'rust_collect_test_json', 'rust_lcov_export'])
+                    self.assertEqual([row['image_id'] for row in invokes[1:]], [first]*3)
+                    starts = {row['phase']: row['phase_id'] for row in records(directory) if row['event'] == 'started'}
+                    self.assertTrue(all(row['phase_id'] == starts[row['phase']] for row in invokes))
+                    self.assertEqual(invokes[2]['argv'], calls[1])
+                    self.assertEqual(invokes[3]['argv'], calls[2])
+
+    def test_each_failed_tool_stops_later_phases_and_preserves_other_run(self):
+        for failure in ('build', 'inspect', 'collect', 'export', 'interrupt'):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                directory = root/'run-a'
+                directory.mkdir()
+                other = root/'run-b'
+                other.mkdir()
+                (other/'result.json').write_bytes(b'independent evidence')
+                evidence = gate.PhaseEvidence(directory)
+                invoked = []
+
+                def execute(argv, **kwargs):
+                    stage = 'build' if argv[1] == 'build' else 'export' if '--lcov' in argv else 'collect'
+                    invoked.append(stage)
+                    if failure == stage:
+                        raise subprocess.CalledProcessError(23, argv)
+                    if failure == 'interrupt' and stage == 'collect':
+                        raise KeyboardInterrupt()
+                    if stage == 'build':
+                        Path(argv[argv.index('--iidfile')+1]).write_bytes(b'sha256:'+b'a'*64)
+                    return subprocess.CompletedProcess(argv, 0)
+
+                def inspect(argv, **kwargs):
+                    invoked.append('inspect')
+                    if failure == 'inspect':
+                        raise subprocess.CalledProcessError(23, argv)
+                    return b'sha256:'+b'a'*64
+
+                with patch.object(gate, 'ROOT', root), patch.object(gate.subprocess, 'run', side_effect=execute), \
+                        patch.object(gate.subprocess, 'check_output', side_effect=inspect), \
+                        patch.object(gate, 'rust_summary') as summary:
+                    with self.assertRaises(KeyboardInterrupt if failure == 'interrupt' else subprocess.CalledProcessError):
+                        gate.rust_coverage(directory, evidence)
+                    summary.assert_not_called()
+                expected = ['build', 'inspect', 'collect', 'export']
+                last = 'collect' if failure == 'interrupt' else failure
+                self.assertEqual(invoked, expected[:expected.index(last)+1])
+                self.assertEqual(records(directory)[-1]['event'], 'failed')
+                self.assertEqual((other/'result.json').read_bytes(), b'independent evidence')
+                self.assertFalse((directory/'result.json').exists())
 
     def test_source_identity_contains_exact_input_bytes(self):
         with tempfile.TemporaryDirectory() as temporary:
