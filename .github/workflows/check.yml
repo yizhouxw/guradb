@@ -24,7 +24,7 @@ jobs:
   quality:
     name: quality (Python ${{ matrix.python }})
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ inputs.scope == 'release' && 360 || 275 }}
+    timeout-minutes: ${{ inputs.scope == 'release' && 360 || 300 }}
     strategy:
       fail-fast: false
       matrix:
@@ -54,6 +54,9 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: harness-${{ github.run_id }}-${{ github.run_attempt }}-py${{ matrix.python }}
-          path: artifacts/harness/
+          path: |
+            artifacts/harness/
+            !artifacts/harness/**/fixed-objects-*/lab/auth.json
+            !artifacts/harness/**/fixed-objects-*/lab/s3.json
           if-no-files-found: warn
           retention-days: 14

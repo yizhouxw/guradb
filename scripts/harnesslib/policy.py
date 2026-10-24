@@ -189,6 +189,12 @@ def plan(root: Path, paths: list[str], policy: dict, architecture: dict,
                                             ("tests/faults/", "stability-component", "stability")):
                 if path.startswith(prefix):
                     gates.add(component if path.startswith(prefix + "component/") else full)
+            if path == "scripts/fixed_objects_acceptance.py" or path.startswith("tests/storage_support/"):
+                # Fixture, fault and measurement changes must rerun their actual
+                # component drivers even without a production source change.
+                runtime_changed = True
+                gates.update({"python", "functional", "performance-smoke",
+                              "stability-component", "unit-coverage"})
             if path == "scripts/fixed_catalog_acceptance.py" or path.startswith("tests/catalog_support/"):
                 # A standalone PG evidence driver change must run its actual
                 # module acceptance; unit/compile-only does not prove PG semantics.
