@@ -1,5 +1,7 @@
 # 概要设计实施计划：分批合同、提前纵向验收与模块并行
 
+**调度更新（2026-10-21）：** 日常实施采用[策略 v2](2026-10-21-modular-delivery-v2.md)、[细粒度需求矩阵](../product/requirements-v2.md)和[模块交付合同](../design/module-delivery-contracts.md)。本页保留产品范围、依赖与 I/G 退出条件；旧 P 包不再是必须整包完成才交接的任务单位，旧整库门禁频率由四层验证替代。
+
 日期：2026-10-20，v0.6评审落实。2026-10-21开始按本计划实施，P01 synthetic真值首片已通过PR与主线验收，P00 CF1-A正在最终门禁，尚未冻结或接通新运行时能力；逐包状态、owner与证据见[实施追踪](2026-10-21-delivery-progress.md)。本文替代 [2026-10-19 计划](2026-10-19-product-delivery.md)的执行分解，吸收 [A1–A6](2026-10-18-next-stage.md)义务，不替代[路线图 M0–M4](../roadmap.md)退出条件。
 
 本次按[ADR0020](../decisions/0020-product-review-and-vertical-delivery.md)调整合同/集成顺序；P00–P20仍是责任包，G1–G5及M0–M4仍是最终门槛。I1–I3只标G1内提前真实联测点，不另立产品阶段。

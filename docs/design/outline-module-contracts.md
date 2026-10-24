@@ -1,5 +1,7 @@
 # 概要设计：模块边界与公共合同
 
+**实施合同更新：** [模块交付合同](module-delivery-contracts.md)明确本轮具名 owner、资源/验收、Rust/Python 唯一权威与迁移出口；[策略 v2](../plans/2026-10-21-modular-delivery-v2.md)负责排程。本页继续保留目标 port/架构与长期不变量；执行安排冲突时采用 v2，不将未实现 port 当稳定 API。
+
 日期：2026-10-20。状态：目标设计，公共类型、port、字段和状态名均是设计名，尚非已发布 API。本文细化[概要设计](outline-design.md)，决定见 [ADR 0018](../decisions/0018-outline-design-and-module-contracts.md)，执行见[并行计划](../plans/2026-10-20-parallel-delivery.md)。不修改当前机器依赖图，也不扩大[alpha 白名单](../user/features.md)。
 
 ## 1. 从场景和竞品确定边界

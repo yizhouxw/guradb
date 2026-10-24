@@ -17,7 +17,8 @@ allowed = ["common", "storage"]
 
 [modules.connectors]
 paths = ["modules/connectors/", "crates/guradb-connectors/"]
-allowed = ["common", "storage"]
+# ADR0024: private fixed FD worker consumes the authoritative controlled catalog.
+allowed = ["common", "storage", "catalog"]
 
 [modules.index]
 paths = ["modules/index/", "crates/guradb-index/"]

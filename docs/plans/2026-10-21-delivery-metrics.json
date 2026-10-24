@@ -1,0 +1,1063 @@
+{
+  "schema_version": 1,
+  "snapshot": "2026-10-22T00:39:21.342265+00:00 C1 limited client-control accepted; D1 lib/sealed independently accepted; C3 shared-source review pending; D2 plan only",
+  "main_observed_at_utc": "2026-10-21T23:52:46.564881+00:00",
+  "main_sha": "1e4f6a6c26eb28982f4b61cc75aa05e290211809",
+  "validation_costs": [
+    {
+      "feature": "M-CATALOG",
+      "scope": "normal-hook-and-clean-original-base-post",
+      "head": "86fcaf093deaba98c0495f775ac1d4767bbbf950",
+      "outer_seconds": 1404.3996155420318,
+      "hook_command_seconds": 724.4218112910166,
+      "post_seconds": 673.9457825409481,
+      "reports": [
+        "73e995f9f649a29df1d620680f34c5e97c6de8119e099af8e55f0abec0586a6e",
+        "5b3f0f1f5e90c8a411e4a5dd91890b722b8a41bea0739a9c35bb3a3944e75941"
+      ],
+      "modular_after_seconds": null
+    },
+    {
+      "feature": "V2-GATES",
+      "scope": "bootstrap-only; not module or system",
+      "source_manifest": "dbf112581450230828159a6027368ce967243068e86196c2cb726e60c66caf54",
+      "report": "7ed44decf79d3a4dee26f3d443957e0df4ce39e86f124fd6e9c498ae08dafd73",
+      "outer_seconds": 50.76505187491421,
+      "fresh_commands": 4,
+      "reused_commands": 0,
+      "harness_tests": 132,
+      "contract_tests": 136,
+      "comparable_to_catalog_full_quality": false
+    },
+    {
+      "feature": "V2-GATES-engineering",
+      "scope": "normal-hook-and-clean-original-base-post; not product module pass",
+      "head": "82b2bfeeac6fd1186ce33f644e0d38fc4dd263cc",
+      "hook_command_seconds": 121.9333435,
+      "post_seconds": 114.52095325,
+      "reports": [
+        "5ba89b81f6ed61da060945ee8ba388cc8db43a2e9a37ceb70f45f0849db0d14c",
+        "3bedd684a9b520f2f9efe89b3fdbb3a75524bb27d263b28b08bbb9c09cc08f44"
+      ],
+      "suites_each": 5,
+      "product_quality_claim": false
+    },
+    {
+      "feature": "query-storage-scoped-probe",
+      "scope": "strict coverage failed before three M0 modes",
+      "outer_seconds": 192.389681,
+      "planned_after_coverage_modes": 3,
+      "executed_after_coverage_modes": 0,
+      "python_covered": 976,
+      "python_eligible": 976,
+      "rust_covered": 710,
+      "rust_eligible": 711,
+      "result": "failed",
+      "independent_review": "c53194cf3ec69c3144ce2431fbdaa49395772dd87eb0f68cb2b5215289957323",
+      "modular_after_seconds": null
+    },
+    {
+      "feature": "M-STORAGE-direct-fixture-v2",
+      "scope": "26 targeted units then first functional; not full module",
+      "outer_seconds": 29.130642,
+      "functional_seconds": 23.75540566595737,
+      "units_passed": 26,
+      "functional_exit": 1,
+      "dot_put_attempted": false,
+      "result": "failed; before-dot LIST7 vs8 missing repeated-separator",
+      "product_module_pass": false
+    },
+    {
+      "feature": "M-QUERY-owner-tests",
+      "scope": "first normal-hook full module12source/11commands, then original-base post",
+      "head_dependency": "82b2bfeeac6fd1186ce33f644e0d38fc4dd263cc",
+      "status": "normal hook and clean original-base post passed; task completed; DraftPR17 depends on16",
+      "outer_seconds": null,
+      "reused_commands": 0,
+      "first_complete_attempt_result": "passed",
+      "commit": "ad5c9fe1dcaf887362eef0908715e6fa1e2b96ba",
+      "normal_commit_outer_seconds": 557.1700363,
+      "report": "07df4eaeb76af99230441a9a23b0bcf1a3df0b4ba6843ee486185958cae33cce",
+      "commands_passed": 11,
+      "suites_passed": 9,
+      "rust_raw_lines": 623,
+      "rust_original_owner_excluded_lines": 5,
+      "rust_eligible": 618,
+      "rust_covered": 618,
+      "investment_category": "tests",
+      "new_user_feature_count": 0,
+      "post_seconds": 418.63354325,
+      "post_report": "997a9338660db2830aa78ff4126bd16160962c50a6eb97f6797a99ddf86f04b2",
+      "python_covered": 890,
+      "python_eligible": 890,
+      "independent_actual_review": "540f7fbee18ea016134087e4f5084beeea2fa87ae7919f3bae8a19562920aa81"
+    },
+    {
+      "feature": "P03-read-component",
+      "scope": "60 units in two commands plus original readonly functional/performance/fault; not strict/full task",
+      "pure34_seconds": 4.03905012505129,
+      "remaining26_plus_three_modes_seconds": 50.1314470829675,
+      "functional_cases": 12,
+      "performance_cases": 4,
+      "fault_cases": 12,
+      "source_manifest": "2d1dfa7dcf5aaa403959a1d038aa1cfe9c79bc7b4b854f85785b5c6e12e0d2b5",
+      "independent_actual_review": "0c05f60e654897265bfe039783d570555a93bf4b3fba32fa53f5d8a19a81c1b5",
+      "original_mutating_sdk_diagnostic": "FAIL retained; not rerun",
+      "strict_full_pass": false
+    },
+    {
+      "feature": "P04-real-P03-single-source-pair",
+      "scope": "actual immutable object to narrow Parquet ReadBatch; no realPG/Rust/full multiSource/system",
+      "source_manifest": "51601127d5a82c91dc77fa5a445ada83a31ba8d45cfe63999e8cb8010b7fa9d0",
+      "units": 44,
+      "unit_outer_seconds": 0.7776971249841154,
+      "modes": [
+        {
+          "mode": "functional",
+          "cases": 6,
+          "seconds": 17.743405665969476,
+          "report": "f73a4267d6558e3e38b9e67bc95b9da607de06b6e447d51e311c7442605d4b1b"
+        },
+        {
+          "mode": "performance",
+          "cases": 4,
+          "seconds": 16.660156875033863,
+          "report": "92bcd1a34d97d3daa04962e06fc5e054bcf9d4859729008ae648b164073beae2"
+        },
+        {
+          "mode": "fault",
+          "cases": 23,
+          "seconds": 5.619701916002668,
+          "report": "fa040d78a2136217a1af47add3a97cf4791d14644735957086160045a600d800"
+        }
+      ],
+      "three_modes_seconds": 40.02326445700601,
+      "source28_and_resources_unchanged": true,
+      "safe_file_count": 314,
+      "safe_bytes": 3318854,
+      "safe_index": "7dd16227127e9c1cd6c2c7c3c72592a180d90873a76403e635243faa91aa6049",
+      "root_actual_review": "fdd9a13eab7d5b28879262e142de17e3601c60977572c840ef9aeaf1615613a6",
+      "independent_additional_review": "ef3e107e536abbceefa07e5fd8431b1f99039460490d40cd175efe75db00608b",
+      "strict_full_pass": false
+    },
+    {
+      "feature": "P05-M1-native-lib-first",
+      "scope": "complete real Arrow/DF lib tests with sealed fixture provider; not component performance or strict",
+      "source_manifest": "c32f44b69c605ef8db13cc7385aba94ea0a2153e522dbb5abfbccbafec23b968",
+      "tests_passed": 55,
+      "ignored": 0,
+      "filtered": 0,
+      "compile_seconds": 14.85,
+      "test_seconds": 1.49,
+      "outer_seconds": 16.611806916887872,
+      "index": "20de7e61f490c0a517facddaa3954c39f2bc02bda37d585eb305dce8558acb76",
+      "independent_actual_review": "8e51f46b9ae97f9c8791ae596075ab59271ff755e080e4bcc087563a4adbfcdc",
+      "provider_object_io": 0,
+      "native_hard_memory_proved": false,
+      "new_m1_performance_pass": false
+    },
+    {
+      "feature": "P04-B1-two-source-real-pair",
+      "source_manifest": "0de215b463a69a4fc760dd3b06e8afe7c2dfbd655ac2d4532787b19ffc96209f",
+      "scope": "local component and real P03 pair; not formal strict/full/main",
+      "unit_count": 65,
+      "unit_internal_seconds": 0.706,
+      "unit_outer_seconds": 0.972836791886948,
+      "modes": [
+        {
+          "mode": "functional",
+          "cases": 10,
+          "seconds": 24.03230349998921,
+          "report": "5d6dcc552283f21afd0e8acdbdc6158f54301037dcf6a0f96f8326bfd7418e8a"
+        },
+        {
+          "mode": "performance",
+          "cases": 8,
+          "seconds": 18.913824875024147,
+          "report": "6b8465a7857ea3dd927b61eefe22c16890b9f9d787198041a09f90ab2e67206e"
+        },
+        {
+          "mode": "fault",
+          "cases": 26,
+          "seconds": 5.883838500012644,
+          "report": "fd3e22e843f37cee455727d96d8d36fc0e72721417b518f80fa6d42f376b620c"
+        }
+      ],
+      "outer_seconds": 52.139335290994495,
+      "outer_engineering_result": "FAIL retained; safe-index omitted original fault .bin; default bridge ID delta retained",
+      "safe_index": "353223d5e02977f4083cd4d85073e1724464bf8dff49a61e2f429ad55a58a047",
+      "safe_files": 450,
+      "safe_bytes": 7039919,
+      "manifest_bound_bins": 59,
+      "root_release": "4b5430ea3c5c50176dcae8ec9a38e4273757b7cc9964aa7e73641d744741d00c",
+      "independent_actual_review": "e8a78f02f23e48260c1a12504ce67d7a0997d490eb18a58bda956d8d31d2eacc",
+      "max_page_ms": 38.964,
+      "max_cohort_ms": 58.985,
+      "cancel_ms": 7.0235,
+      "tests_rerun_for_index": false,
+      "strict_full_pass": false
+    },
+    {
+      "feature": "CI-main-push-only-engineering",
+      "head": "23a2e374d779af3881bb17b46698fd08a673cd37",
+      "hook_seconds": 116.937055,
+      "own_base_post_seconds": 40.995685,
+      "full_pr_post_seconds": 41.042237,
+      "suites_each": 5,
+      "harness_tests": 134,
+      "contract_tests": 136,
+      "native_tests": 9,
+      "native_compile_lines_observed": [
+        56,
+        0,
+        0
+      ],
+      "root_cause_proved": false,
+      "independent_actual_review": "6a45a55e786c0f7d93a8f93876b287c6c7e5a24bcd82defac6ba244eb470b98e",
+      "product_quality_claim": false
+    },
+    {
+      "feature": "P04-B2-private-located-real-pair",
+      "source_manifest": "a509e6e28aaa75609651d9fea88f36f5bc7c7413ea0dfef97fca6de832d7d23a",
+      "scope": "FIRST79 plus original three real P03/source drivers with appended located outputs, independently actual accepted; not strict/full/P06/PG/Rust/I1",
+      "unit_count": 79,
+      "original_unit_count": 65,
+      "new_located_units": 14,
+      "unit_internal_seconds": 1.15,
+      "unit_outer_seconds": 1.400002415990457,
+      "unit_release": "a3db0f547bcc668c7fda6eac5742462516514a2a654aac92099e9912ccb26295",
+      "modes": [
+        {
+          "mode": "functional",
+          "original_samples": 10,
+          "located_samples": 4,
+          "seconds": 24.24193333403673,
+          "report": "617d583fef5045fdff901d76689a0c1da2cd696d6b66dfa3a0c8c04535f9f074"
+        },
+        {
+          "mode": "performance",
+          "original_samples": 8,
+          "located_samples": 4,
+          "seconds": 17.182195583940484,
+          "report": "6f77b405613aae8d1c0cade6bb1dad19bc34850fff4d624e8bbe92dcee755bfa"
+        },
+        {
+          "mode": "fault",
+          "original_cases": 26,
+          "located_cases": 2,
+          "cases": 28,
+          "seconds": 5.992989165941253,
+          "report": "f0799724ae84be9f550dec943b110387407cd3e43aa8354a07a1fd05cc076395"
+        }
+      ],
+      "three_modes_seconds": 47.41711808391847,
+      "first_attempt_all_commands_passed": true,
+      "source33_and_receipt_index_unchanged": true,
+      "docker_three_classes_equal_baseline": true,
+      "safe_index": "26cb034c201285b188c2150f99328c1ff2530bef17b76cb71c2660608e293f20",
+      "safe_files": 532,
+      "safe_bytes": 14122054,
+      "manifest_bound_bins": 65,
+      "report_declared_files_verified": 497,
+      "release": "cb0b8b4e845ddc00f9be1284873d3af3456cfa6d4968fccf36c33020f0d71134",
+      "independent_source_reviews": [
+        "dc5e657f844ad99ce2ed34371d8cf3f6890f112586228503eaf69dd46c996137",
+        "316b8dc95b993aa80d1633f1e43b32c0195e0f7d1bf3c35f69674c5065676e95"
+      ],
+      "independent_actual_review": "6f5b29dca8a6bf7d56e4cea2ea73101db6517b1aaf774cc95f11467f867b219e",
+      "strict_full_pass": false,
+      "real_p06_pg_rust_pair_pass": false,
+      "new_user_journeys_passed": 0
+    },
+    {
+      "feature": "P05-probe-launcher-pure4-first",
+      "scope": "pure mocked launcher regression only; no native or performance",
+      "test_count": 4,
+      "internal_seconds": 0.05,
+      "outer_seconds": 0.14871112501714379,
+      "passed": true,
+      "docker_mutations": 0,
+      "native_build_or_probe_executions": 0,
+      "release": "0d1ec4f8a9d285233fc975a7ebc1a9239b816487a01de1a057098e3f2a47ec1f",
+      "new_m1_performance_pass": false,
+      "independent_actual_review_prefix": "53ec1fe0"
+    },
+    {
+      "feature": "P05-probe-new-image-versions-and-format",
+      "scope": "separate new environment observation and one format; not build/probe result",
+      "actual_image": "sha256:c949437410b6c3576bff4a410b4f6294a9e0eeb40cb6e4717c67d34a3a04dd60",
+      "platform": "Linux aarch64",
+      "rustc": "1.90.0",
+      "cargo": "1.90.0",
+      "rustfmt": "1.8.0",
+      "versions_report": "4535a1ebf67f5be7b3f669ea2806fed20b1af16eb74902f0e52904e4ecafe0d7",
+      "format_report": "59f4d339876b56cada6f1e641097945e8210a8dfcb7ebae22d3a0a47b1b3965e",
+      "format_command_passed": true,
+      "formatted_lines": 648,
+      "source_limit_result": "STOP before build; source responsibility split required",
+      "original_budget_or_tests_changed": false,
+      "build_started_at_that_stop": false,
+      "probe_started_at_that_stop": false,
+      "release": "84287414f82b871872e1cb1d324bd5547d9f4edbb1653fbbbdde3c18575bc466",
+      "old_image_quality_reused": false
+    },
+    {
+      "feature": "P05-M1-cooperative-sealed-component-first",
+      "scope": "M1 cooperative sealed-fixture real Arrow/DataFusion component ONLY",
+      "source_manifest": "4ec8eb51c44fe7add1498b7ec1953e32e76fd50d6cfc24bef2b15b0dfffd1564",
+      "source_split_review": "e2e395c3120f2aef0886e83e89ac5e61bcf7374d8896e408ac152855a1e570dc",
+      "source_before_after_equal": true,
+      "build_seconds": 13.891809624969028,
+      "driver_seconds": 22.80074941692874,
+      "native_processes": 7,
+      "request_samples": 12,
+      "performance_samples": 10,
+      "performance_processes": 5,
+      "temperatures_per_process": [
+        "cold",
+        "warm"
+      ],
+      "input_rows": 8192,
+      "parquet_files": 2,
+      "batches_source_calls_strict_decodes_materializations": 32,
+      "result_rows": 1000,
+      "p01_source_rows": {
+        "source-main": 10,
+        "source-mirror": 1
+      },
+      "p01_complete_members": 11,
+      "no_limit": {
+        "error": {
+          "code": "resource_limit",
+          "message": "managed fixture budget exhausted"
+        },
+        "materializations": 32,
+        "rows": 8192,
+        "source_calls": 32,
+        "strict_decodes": 32
+      },
+      "max_performance_total_wall_seconds": 1.661404,
+      "max_performance_process_vm_hwm_bytes": 56528896,
+      "actual_arrow_peak": null,
+      "actual_df_pool_peak": null,
+      "provider_object_io": 0,
+      "provider_io_scope": "sealed fixture only; host Parquet/input/output IO separately reported, not zero wire for real Source",
+      "os_cache": "uncontrolled",
+      "trial_parent_managed_memory_bytes": 268435456,
+      "trial_parent_output_bytes": 33554432,
+      "native_hard_isolation": false,
+      "full_fault_pass": false,
+      "strict_full_pass": false,
+      "system_I1_pass": false,
+      "registered_module_exit_pass": false,
+      "report": "67ee19bfcce5033b944438703513e6f1701a5f97a703ded050fa7b9bc696beb5",
+      "release": "543815025cc0bf12c891acb5b79dca107dfc2b6e0a746072d825093bf7b8635f",
+      "safe_index": "ca68bdeecccc568b1210170503df8f6937b57d3eb96387cf6ee69e724a8d65b1",
+      "binary_sha256": "76c1e51cf2ec5ff72137614d0566c81114d0ae8a6d4fe5b76a97459dc1097417",
+      "docker_resources_equal_baseline": {
+        "containers": true,
+        "networks": true,
+        "volumes": true
+      },
+      "independent_actual_review": "c3dc2e9d97b0a26bbc24d79ad16ea964db8e15eeadc97bdfc6e78b638e1abb72",
+      "missing": [
+        "generic SourceReadPort/PG/P03-P04 bridge",
+        "native hard memory/cancellation isolation",
+        "full fault profile",
+        "strict coverage/registered harness exit",
+        "I1"
+      ],
+      "max_performance_total_wall_with_completion_tail_seconds": 1.662153709,
+      "reviewed_safe_files": 245,
+      "reviewed_safe_bytes": 27964031,
+      "projection_columns": 3,
+      "sort_keys": 2
+    },
+    {
+      "feature": "C1-parent-catalog-control",
+      "scope": "limited client control component; no remote backend stop/strict/full/pair",
+      "source_manifest": "98b7032dce03f53f5f308f4e3607ce27f32a25cad10d42aaa247d863db21cfd6",
+      "evidence_index": "7ca85c56d7ac2889f367621c13cfde954d55d9f6d359fa85d179b708bfe05362",
+      "modes": [
+        {
+          "mode": "control",
+          "outer_seconds": 5.327315249945968,
+          "report": "a387c3799860eb4cf1f5f2ca8b771c1474e26152237fad70a70f1a5d558e82ba"
+        },
+        {
+          "mode": "functional",
+          "outer_seconds": 2.047123125055805,
+          "report": "24dd6ae5c669622f3cbc21c5284814062bdc3f618b8c0e46aee6532e6bd751d2"
+        },
+        {
+          "mode": "performance",
+          "outer_seconds": 30.262957917060703,
+          "report": "9dea744a0e256ffee2651ec550973e199e90267484c9376199051a95ed4cdb98"
+        },
+        {
+          "mode": "fault",
+          "outer_seconds": 8.145847667008638,
+          "report": "73de0b39e779d237ad605531a7389f06a329a9539c345adf7d471b42c82cb67d"
+        }
+      ],
+      "first_control_command_result": "passed",
+      "new_control_cases": 42,
+      "performance_queries": 32,
+      "independent_actual_review": "c8f3c52a729a35f403d5f0771a41f33ed922a81b73238f639ad181559ead394d",
+      "remote_backend_stop_confirmed": false,
+      "full_module_pass": false
+    },
+    {
+      "feature": "D1-query-source-consumer",
+      "scope": "native lib functionality and original sealed shared-execute regression; not port performance or real P04 pair",
+      "source_manifest": "564efef750ee2af697914bfc72ac271134947316f1c2827ff7e82b534b7bd689",
+      "tests_passed": 76,
+      "lib_outer_seconds": 16.1025371249998,
+      "sealed_regression_outer_seconds": 21.849966874928214,
+      "sealed_performance_samples": 10,
+      "first_failure_preserved": true,
+      "full_module_pass": false,
+      "independent_actual_review": "1d333d653131e6bb1f399053e8cf8b47307513d1b4b9f90c687297fe61ef5feb"
+    }
+  ],
+  "first_pass_rate": {
+    "passed_first_complete": null,
+    "complete_attempted": null,
+    "value": null,
+    "reason": "historical functional first-attempt ledger incomplete; new query test slice first full module passed and post complete; native/lib and local pair command cohorts separately reported, not new system/user features",
+    "tracked_new_validation_cohort": [
+      {
+        "id": "M-QUERY-owner-tests",
+        "category": "tests",
+        "complete_attempted": 1,
+        "passed_first_complete": 1,
+        "value": 1.0,
+        "status": "normal hook plus clean original-base post passed; task completed",
+        "new_user_feature_count": 0
+      },
+      {
+        "id": "B1-unit-oracle",
+        "category": "tests",
+        "passed_first_complete": 0,
+        "complete_attempted": 1,
+        "value": 0.0,
+        "not_new_product_feature": true
+      },
+      {
+        "id": "B1-three-component-commands",
+        "category": "component/pair command cohort",
+        "passed_first_complete": 3,
+        "complete_attempted": 3,
+        "value": 1.0,
+        "not_formal_module_or_main": true
+      },
+      {
+        "id": "B1-indexing",
+        "category": "engineering evidence",
+        "passed_first_complete": 0,
+        "complete_attempted": 1,
+        "value": 0.0,
+        "repair_without_quality_rerun": true
+      }
+    ],
+    "phase_only_cohorts": [
+      {
+        "id": "P05-M1-native-lib-first",
+        "scope": "native lib phase only",
+        "complete_attempted": 1,
+        "passed_first_complete": 1,
+        "value": 1.0,
+        "complete_module_claim": false
+      },
+      {
+        "id": "P04-current-single-source-pair-three-drivers",
+        "scope": "three existing component drivers on new fixed source; not entire task or historical first pass",
+        "complete_attempted": 1,
+        "passed_first_complete": 1,
+        "value": 1.0,
+        "complete_module_claim": false
+      },
+      {
+        "id": "P04-B2-first79",
+        "scope": "unit phase only; old65 plus new14",
+        "complete_attempted": 1,
+        "passed_first_complete": 1,
+        "value": 1.0,
+        "complete_module_claim": false
+      },
+      {
+        "id": "P04-B2-three-component-commands",
+        "scope": "real component/P03 pair command cohort; independent actual review passed",
+        "complete_attempted": 3,
+        "passed_first_complete": 3,
+        "value": 1.0,
+        "complete_module_claim": false
+      },
+      {
+        "id": "P05-probe-pure4",
+        "scope": "pure launcher unit phase only",
+        "complete_attempted": 1,
+        "passed_first_complete": 1,
+        "value": 1.0,
+        "complete_module_claim": false
+      },
+      {
+        "id": "P05-M1-cooperative-sealed-component-first",
+        "scope": "new cooperative sealed-fixture Arrow/DF component native cohort only; not generic Source or full module",
+        "complete_attempted": 1,
+        "passed_first_complete": 1,
+        "value": 1.0,
+        "complete_module_claim": false,
+        "non_author_actual_review": "c3dc2e9d97b0a26bbc24d79ad16ea964db8e15eeadc97bdfc6e78b638e1abb72"
+      }
+    ]
+  },
+  "integration_wait_minutes": null,
+  "new_user_journeys": {
+    "I1": "pending",
+    "I2": "pending",
+    "I3": "pending"
+  },
+  "failure_events": [
+    {
+      "feature": "M-STORAGE",
+      "stage": "readonly-image-preflight",
+      "classification": "environment-identity",
+      "quality_tests_executed": 0,
+      "service_mutations": 0,
+      "result": "failed; original retained; actual quiet operator release recorded"
+    },
+    {
+      "feature": "B01-primitives",
+      "stage": "readonly tag@digest image lookup",
+      "classification": "environment-reference-resolution",
+      "quality_tests_executed": 0,
+      "service_mutations": 0,
+      "outer_seconds": 0.151409792015329,
+      "result": "preserved; canonical same repository@digest lookup succeeds; no pull/fallback"
+    },
+    {
+      "feature": "M-STORAGE",
+      "stage": "functional-before-dot-list",
+      "classification": "fixture-diagnostic-vs-product-boundary",
+      "units_executed_passed": 26,
+      "functional_exit": 1,
+      "result": "original FAIL retained; expected8 unchanged; new readonly product cohort passed separately on source2d1d; SDK diagnostic not rerun"
+    },
+    {
+      "feature": "PR14/15/16",
+      "stage": "GitHub job admission",
+      "classification": "account-billing-or-spending-limit",
+      "quality_tests_executed": 0,
+      "steps_each": [],
+      "observed_at_utc": "2026-10-21T14:33:25Z",
+      "result": "all six jobs not started; no merge/waiver/settings mutation"
+    },
+    {
+      "feature": "PR14/15/16/17",
+      "stage": "latest head GitHub job admission",
+      "classification": "account-billing-or-spending-limit",
+      "quality_tests_executed": 0,
+      "jobs_not_started": 8,
+      "observed_at_utc": "2026-10-21T15:17:15Z",
+      "result": "all latest-head jobs have0 steps and payment/spending-limit annotation; no merge/waiver/settings mutation"
+    },
+    {
+      "feature": "P05-M1-component-probe",
+      "stage": "readonly exact historical image lookup",
+      "classification": "environment-identity",
+      "historical_image": "sha256:debb142e38e09c105d0b738bb33b1a30435a791b8d0111dae86c7b850711f8f0",
+      "quality_tests_executed": 0,
+      "service_mutations": 0,
+      "result": "failed and stopped; no image substitution; later new image independently admitted",
+      "report": "ffae4667b80912c736f757dece68cbb4f04925034f124cf9a963768b5ab1ed6a"
+    },
+    {
+      "feature": "P05-M1-component-probe",
+      "stage": "new-image single fmt result",
+      "classification": "source-size-guard",
+      "formatted_lines": 648,
+      "source_limit_lines": 600,
+      "build_executions": 0,
+      "probe_executions": 0,
+      "result": "format command passed; overall STOP before build, exact responsibility split next",
+      "report": "59f4d339876b56cada6f1e641097945e8210a8dfcb7ebae22d3a0a47b1b3965e"
+    }
+  ],
+  "investment_categories": [
+    "rust-behavior",
+    "public-contract",
+    "tests",
+    "engineering-tools"
+  ],
+  "unmeasured": [
+    "after-modular-validation-cost",
+    "complete-historical-first-pass-rate",
+    "integration-wait-starts-for-pending-pairs",
+    "actual-Arrow/DF-pool-peak-and-native-hard-memory-cancellation-isolation",
+    "real-cloud-or-independent-physical-three-hosts"
+  ],
+  "primitive_experiments": [
+    {
+      "feature": "B01-primitives",
+      "scope": "stock PG18 format only; not target physical ingest",
+      "server": "PG18.6 Debian aarch64",
+      "rows": 12,
+      "p01_rows": 11,
+      "commands": 34,
+      "outer_seconds": 3.713721042033285,
+      "expected_sqlstates": [
+        "55000",
+        "55000",
+        "23505"
+      ],
+      "independent_actual_review": "049cbb9838b9ddc82f4c41d644e43f3ea4b26cd6a69d8d9199bf8f01b3f1956e",
+      "runtime_released": true,
+      "module_pair_system_pass": false
+    }
+  ],
+  "remote": {
+    "catalog_pr": "https://github.com/yizhouxw/guradb/pull/14",
+    "head": "86fcaf093deaba98c0495f775ac1d4767bbbf950",
+    "strategy_pr": "https://github.com/yizhouxw/guradb/pull/15",
+    "gates_pr": "https://github.com/yizhouxw/guradb/pull/16",
+    "ci": "blocked before steps by account billing/spending limit; not executed",
+    "run_ids": [
+      39610864133,
+      39622464153,
+      39616551823,
+      39622252811
+    ],
+    "main_integrated": false,
+    "external_owner": "user account administration",
+    "local_owner": "ROOT PR integration",
+    "query_owner_pr": "https://github.com/yizhouxw/guradb/pull/17",
+    "strategy_head": "d48a645236644f32d58b82e09e704f42ea5aa943",
+    "gates_head": "23a2e374d779af3881bb17b46698fd08a673cd37",
+    "query_owner_head": "ad5c9fe1dcaf887362eef0908715e6fa1e2b96ba",
+    "latest_snapshot": "02c8efff12015db1705c4667973978c253ae3d26167c2c0866a99260e54a450e",
+    "latest_observed_at_utc": "2026-10-21T17:19:09.681196+00:00",
+    "jobs_not_started": 8,
+    "new_run_ids": [
+      39626691839,
+      39629589830
+    ],
+    "new_jobs_not_started": 4,
+    "feature_push_run_observed_for_23a2": false,
+    "pr_run_observed_for_23a2": true,
+    "previous_snapshot": "099b49b1fc234c7b01e1082dab6dcbb4a0b5b0f74259f5475aba9302e161b74a",
+    "latest_snapshot_path": "/Users/chad/dev/guradb/artifacts/strategy-v2-module-pr-update/task-branch/result.json",
+    "strategy_latest_observed_at_utc": "2026-10-21T17:19:09Z",
+    "strategy_latest_run_ids": [
+      39642553286,
+      39642540142
+    ],
+    "user_decision": "continue local development and task branches; retain remote CI block; no merge or waiver",
+    "user_decision_received_date": "2026-10-22 Asia/Shanghai",
+    "gates_snapshot_preserved": {
+      "latest_snapshot": "3e12e6e7c09bd502a3a619473f63d7bc256a790de404e66afc076769e3212991",
+      "latest_observed_at_utc": "2026-10-21T15:54:00Z",
+      "latest_snapshot_path": "/Users/chad/dev/guradb/artifacts/gates-v2-main-only-pr-update/result.json"
+    },
+    "latest_snapshot_scope": "strategy PR15 at head d48a645 only; older gates/pr observations remain historical"
+  },
+  "integration_wait_observations": [
+    {
+      "feature": "M-CATALOG",
+      "meaning": "elapsed since branch task-finish, not all delay attributable to CI",
+      "since_utc": "2026-10-21T12:55:43Z",
+      "observed_utc": "2026-10-21T14:43:44Z",
+      "minutes": 108.01666666666667,
+      "next_consumer": "real PG reauthorize -> P03/P04; interface pairing pending"
+    },
+    {
+      "feature": "M-CATALOG",
+      "meaning": "branch task-finish to current snapshot; not all delay attributable to CI",
+      "since_utc": "2026-10-21T12:55:43Z",
+      "observed_utc": "2026-10-21T15:25:04Z",
+      "minutes": 149.35,
+      "next_consumer": "controlled real PG->read interface still pending"
+    },
+    {
+      "feature": "M-CATALOG",
+      "meaning": "task-finish to snapshot; not all waiting attributable to CI",
+      "since_utc": "2026-10-21T12:55:43Z",
+      "observed_utc": "2026-10-21T16:34:19.577091+00:00",
+      "minutes": 218.6096181833333,
+      "next_consumer": "controlled real PG read with exact unknown-bind cleanup"
+    },
+    {
+      "feature": "M-CATALOG",
+      "meaning": "task-finish to explicit current snapshot; not all waiting attributable to CI",
+      "since_utc": "2026-10-21T12:55:43Z",
+      "observed_utc": "2026-10-21T17:13:09.185015+00:00",
+      "minutes": 257.43641691666664,
+      "next_consumer": "controlled real PG read with exact unknown-bind cleanup; interface still pending"
+    }
+  ],
+  "active_tasks": [
+    {
+      "id": "4f36dc7140274d578ba88507369aa483",
+      "owner": "ROOT",
+      "scope": "exact four fact documents; retain all behavior and acceptance obligations",
+      "original_base": "d48a645236644f32d58b82e09e704f42ea5aa943",
+      "behavior_writer_dispatched": false,
+      "owner_status": "current ROOT document writer; active follow-up receipt; no behavior source write"
+    },
+    {
+      "id": "476c1fbff60a40a9944eb56036716375",
+      "owner": "plan_audit",
+      "scope": "P03 recovery component stable, old-base strict/full/commit still pending",
+      "original_base": "4d6baca888421d90f146679ef71b0e555fe60881",
+      "behavior_writer_dispatched": false,
+      "owner_status": "historical DRI; old agent stopped; source frozen pending explicit new-session writer handoff"
+    },
+    {
+      "id": "4696bbe16be041d3b900019fe2fd08b3",
+      "owner": "plan_audit",
+      "scope": "B2 FIRST79/10+4/8+4/28 independently actual accepted; source33 STOP, original strict/full/commit pending",
+      "original_base": "17d66c66a067eebe73280ce8d3488fb4f7cdcfe9",
+      "behavior_writer_dispatched": false,
+      "owner_status": "historical DRI; old agent stopped; source frozen pending explicit new-session writer handoff"
+    },
+    {
+      "id": "bc81c2ae8eb94fb99a646c061a61c35c",
+      "owner": "plan_audit temporary query D1 DRI/writer",
+      "scope": "D1 source40 and 76 lib/original sealed independently accepted; new-port performance/full module/real P04 bridge pending",
+      "behavior_writer_dispatched": false,
+      "original_base": "1e4f6a6c26eb28982f4b61cc75aa05e290211809",
+      "owner_status": "historical DRI; old agent stopped; source frozen pending explicit new-session writer handoff"
+    },
+    {
+      "id": "a4ddd8fafdf04304a24bd4f474831ca5",
+      "owner": "p00_cf1a",
+      "scope": "C1 source13/client-control component accepted; source frozen, strict/full/commit pending; C3 plan only",
+      "original_base": "86fcaf093deaba98c0495f775ac1d4767bbbf950",
+      "behavior_writer_dispatched": false,
+      "new_runtime_pass": "limited client-control component only",
+      "owner_status": "historical DRI; old agent stopped; source frozen pending explicit new-session writer handoff"
+    },
+    {
+      "id": "a8bd6e4158e448298bf3016dead9b43e",
+      "owner": "p00_cf1a temporary C3 integration writer",
+      "scope": "local SOURCE snapshot integration exception; shared conflicts preserved, exact upstream closure, no pair pass",
+      "original_base": "86fcaf093deaba98c0495f775ac1d4767bbbf950",
+      "merge_head": "b3dd39f68511558d86753f3148e1b9731bcde622",
+      "behavior_writer_dispatched": false,
+      "owner_status": "historical DRI; old agent stopped; source frozen pending explicit new-session writer handoff"
+    }
+  ],
+  "critical_pair_slices": [
+    {
+      "id": "A",
+      "owner": "plan_audit",
+      "dependencies": [
+        "P03-read-M"
+      ],
+      "real_output": "P03 real object -> P04 single-source ReadBatch",
+      "status": "local actual singleSource component pair passed; strict/full original task pending",
+      "source_manifest": "51601127d5a82c91dc77fa5a445ada83a31ba8d45cfe63999e8cb8010b7fa9d0",
+      "root_actual_review": "fdd9a13eab7d5b28879262e142de17e3601c60977572c840ef9aeaf1615613a6",
+      "independent_actual_review": "ef3e107e536abbceefa07e5fd8431b1f99039460490d40cd175efe75db00608b"
+    },
+    {
+      "id": "B",
+      "owner": "plan_audit",
+      "dependencies": [
+        "A"
+      ],
+      "real_output": "full main10+mirror1 and explicit located descriptors; same parent ledger",
+      "status": "B1 and B2 local real P03/source component pairs independently actual accepted; not complete module/system",
+      "sub_slices": {
+        "B1": "accepted independent e8a78f02; not strict/full/main",
+        "B2": "actual79/functional10+located4/performance8+located4/fault28 independently accepted; private joint768KiB, not P06/PG/Rust/I1"
+      },
+      "source_manifest": "a509e6e28aaa75609651d9fea88f36f5bc7c7413ea0dfef97fca6de832d7d23a",
+      "independent_actual_review": "6f5b29dca8a6bf7d56e4cea2ea73101db6517b1aaf774cc95f11467f867b219e"
+    },
+    {
+      "id": "C",
+      "owner": "ROOT",
+      "dependencies": [
+        "catalog-controlled-call-interface",
+        "storage-source-parent-control-interface",
+        "A",
+        "B"
+      ],
+      "real_output": "real PG reauthorize/cancel/deadline to read with precise pin cleanup",
+      "status": "C1 limited client-control independently accepted; C3 controlled storage/source implementation and real PG pair pending",
+      "architecture_review": "7a2c1a5328782042b3d973feb969b0097b3f711f91424a30b46d563623b597c2"
+    },
+    {
+      "id": "D",
+      "owner": "ROOT",
+      "dependencies": [
+        "B",
+        "C",
+        "P05-R2",
+        "query-real-provider-interface"
+      ],
+      "real_output": "real full Source -> Rust bridge; no SealedFixture substitution",
+      "status": "D1 byte-provider lib/sealed regression independently accepted; D2 real P04 bridge plan only"
+    },
+    {
+      "id": "E",
+      "owner": "p00_cf1a",
+      "dependencies": [
+        "B",
+        "C",
+        "D-for-materialize"
+      ],
+      "real_output": "real multi-source BM25/exact artifact/candidate/source materialization; shared retry ledger",
+      "status": "pending"
+    },
+    {
+      "id": "F",
+      "owner": "ROOT",
+      "dependencies": [
+        "C",
+        "D",
+        "E-for-full-I1"
+      ],
+      "real_output": "formal HTTP/PG scan first, then complete I1 retrieval",
+      "status": "pending"
+    }
+  ],
+  "p03_source_recovery": {
+    "task": "476c1fbff60a40a9944eb56036716375",
+    "source_manifest": "2d1dfa7dcf5aaa403959a1d038aa1cfe9c79bc7b4b854f85785b5c6e12e0d2b5",
+    "independent_source_review": "b448c266fc5ed2d71933964caf337e7c33adb1906918ac4fbf115f325172cf44",
+    "root_source_review": "05d4a89c27dca1090995646f032488ff10029c48ce478cba4fd131d9a0fcfde8",
+    "old26tests_and7production_and_audit_unchanged": true,
+    "new_unit_definitions": 8,
+    "new_runtime_result": {
+      "component": "passed",
+      "unit_count": 60,
+      "functional": 12,
+      "performance": 4,
+      "faults": 12,
+      "root_release": "5ad7d23c4c107ef3ea2043f163933e7f6d117825ea747eb78e7cddb5dc750419",
+      "independent_actual_review": "0c05f60e654897265bfe039783d570555a93bf4b3fba32fa53f5d8a19a81c1b5",
+      "strict_full_task_pass": false
+    },
+    "original_diagnostic": "FAIL retained"
+  },
+  "pair_wait_observations": [
+    {
+      "id": "A",
+      "meaning": "P03 ROOT read component release to first real P04 functional command; not full module certification",
+      "stable_since_utc": "2026-10-21T14:57:38Z",
+      "consumer_started_utc": "2026-10-21T15:18:34Z",
+      "seconds": 1256,
+      "minutes": 20.933333333333334,
+      "released_utc": "2026-10-21T15:20:01Z"
+    }
+  ],
+  "wip": {
+    "actual_slots": 4,
+    "behavior_limit": 2,
+    "running_behavior_at_snapshot": 0,
+    "next_behavior_tasks": [
+      "C3 controlled PG-to-source after shared-source review",
+      "D2 real P04-to-Rust controlled bridge"
+    ],
+    "runtime_window_owner": null,
+    "role_count_is_not_concurrency": true,
+    "next_window_owner": "C3 after shared-source review and implementation SOURCE approval",
+    "author_autonomous_module_verification": true,
+    "source_review_can_overlap_frozen_component_run": true,
+    "current_agents": "new medium C3 independent reviewer and D2 read-only interface planner; old agents stopped"
+  },
+  "investment_observations": {
+    "scope": "this strategy delivery window only; phase/module/system counts kept separate",
+    "rust_behavior": {
+      "new_m1_native_lib_phase_passed": 1,
+      "tests_executed": 55,
+      "new_m1_complete_module_passed": 0,
+      "new_user_journeys_passed": 0,
+      "new_m1_native_component_first_passed": 1,
+      "new_m1_component_actual_review": "c3dc2e9d97b0a26bbc24d79ad16ea964db8e15eeadc97bdfc6e78b638e1abb72"
+    },
+    "public_contract": {
+      "requirements_defined": 42,
+      "strategy_pr_document_files": 19,
+      "new_user_feature_count": 0
+    },
+    "tests": {
+      "query_owner_added_describe_cases": 2,
+      "p03_added_read_acceptance_units": 8,
+      "p04_added_fixture_identity_units": 6,
+      "p05_added_independent_result_cases": 7,
+      "full_query_existing_module_test_slice_passed": 1,
+      "new_user_feature_count": 0,
+      "p04_added_multisource_units": 21,
+      "ci_trigger_added_regressions": 2,
+      "p05_launcher_units_planned": 4,
+      "p04_added_located_units": 14,
+      "p05_launcher_units_first_passed": 4
+    },
+    "engineering_tools": {
+      "gates_pr_source_files": 22,
+      "engineering_suites_each_round": 5,
+      "harness_tests_each_round": 134,
+      "contract_tests_each_round": 136,
+      "product_module_certifications_from_tools": 0,
+      "indexing_failure_retained": true
+    },
+    "python_transition_behavior": {
+      "accepted_component_slices": 2,
+      "slice": "B1 one/two fixed-manifest union plus B2 private located producer/fixture consumer",
+      "formal_complete_modules": 0,
+      "main_user_journeys": 0,
+      "b2_first_component_result": "independently actual accepted",
+      "b2_formal_complete_module": false
+    }
+  },
+  "engineering_next_slice": {
+    "owner": "p00_cf1a",
+    "scope": "bounded phase/dirty-reason observations within original commands, module Python registry when real owner closure exists",
+    "change_cached_semantics_workload_or_threshold": false,
+    "evidence_archive": "single-pass current writer index; preserve historical profiles without repeated scanning",
+    "performance_speedup_claim": null,
+    "author_pre_source_freeze_checks": [
+      "fmt target files",
+      "source <=600 lines",
+      "readonly exact image identity preflight"
+    ],
+    "ordinary_unit_and_format_execution": "author autonomous within existing explicit authorization; no repeated PM permission cycle",
+    "pm_controlled_windows": [
+      "shared native performance",
+      "migration",
+      "coverage target/profile"
+    ],
+    "incremental_review": "only necessary source/environment delta; preserve original workload and strict duties",
+    "no_silent_image_substitution": true,
+    "process_cost_learning": [
+      "late fmt expanded example to648 lines: move check before final SOURCE",
+      "historical exact image absent: readonly preflight before source admission"
+    ]
+  },
+  "next_slice_plans": [
+    {
+      "id": "P05-M1-component-probe",
+      "owner": "p00_cf1a",
+      "source_plan": "78092508679b7ef53d3ca6217c597304f1eb65bc258b081abfa545069fce9eda",
+      "state": "first cooperative sealed-fixture component independently actual accepted and released; generic Source/full module remain missing",
+      "proposed_parent_managed_memory_bytes": 268435456,
+      "budget_state": "ROOT fixed before implementation; trial256MiB not measured production default",
+      "files_proposed": [
+        "crates/guradb-query/examples/fixed_m1_probe.rs",
+        "scripts/fixed_query_acceptance.py"
+      ],
+      "source_candidate": "4ec8eb51c44fe7add1498b7ec1953e32e76fd50d6cfc24bef2b15b0dfffd1564",
+      "independent_source_review": "e2e395c3120f2aef0886e83e89ac5e61bcf7374d8896e408ac152855a1e570dc",
+      "launcher_regression_new_file_planned": false,
+      "source_split_manifest_prefix": "54202c8e",
+      "split_independent_source_review": "e2e395c3120f2aef0886e83e89ac5e61bcf7374d8896e408ac152855a1e570dc",
+      "formatted_manifest": "4ec8eb51c44fe7add1498b7ec1953e32e76fd50d6cfc24bef2b15b0dfffd1564",
+      "launcher_regression_first4_passed": true,
+      "source_files_after_split": 35,
+      "split_file_lines": {
+        "main": 583,
+        "fixture_files": 78
+      },
+      "actual_probe_result": "67ee19bfcce5033b944438703513e6f1701a5f97a703ded050fa7b9bc696beb5",
+      "actual_release": "543815025cc0bf12c891acb5b79dca107dfc2b6e0a746072d825093bf7b8635f",
+      "independent_actual_review": "c3dc2e9d97b0a26bbc24d79ad16ea964db8e15eeadc97bdfc6e78b638e1abb72",
+      "initial_changes_required_source_review": "167176007e1051a8f918b9ef745cd174c4f4c6e11f70ac67d5006637dd970e9f"
+    },
+    {
+      "id": "C1-parent-catalog-control",
+      "owner": "p00_cf1a",
+      "state": "SOURCE_PASS_AND_LIMITED_CLIENT_CONTROL_ACTUAL_PASS; strict/full/pair pending",
+      "task": "a4ddd8fafdf04304a24bd4f474831ca5",
+      "plan_manifest": "ce77fcf86192765630945b0f2db4b6db4cb0859ee154128d64769d2c172d4864",
+      "plan_source": "6fe1d5a71b5f0ae6f643472c1160741e56c0e2e509d5e7516b5acb7f12ef4ac3",
+      "independent_plan_review": "f08ffa52a23911d531d245205ed043406d3ef75e70924f8c3c86c8d89e41f390",
+      "actual_new_tests": {
+        "passed": 39,
+        "scope": "Mock/SQLite only; no full13 pre-run manifest",
+        "first_new13_errors": 7,
+        "first_failure_preserved": true
+      },
+      "actual_performance": {
+        "queries": 32,
+        "read_max_ms": 25.704,
+        "query_budget_ms": 1000,
+        "cleanup_max_ms": 11.456,
+        "cleanup_budget_ms": 5000
+      },
+      "full_module_pass": false,
+      "pair_pass": false,
+      "absence_terminal": false,
+      "source_manifest": "98b7032dce03f53f5f308f4e3607ce27f32a25cad10d42aaa247d863db21cfd6",
+      "evidence_index": "7ca85c56d7ac2889f367621c13cfde954d55d9f6d359fa85d179b708bfe05362",
+      "independent_actual_review": "c8f3c52a729a35f403d5f0771a41f33ed922a81b73238f639ad181559ead394d",
+      "remote_pg_backend_stop_confirmed": false,
+      "complete_pg_server_cost_known": false,
+      "pg_native_memory_measured": false
+    },
+    {
+      "id": "D1-query-controlled-source-consumer",
+      "owner": "plan_audit temporary query DRI",
+      "state": "76 lib and original sealed regression independently accepted; full module/new port performance pending",
+      "task": "bc81c2ae8eb94fb99a646c061a61c35c",
+      "plan_source": "e53136f78543e007f5af8a32a308acf253947198a7eec613032f589693781f36",
+      "plan_manifest": "5e71a49b5de4004c30a652be069d7ff9cfcae111e118a7eadcef125c818f636f",
+      "independent_plan_review": "971988cceb6a9dd544423b033d811e1e4d2f6cbb9dedf05bebf057dd42f16c66",
+      "before35_manifest": "e7351edeefc9ad0eece1c33ecbfec9f6dd61b6ec675f535bd49475dd8663f5ca",
+      "docs_first_manifest": "5963d865120ab9fad81fb582825bbcb8e9cfb027a2824315418fefbbfbeabadc",
+      "strict_decodes_per_page": 1,
+      "schema_cache": false,
+      "pending_credit_owner": "Admission Owner until matching trusted acknowledgement",
+      "actual_new_tests": {
+        "definitions": 73,
+        "passed": 72,
+        "failed": 1,
+        "original55_passed": 55,
+        "result": "failed",
+        "author_reported": true,
+        "outer_seconds": 16.8525
+      },
+      "actual_performance": null,
+      "full_module_pass": false,
+      "real_p04_pair_pass": false,
+      "native_hard_memory_pass": false,
+      "source_manifest": "564efef750ee2af697914bfc72ac271134947316f1c2827ff7e82b534b7bd689",
+      "independent_source_review": "6f8c01d4813300d3290b8c28b46d5638d521e191d6f2ddb0741c66056fda90b7",
+      "actual_latest_tests": {
+        "passed": 76,
+        "failed": 0,
+        "ignored": 0,
+        "filtered": 0,
+        "outer_seconds": 16.1025371249998
+      },
+      "sealed_regression": {
+        "passed": true,
+        "performance_processes": 5,
+        "samples": 10,
+        "outer_seconds": 21.849966874928214
+      },
+      "new_port_performance_pass": false,
+      "independent_actual_review": "1d333d653131e6bb1f399053e8cf8b47307513d1b4b9f90c687297fe61ef5feb"
+    }
+  ],
+  "b1_failures_retained": {
+    "first_unit": {
+      "report": "e1aa9446a92f09f5d00584e6d77b4bb60c9a681714a45cf773feba4b8b24e28b",
+      "passed": 64,
+      "failed": 1,
+      "total": 65,
+      "internal_seconds": 0.726,
+      "outer_seconds": 1.1165103329112753,
+      "component_commands_started": 0,
+      "cause": "new oracle real-clock deadline equality"
+    },
+    "repaired_window": {
+      "actual_all_components_pass": true,
+      "original_outer_failed": true,
+      "cause": "safe-index missing existing fault .bin; system default bridge delta kept",
+      "no_production_budget_or_workload_change": true
+    }
+  }
+}

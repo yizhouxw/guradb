@@ -81,6 +81,9 @@ class FixedSourceReader:
         self._failed = False
         self._reader_lock = threading.Lock()
         self.last_observation = None
+        self._producer_token = None
+        self.last_prefix = None
+        self.last_output_lease = None
         self.port = SourceReadPort(self.read_batch)
 
     def _authorize(self, binding):
@@ -177,11 +180,18 @@ class FixedSourceReader:
             # An immutable envelope necessarily precedes its final serialization
             # tail; real acceptance times the whole call and records that tail.
             usage = scope.batch_usage(before)
+            usage_point = scope.last_usage_point if self._producer_token is not None else None
             observed = scope.monotonic()
             result = self._encode(ordinal, rows, usage, bound)
+            if self._producer_token is not None:
+                from modules.connectors.fixed_producer_observation import Snapshot
+                at_a = Snapshot.capture(scope)
             self._authorize(state['binding'])
             # Returned wire is retained until the query scope is discarded.
             output_memory.keep(len(result.encoded) + 64)
+            if self._producer_token is not None:
+                output_memory._producer_lease.kind = 'output'
+                self.last_output_lease = output_memory._producer_lease
             precommit = scope.monotonic()
             self.last_observation = {'observed_monotonic_s': observed,
                 'precommit_monotonic_s': precommit, 'usage_elapsed_ms': usage['elapsed_ms'],
@@ -190,6 +200,13 @@ class FixedSourceReader:
             # Final policy check and ledger commit. Nothing after this point
             # performs an application-level reject of this returned envelope.
             scope.delivered(len(result.encoded))
+            if self._producer_token is not None:
+                from modules.connectors.fixed_producer_observation import PrefixRecord
+                self.last_prefix = PrefixRecord(
+                    Snapshot.from_usage(before, self._producer_base_current), usage_point,
+                    at_a, Snapshot.capture(scope), scope._batch_peak, len(result.encoded),
+                    result.sha256, tuple(sorted(result.value['usage'].items())))
+                self.last_prefix.validate(result)
             return result
 
     def _encode(self, ordinal, rows, usage, bound):
@@ -248,7 +265,46 @@ class FixedSourceReader:
     def read_located_batch(self, binding, ordinal):
         return self._read(binding, ordinal, located=True)
 
-    def _read(self, binding, ordinal, *, located):
+    def producer_open(self, token):
+        """Trusted lifecycle entry; counts are minted only after actual load/pages."""
+        require(token is not None and self._producer_token is None,
+                'producer reader already consumed', 'expired_context')
+        require(self._reader_lock.acquire(blocking=False), 'reader is busy', 'resource_limit')
+        try:
+            require(self._state is None and not self._failed, 'reader already used', 'expired_context')
+            self._producer_token = token
+            with self.scope.batch():
+                self._load()
+                return (len(self._state['records']), len(self._state['pages']),
+                        len(self._state['binding']['resource']['fields']))
+        except BaseException:
+            self._failed = True
+            self._state = None
+            raise
+        finally:
+            self._reader_lock.release()
+
+    def producer_read(self, token, binding, ordinal):
+        require(token is self._producer_token, 'foreign producer owner', 'unauthorized')
+        return self._read(binding, ordinal, located=False, producer_token=token)
+
+    def producer_close(self, token):
+        if self._producer_token is None:
+            return
+        require(token is self._producer_token, 'foreign producer owner', 'unauthorized')
+        require(self._reader_lock.acquire(blocking=False), 'reader is busy', 'resource_limit')
+        try:
+            self._state = None
+            self._failed = True
+            self.last_prefix = None
+            self.objects.cache.clear()
+            self.scope.producer_closed = True
+        finally:
+            self._reader_lock.release()
+
+    def _read(self, binding, ordinal, *, located, producer_token=None):
+        require(self._producer_token is None or producer_token is self._producer_token,
+                'controlled reader requires its producer owner', 'unauthorized')
         # A non-owner cannot clear or poison another call's shared state.
         require(self._reader_lock.acquire(blocking=False),
                 'concurrent fixed source reads rejected', 'resource_limit')
@@ -258,6 +314,9 @@ class FixedSourceReader:
             require(not self._failed, 'fixed source failed; a fresh scope is required', 'expired_context')
             with self.scope.batch():
                 before = self.scope.usage()
+                self._producer_base_current = self.scope.memory_current
+                self.last_prefix = None
+                self.last_output_lease = None
                 if self._state is None:
                     self._load()
                 return self._located_batch(ordinal, before) if located else self._batch(ordinal, before)

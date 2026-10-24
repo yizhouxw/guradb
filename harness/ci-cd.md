@@ -32,3 +32,7 @@
 恢复操作应更新ADR与机器决定、核远端workflow状态及有效保护规则；不能仅修改YAML或恢复开关便声称CI通过。CI/CD优化独立Issue管理，不自动混入数据库交付。历史Actions artifacts通常仅保留14天，必要证据继续在本地按原规则归档；本地归档不等于异地备份。
 
 CD仍需明确不可变构建物、版本/摘要、部署目标、身份与授权、健康检查、迁移/备份、unknown对账及恢复/补偿。关闭CI或代码回退不撤销外部副作用，也不自动开启部署。
+
+## 保留的PR15/16实现与预算（当前不启用远端）
+
+保留auto/module/pair/system/release选择、完整生产分母、选择器/配置指纹、真实argv/timeout、前后源码与证据绑定。workflow保留main-only push、无过滤PR、手动及定时release、双Python矩阵、固定Actions SHA、安全artifact私配排除；这些配置不表示启用或运行。36原命令19620+600=20220秒；本候选P06再加原900/300/300秒三driver，39命令21120+600=21720秒。普通340/release360历史配置保留，不涨阈值、不新增分片工具。两个CI容量test入口按ci-state暂停时如实SKIP，不得称PASS；本地39命令及原timeout、strict100%/21排除、planned release missing均保留。恢复CI必须先解决真实容量并重新授权。

@@ -75,3 +75,11 @@ M0/M1 已接入真实功能、组件基准和故障注入；完整性能、完�
 非小型任务用 task-start 记录目标与原始 base，task-status 恢复上下文，最终提交后 check，再用 task-finish --report/--review 验证整项范围并归档；task-abandon 只停止记录，保留文件与 Git 历史。checkpoint 同样重验报告/全部命令/日志 SHA-256，证据归档到共同 Git 管理目录，不依赖 artifacts 永久留存。
 
 GitHub Actions质量和诊断工作流当前已按用户指令停用，配置保留；PR不再等待远端quality检查。历史失败/缺失原样记录，本机适用检查、独审与main证据仍须真实通过；完整release的planned/missing仍阻断。未来恢复CI/CD与平台required checks须重新讨论授权，见[当前规则](ci-cd.md)。
+
+## 模块交付 v2 的本地入口
+
+[策略v2](../docs/plans/2026-10-21-modular-delivery-v2.md)、[需求矩阵](../docs/product/requirements-v2.md)及[模块合同](../docs/design/module-delivery-contracts.md)保留。机器接线使用module/pair/system/release分层，完整owner生产源strict100%、真实依赖、原预算/负例/恢复/追溯不变；未知映射扩大为system，工程工具自测不冒充产品验收。CI当前暂停，不改变本地层级与release missing。
+
+## 2026-10-24 用户授权的现行覆盖阈值（Refs #23）
+
+Python 全部自研生产源行覆盖率至少80%；Rust仍为现有经审查排除后的适用行100%。两者用合法整数covered/total交叉相乘判断，total必须大于0，不用显示百分比或舍入。完整源分母、未导入文件、身份前后绑定、测试失败拒绝保持；Python仍不允许行排除，Rust原21行清单不扩大。旧100%要求/历史报告保留为当时合同，不改写原失败或测量。本次政策实现与边界验证另记；80%不等于完整产品验收。

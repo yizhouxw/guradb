@@ -196,6 +196,11 @@ def plan(root: Path, paths: list[str], policy: dict, architecture: dict,
                 runtime_changed = True
                 gates.update({"python", "functional", "performance-smoke",
                               "stability-component", "unit-coverage"})
+            if path == "scripts/fixed_indexes_acceptance.py" or path.startswith("tests/index_support/"):
+                # Retain original P06 physical artifact acceptance obligations.
+                runtime_changed = True
+                gates.update({"python", "functional", "performance-smoke",
+                              "stability-component", "unit-coverage"})
         dependency_change = (PurePosixPath(path).name in {
             "Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "requirements-m0.lock", "requirements-m1.lock"}
             or path in {"scripts/cargo.py", "scripts/m0.py", "scripts/m1.py", "scripts/m1_acceptance.py"} or path.startswith(("scripts/m0lib/", "scripts/m1lib/")))

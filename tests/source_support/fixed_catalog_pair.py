@@ -9,7 +9,8 @@ import psycopg
 from modules.catalog.cf1a_auth import TrustedPrincipal
 from modules.catalog.cf1a_codec import contract
 from modules.catalog.cf1a_control import CatalogReadControl
-from modules.common.cf1a_primitives import ContractFailure, digest
+from modules.common.cf1a_primitives import ContractFailure, digest, require
+from modules.common.cf1a_wire import Contract
 from modules.common.cf1a_read import without
 from modules.connectors.fixed_source_reader import FixedSourceReader
 from modules.connectors.fixed_source_scope import SourceScope
@@ -26,6 +27,16 @@ from tests.source_support.fixed_located_acceptance import measured_located
 def prepare(catalog, authority, principal, fixture, dataset):
     """Register complete immutable actual uploaded targets; never issue a context."""
     value = fixture['binding'].value
+    return prepare_target(catalog, authority, principal,
+                          contract('read_descriptors', {key: deepcopy(value[key])
+                                   for key in ('resource', 'revision', 'view', 'indexes')}), dataset)
+
+
+def prepare_target(catalog, authority, principal, descriptor, dataset):
+    """Publish an explicit target; no fabricated read_binding/context is needed."""
+    require(type(descriptor) is Contract and descriptor.kind == 'read_descriptors',
+            'prepare requires explicit complete target')
+    value = descriptor.value
     target = {key: deepcopy(value[key]) for key in ('resource', 'revision', 'view', 'indexes')}
     target['resource']['dataset_id'] = dataset
     target['revision']['dataset_id'] = dataset

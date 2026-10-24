@@ -63,13 +63,13 @@ git push -u origin codex/<task>
 
 推送前核对远端分支：若已被他人推进，先保留现场、正常 merge 并重验；禁止强推。推送授权包含创建 PR，使用 GitHub 连接器或网页 New pull request：base=main，compare=任务分支；未完成使用 Draft。可用 GitHub CLI 时等价为 `gh pr create --base main --head codex/<task> --draft --title '<标题>' --body-file <实际正文文件>`，CLI 不是 harness 的必需依赖。
 
-使用[PR模板](../.github/pull_request_template.md)填写原始 base、owner/范围、依赖、验收/拒绝、证据、恢复和独立复核。每次追加提交、冲突处理或同步主线均使旧 head 证据失效，重新对原始 base 检查并更新 PR；若已 task-finish，同一分支以新的 label 启动 follow-up task，最终用显式原始 base 的 check/checkpoint 覆盖完整 PR 范围，不把 follow-up receipt 当作旧任务全部证据。
+使用[PR模板](../.github/pull_request_template.md)填写原始 base、owner/范围、依赖、验收/拒绝、证据、恢复和独立复核。每次追加提交、冲突处理或同步主线均重新对原始 base 按实际影响层级检查并更新 PR；旧 head 报告仍保留原义，未经明确完整输入闭包复用协议不能伪装成本次执行；若已 task-finish，同一分支以新的 label 启动 follow-up task，最终用显式原始 base 的 check/checkpoint 覆盖完整 PR 范围，不把 follow-up receipt 当作旧任务全部证据。
 
 ## 5. 合入条件与串行集成
 
 合入前逐项核对：
 
-1. PR 为 Ready、目标 main、依赖已合入、文件范围与合同一致，审查发现均处置；高风险独立复核已完成，兼容/迁移/补偿明确。
+1. PR 为 Ready、目标 main、依赖已合入、文件范围与合同一致、对应 module/pair 或更高层证据成立，审查发现均处置；高风险独立复核已完成，兼容/迁移/补偿明确。
 2. fetch 最新 main 并核对其 SHA 是任务分支的祖先。若落后，在干净分支执行 `git merge origin/main`，解决冲突后重新复核和执行完整 PR 原始 base 的 check，再正常 push；不 rebase 已共享分支，不 force-push。原始 task base 保留，禁止缩小验证范围。
 3. 当前以本机适用自测、独立复核和精确源码报告判定准入。GitHub Actions已暂停，不要求两个远端quality job success；历史failed/missing不改写PASS，记录paused/not-run。缺失必要本地证据仍阻断，源码/冲突变化须补相应验证。
 4. 集成者保存合并前 main SHA 与已审查 head SHA，临合并再次核对主线未推进；如变化，停止并回到同步/验证。通过 GitHub **Create a merge commit** 合入，保留任务历史/receipt 可追溯性；不 squash/rebase merge，不使用管理员绕过。API/CLI 合入须提供 expected head SHA，防止 head 在审查后被替换。
@@ -83,7 +83,7 @@ git fetch origin
 git worktree add --detach <absolute-new-integration-worktree> <merge-sha>
 cd <absolute-new-integration-worktree>
 # 按当前锁定依赖准备 .venv
-.venv/bin/python scripts/harness.py check --base <main-before-merge-sha>
+.venv/bin/python scripts/harness.py check --level system --base <main-before-merge-sha>
 .venv/bin/python scripts/harness.py checkpoint --label <task>-main-verified --report <report.json>
 ```
 
@@ -111,3 +111,13 @@ cd <absolute-new-integration-worktree>
 ## 7. 清理与交接
 
 PR合入且主线验证通过后才可提议清理。先确认工作区干净、无active task、分支/检查点/证据可取；worktree/分支不自动删除，不批量推送 checkpoint。receipt 和 Git 目录归档不是异地备份；Actions artifacts 14天到期前把需长期保存的报告/trace转存授权位置。关闭未合并PR不算完成，task-abandon 留下原因、失败、依赖、现场与接续位置。
+
+## 8. 策略 v2 的连续配对与集成窗口
+
+[策略 v2](../docs/plans/2026-10-21-modular-delivery-v2.md)把需求小片作为任务单位。ROOT 是 PM/串行集成者，按实际四槽控制在制、写权与审查分工；模块稳定后指定真实消费者与最早配对窗，迟于目标窗口须记录阻塞 owner/解除动作。普通隔离单元/功能可并行，性能与共享迁移只独占受控资源。
+
+分支/PR 验证按 module/pair/system 层级选择；当前两 Python quality job 名称与真实候选检查保持。模块通过不要求每次编辑重跑所有数据库套件；公共影响/未知范围扩大检查。ROOT 把稳定小片聚成系统批次，精确 main 候选完成 system 与 main CI 前不推进下一批，I1/I2/I3 教程只能由系统实物提升。全程保留原 base、独立审查、merge commit 与正常推送；不将频率调整变为跳过恢复或发布义务。
+
+### 本地模块与系统证据分层
+
+精确主线候选使用 `--level system`，模块/配对报告不能建立main-verified系统记录。完整owner及真实依赖由模块负责人验证，跨模块用户旅程由系统测试独立负责；ROOT按Issue组织已有稳定批次，独立PM维护优先级/依赖/阻塞。远端CI暂停规则以当前治理为准，不恢复旧等待条件。

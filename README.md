@@ -1,5 +1,7 @@
 # GuraDB
 
+2026-10-21 起按[模块交付策略 v2](docs/plans/2026-10-21-modular-delivery-v2.md)组织开发：[细粒度需求矩阵](docs/product/requirements-v2.md)、[模块 owner/输入输出/运行时权威](docs/design/module-delivery-contracts.md)与四层验证共同约束实施。机器门禁由独立 `gates-v2` 任务落地，文档不表示新用户能力已通过；当前先交真实共同视图查询，再推进图文和训练。
+
 面向 **AI 训练、推理与 AI 应用** 的分布式多模态一体化数据库。
 
 GuraDB 的目标是在对象存储与开放湖上统一管理结构化数据、文本、图像、音频、视频、向量及关系数据，在同一查询体系内组合 SQL、全文检索、向量检索与 Graph 检索，并服务数据准备与可复现训练读取。

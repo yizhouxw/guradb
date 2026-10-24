@@ -42,3 +42,7 @@ M0 rust/functional/performance-smoke/stability-component 为ready，完整perfor
 [共用场景](functional/interface_scenarios.py)在M0 functional的PG子driver中启动真实HTTP及PG监听，对同一不可变manifest执行15种查询、7种参数场景、17种拒绝及撤权/恢复；每个成功场景同时比对HTTP、Psycopg 3.2.10 text/binary结果和PG18真值。int8按接口合同归一化，bool不当整数。保留原有psql、PG raw协议、容量/取消/预算、HTTP分页与S3测试。
 
 M1/M2的scan/search/graph/export仍由现有HTTP/CLI/MCPdriver验证；PG SQL端口只覆盖M0白名单，不声称这些job也有SQL入口。最新数值、缺口和命令见[实现与测试复审](../docs/reviews/2026-10-18-implementation-and-tests.md)。
+
+## 2026-10-24 用户授权的现行覆盖阈值（Refs #23）
+
+Python 全部自研生产源行覆盖率至少80%；Rust仍为现有经审查排除后的适用行100%。两者用合法整数covered/total交叉相乘判断，total必须大于0，不用显示百分比或舍入。完整源分母、未导入文件、身份前后绑定、测试失败拒绝保持；Python仍不允许行排除，Rust原21行清单不扩大。旧100%要求/历史报告保留为当时合同，不改写原失败或测量。本次政策实现与边界验证另记；80%不等于完整产品验收。

@@ -176,3 +176,58 @@ D1–D3修订后的候选状态：已按先行合同修改2个codec入口并保�
 前两轮FAIL完整保留：第一轮旧P04观察器把bind后剩余TTL错误加到C3的bind前T0；只新增pair观察器，保留实际T0/原parent截止/绝对wall映射，旧helper与原79单元不改。第二轮新fixture把撤grant的`unauthorized`误期待成epoch变化的`revoked`；普通最小复现确认既有语义后，仅修精确期望并保存expected/observed诊断。三轮闭包JSON实际路径数为75/76/76；此前口头73/74计数有误，以保全JSON为准。前两失败不是通过，第三轮也未抹去它们。
 
 原P04普通79、对象26、目录39单元均已通过；定向parent/child/组合/启动留证单元另有日志。这些及本次pair不替代原functional/performance/fault三mode或完整原base门禁。独立证据审、strict coverage、整项原base check、正常hook/提交后验证、上游依赖/PR/远端CI/精确main仍未闭合；PG远端停止确认、完整server费用、PG/native内存、单故障域以外/真实云/HA/生产规模仍缺失，不能据此声明完整产品支持或可发布。
+
+
+## 新 task：P04 controlled producer / IPC（2026-10-23，待实现）
+
+独立 worktree `/Users/chad/.codex/worktrees/p04-controlled-producer/guradb`，分支 `codex/p04-controlled-producer`，receipt9558d0ea10cf4bbea8a18433b3a9cd81，原base5a208d1befdf691cdc504dea5a61cac48f364c63。ROOT显式批准 stacked 例外，依赖 Draft PR18；PR/双版本CI/合入后主线复验仍需独立闭合。旧 C3 finished receipt/index/source 不追加行为。
+
+范围：Python controlled producer open/load/pages/credit/close、私有IPC worker/定长frame及对应unit/真实chain driver。Rust SourceCall local checkpoint、dual settlement、receiver preallocation、唯一prepare编排由 D2 独占；runtime/shared schema/locks/policy由 ROOT 冻结。当前只获三leaf docs与artifact写权，生产行为须双方最终manifest审后授权。文件各≤600行，不跨树import或实现第二SQL。
+
+不变量：INV-001/002/005/006/008/010/011；同binding/固定视图/撤权优先，before-bind T0、一次attach、预算min、单父信用真实所有权。producer内部 reservations 是≤8MiB grant子分配，不重复charge。readonly A-prefix、实际Execution累计、memory current/peak、transport各自口径固定。PG execution/cleanup域分离，1 in-flight+1未ACK缓存槽且全计费。close/reconcile不得重跑，unknown不退款伪known。
+
+最小顺序：联合冻结protocol/预算→本树三leaf先行→producer有限源码/ordinary unit及SOURCE独审→固定Linux拓扑独占预验→真IPC进程负例→独占真PG/S3全11/130 SQL链及实物审→正常原base全门禁/hook/commit/post/review/task-finish/checkpoint。首失败保原件，首次不得加256MiB预算或缩输入；两次无新证据失败转根因定位。PG pin和owned进程独立对账，回退代码不代表外部资源已清理。
+
+验收/预算详见本用户合同与场景表；计划命令集合由harness plan实际选择，planned/missing不写PASS。当前无SOURCE、服务、native或产品测试启动；当前文档不更改旧历史组件结果。
+
+
+### 受控 producer slice1 本地普通验证（2026-10-23）
+
+新任务9558d0ea的本地生命周期/同点witness/子信用切片完成首轮普通验证：新producer16/16与原7leaf direct source79/79通过，结果`artifacts/p04-controlled-producer/slice1/ordinary-first/result.json` SHA256 `52cb9ae48af7a74031616165ec3fa93c062fdda2de96078b7e11ec1d12ba897a`，分别实际进程2.816s/1.429s。48相关路径前后SHA一致，绑定源码修复清单`5fe26bc5`；ROOT独立核95项逐test、日志和进程终态，审查SHA `02ee3c3635cd2bd82c817371aa1c37f0622bf80464076d4fdda5a416a4a23b66`。本结果文字在测试后追加，不冒充已跑源码身份。
+
+验证使用真实PyArrow写出的有界Parquet fixture与mock对象transport，覆盖实际load后11/130 rows/pages、64/64/2、open成本不再写入首page A、精确usage_point/at_a/tail、单父子lease与ACK/close时consumer输出仍live；新增并发release确定性barrier及safe generation边界也通过。它只证明本地实现及原direct回归，不证明PG发行、跨进程Rust权威、实际IPC/receiver预授、worker kill/wait/reap或真实完整链。第一SOURCE审发现release竞态/generation无上界并保留，窄修后SOURCE增审通过；没有通过加预算/删原测试消除失败。
+
+该片仍未完成socket adapter、Linux PG/S3 namespace与实际query binary对接；实际PG→P04→Rust全11/130、新组合256MiB/32MiB真实binding、性能/故障与全原base门禁、正常hook/commit/post、task-finish/checkpoint、依赖PR18/双版本CI/main仍missing。close仅本地logical状态，旧Scope保守账未手减，native/server费用缺口保留；上节规划中这些行为仍待实现与验证。
+
+
+### Linux 原始 anchor 导入切片（待实现、待独立 SOURCE 审与容器验证）
+
+可信父进程先预付 bootstrap，再从固定继承配置上下文导入 exact80B GLNA v2/clock1/unit2；本片只提供 storage typed 一次消费入口，不实现 FD/worker/BIND arena。Python 新建 ReadParent 保留 Rust 原始 u64 T0_ns、boot/session/nonce/代际，fresh Linux CLOCK_MONOTONIC 与 boot 验证；不修改既有 parent.started、不注入伪 clock、不声称两个进程共享 ledger。ns 时间域不套 safeint 计数上限，query 截止只取 min，C1 秒投影向下不延长。
+
+每个本地执行操作携原始 operation/PG seq 与绝对 ns 截止，effective deadline 为 query/operation/page/cohort 最小值；原250ms准入及200ms清理余量同样约束更短 operation，退出操作不延长 query。错误/取消/重复消费/错 boot 或身份/未来 T0/过期/时钟回退明确拒绝，原 memory/直接读取路径保留。Rust 是唯一信用权威，Python 仅预授子分配与本地观察；native/server/完整 IPC 费用仍未知。
+
+验证映射：新 test_fixed_linux_anchor 结构/边界/一次消费/min/slack/浮点舍入负例及原 producer16+direct79 回归须在独立 SOURCE 审后经固定本地容器执行；实际同 Linux boot 跨进程时钟、真实 PG→P04→Rust full11/130、完整 harness/PR/CI 另片，当前均未认证。先行计划与 before 指纹见 artifacts/p04-controlled-producer/storage-linux-anchor-plan 和 storage-linux-anchor-implementation。
+
+
+### Linux anchor 本地容器 ordinary 结果（2026-10-23）
+
+本片实际源码先经 ROOT 独立 SOURCE 审（0196214a），随后固定本地 dev image `sha256:b12433266fb4c63839b077165bee7c770ab8c0d3321d42b817b35232eb020350`、network none、rootfs/工作树只读、临时 /tmp 首轮执行全部115单元：新anchor13、原producer16、原direct79、原parent完整7，115逐项ok，unittest1.648秒、Docker attach2.078秒、容器退出0。106相关源码/测试/锁/文档前后指纹相同；本轮nonce与exactCID、终态、8个Docker客户端PID/PGID及精确删除回读保存在 `artifacts/p04-controlled-producer/storage-linux-anchor-implementation/ordinary-first`，result SHA `4a3ccfb5fda92a82bca55489ca1863a5a0c2eaf82e50337c2903bdd04faec301`，无HOLD。
+
+这些结果只认证typed token结构、原T0/截止/slack/一次消费等本地合同和普通回归；其中Linux真实测试只在Python自身读boot/clock并导入，不证明Rust跨进程anchor来源。实际FD/bootstrap/BIND arena/PG→P04→Rust full11/130、query ABI与完整原基点门禁/正常提交/PR/CI仍待后续，native/driver/server费用未知边界不变。上方pending为测试前先行合同，此处只追加本次已执行范围，原C3与slice1历史证据分别保留。
+
+
+### 2026-10-24 FD protocol/worker有限Source切片（待实现）
+
+ROOT grant49e0c946，仅 fixed_fd_protocol.py/fixed_fd_worker.py、必要FixedProducer stop-only seam、新2unit与三docs；先保全532当前Source/15dirty/index/task9558，base5a/stackedPR18与全门禁保持。冻结joint GFD2/GLNAv2ns/三FD/双seq域/32消息/8MiB不无声变更；不复制reader/PG客户端，不新增通用authority。首先交可审实际protocol+已构造可信composition worker seam，固定config/launcher/新target/信用总相交缺口显式列missing；若现anchor双seq接口不能表达CLOSEpg0，先报ROOT赋域后最小接线，不能伪造序号/重置T0。
+
+行为真值是既有 FixedProducer/ControlledReads 的真实操作与累计invoice、精确A-prefix和终账；未知native/server费用不填0。CLOSE_PREPARE丢payload但本片不释放resident总grant，AUTH_RETIRE同C1普通票据，退出/reap/cleanup由Rust后片组合。保首错、原request和未知下界；不用新测试代旧115或缩输入/增预算。仅AST/差异静读，源码冻后独审再由ROOT安排普通/真实运行，不stage/commit/push。
+
+
+#### FD 首片独审待修（未运行）
+
+首冻结1aa0ec69保留。独审发现ACK函数局部A引用须在输出lease退款前销毁，以及CALL/PERMIT信用需严格safeint上界。仅窄修这两项与新负例；raw ns仍u64，原115定义/预算/launcher域保持。revision2 SOURCE独审后方可由ROOT安排普通运行，当前不标通过。
+
+
+### 私有fd0入口与新target装配（待实现，NOT_CERTIFIED）
+
+本片拟实现PCF2固定配置/原80B Linux anchor一次导入、同C1实际PG与FixedBackend、实测runtime HELLO；同类fixture-only SHA allowlist不是真实I1认证。新SQL target只改逻辑schema/映射与新SourceVersions/两metadata，保本轮原两Parquet raw/ref和全部11/130 cells；不重写旧dataset/metadata、不造binding。现revision2/实际142保留，新增接线与负例待独立Source审和ROOT实际运行。原预算/完整门禁/PR/CI不减，W/native/256和完整FD链仍未认证。
