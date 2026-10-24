@@ -46,3 +46,5 @@ ADR 用来记录已经比较过的方案和取舍。编号只表示记录顺序�
 2026-10-18 的[功能与架构复审](../reviews/2026-10-18-capability-architecture.md)和[行动计划](../plans/2026-10-18-next-stage.md)不替代上述历史决定。后续执行面、持久布局或跨机运行时的选型经实测后再形成新ADR。
 
 - [ADR 0015：严格生产源行覆盖与双接口场景](0015-unit-coverage-and-dual-interface-scenarios.md)：已采用测试门禁，覆盖率目标仍需实际证据达标；不扩展SQL产品白名单。
+
+- [ADR0023：固定模块团队、独立Issue与本机质量阶段](0023-team-issues-and-local-quality.md)：7个核心模块DRI、产品/架构/专职系统测试/集成/PM分责；暂停GitHub Actions与PR CI准入，保留本机质量。

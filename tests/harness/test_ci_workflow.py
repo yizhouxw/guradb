@@ -1,4 +1,5 @@
 import copy
+import json
 import os
 from pathlib import Path
 import re
@@ -19,6 +20,21 @@ from harnesslib.runner import check, run_command
 class CIWorkflowTests(unittest.TestCase):
     def setUp(self):
         self.workflow = yaml.load((ROOT / ".github/workflows/check.yml").read_text(), Loader=yaml.BaseLoader)
+        hosted_capacity_tests = {
+            "test_job_deadline_can_fit_serial_gate_deadlines_and_evidence_upload",
+            "test_every_registered_profile_fits_the_job_without_reducing_commands_or_upload_margin",
+        }
+        if self._testMethodName in hosted_capacity_tests:
+            state = json.loads((ROOT / "harness/ci-state.json").read_text())
+            self.assertIn(state["mode"], ("local_only", "github_actions"))
+            self.assertTrue(state["local_quality_required"])
+            if state["mode"] == "local_only":
+                self.assertFalse(state["github_actions_enabled"])
+                self.assertFalse(state["pr_remote_ci_required"])
+                self.assertTrue(state["resume_requires_explicit_user_decision"])
+                self.skipTest("User-paused hosted CI capacity; local suites and negative CI tests remain required")
+            self.assertTrue(state["github_actions_enabled"])
+
 
     def test_manual_checks_and_tokens_cannot_silently_skip_quality(self):
         workflow = self.workflow

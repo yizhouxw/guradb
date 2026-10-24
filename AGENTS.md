@@ -4,15 +4,17 @@
 
 先阅读 [README](README.md)、受影响目录的 AGENTS、对应 ADR 和 [harness 入口](harness/README.md)。长任务/上下文恢复时检查 Git 状态、当前变更计划、未解决风险与最新报告；旧摘要里的“通过”不能替代当前代码证据。
 
+团队按[固定模块责任与独立 Issue](harness/team-collaboration.md)协同：7个核心模块各有稳定开发DRI，产品、架构、专职系统测试、集成及PM分责；所有后续成员任务先查重再建独立GitHub Issue，派发前具备主模块/角色标签、唯一DRI、验收、依赖、下一动作与检查时间。总协调Issue不能代替成员任务，未验收不关闭。
+
 默认中文说明，英文代码标识符。按需加载相关文档，不把全部历史塞进上下文；长期决定进入 ADR，根文件保留导航和全局规则。
 
 ## Git 追溯与恢复
 
 遵循 [Git 工作流](harness/version-control.md) 与 [ADR 0008](docs/decisions/0008-git-traceability-and-recovery.md)。开始记录 `git status`、起始 commit/分支与检查点；不能自动 stage/stash/覆盖已有用户改动。
 
-当前采用 [GitHub PR 并行流程](harness/parallel-development.md)与 [ADR 0019](docs/decisions/0019-pr-parallel-development.md)：所有开发任务（含文档）默认使用 `codex/<task>` 分支，每个并行任务独占 worktree、task receipt 和文件范围；通过 PR 审查与 CI 后由集成者按依赖顺序串行合入 `main`，不直接向主线提交或推送。失败现场恢复仍在新目录。该约定替代此前普通任务直接 main 的规则；已存在的 dirty 任务保留原现场，迁移办法见流程。
+当前采用 [GitHub PR 并行流程](harness/parallel-development.md)与 [ADR 0019](docs/decisions/0019-pr-parallel-development.md)：所有开发任务（含文档）默认使用 `codex/<task>` 分支，每个并行任务独占 worktree、task receipt 和文件范围；通过本机适用自测与独立复核后由集成者按依赖顺序串行合入 `main`，不直接向主线提交或推送。失败现场恢复仍在新目录。本次团队/harness治理变更经用户明确授权直接提交main，由唯一集成者协调串行窗口、正常hook/推送并核验；普通后续任务仍默认独立分支/PR。该约定替代此前普通任务直接 main 的规则；已存在的 dirty 任务保留原现场，迁移办法见流程。
 
-有限切片通过门禁和复核后提交，记录变更、验证与恢复点；提交后生成精确绑定新 commit 的检查报告并建立 checkpoint。本仓库作者使用 `yizhouxw <yizhou.xw@gmail.com>`。用户已授权本仓库后续开发在门禁和复核通过、提交后验证完成后直接推送任务分支到现有 `origin` 并创建 PR，满足合入条件后通过 GitHub PR 合入 `main`，不再逐次询问；不得强推或覆盖远端新提交。远端设置和部署仍需另行授权。禁止为过门禁使用 `--no-verify` 或关闭 hook。
+有限切片通过门禁和复核后提交，记录变更、验证与恢复点；提交后生成精确绑定新 commit 的检查报告并建立 checkpoint。本仓库作者使用 `yizhouxw <yizhou.xw@gmail.com>`。用户已授权本仓库后续开发在门禁和复核通过、提交后验证完成后直接推送任务分支到现有 `origin` 并创建 PR，满足合入条件后通过 GitHub PR 合入 `main`，不再逐次询问；不得强推或覆盖远端新提交。当前已获用户授权暂停GitHub Actions CI/CD和PR远端CI准入，见[ADR0023](docs/decisions/0023-team-issues-and-local-quality.md)；其余远端设置和部署仍需另行授权。禁止为过门禁使用 `--no-verify` 或关闭 hook。
 
 非小型任务按[开发流程](harness/development-workflow.md)使用 `task-start --label ... --objective ...` 固定基点；plan/check/pre-commit 自动覆盖整项任务。恢复先读 `task-status`，最终提交后执行 check，再用 `task-finish --report ... --review ...` 核验原始范围、归档证据并结束。停止/交接用 task-abandon 保留现场，不把它标成完成。
 
@@ -36,7 +38,7 @@
 5. 单独审查差异、复杂度、边界和证据；高风险变更需要独立审查轮次或人工复核。
 6. 报告改了什么、为什么、实际命令和报告、缺失证据及风险。仅 bootstrap 通过不得宣称数据库质量通过或可发布。
 
-开始前写用户可观察验收、范围与支持/拒绝白名单；完成标准、依赖/迁移纪律、两次无新证据失败后的根因定位及交接遵循开发流程。CI/CD 采用 [GitHub Actions 分层方案](harness/ci-cd.md)，此前 bootstrap CI 已通过；新运行时变更需推送后验证，CD 待发布/环境合同。
+开始前写用户可观察验收、范围与支持/拒绝白名单；完成标准、依赖/迁移纪律、两次无新证据失败后的根因定位及交接遵循开发流程。当前暂停[GitHub Actions CI/CD及PR CI准入](harness/ci-cd.md)，以本机自测、独立复核与精确main证据保障合入；模块、真实配对、系统和release分别验收。原功能/性能/故障/长稳及预算不变，恢复CI/CD另行讨论授权。
 
 Python 3.11+ 开发依赖安装与 make 替代入口见 [harness/README.md](harness/README.md)。当前 M0/M1 有界读取及部分 M2/本地三 worker 切片已落地，范围见 docs/design/m2-running.md；rust/functional/performance-smoke/stability-component 为 ready，完整 performance/stability/soak 仍 planned。组件通过不等于完整发布通过。
 

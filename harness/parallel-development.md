@@ -1,12 +1,14 @@
 # GitHub PR 与多分支并行开发
 
-状态：2026-10-20采用的工程流程，见 [ADR 0019](../docs/decisions/0019-pr-parallel-development.md)。本轮只改变协作合同、文档和 PR 模板，无数据库用户行为、API、持久布局或性能变化；不要求新增数据库场景测试。已有 Actions 仍执行同一 harness，不新增假成功门禁。远端保护未由本文件自动开启。
+当前规则（2026-10-24）：[ADR0023](../docs/decisions/0023-team-issues-and-local-quality.md)已修订本页远端CI准入；GitHub Actions暂停，以本机适用自测/独审/main核验为合入依据。本次治理任务经用户授权直接提交main，普通后续任务仍分支/PR。团队与独立Issue见[协作合同](team-collaboration.md)。
+
+历史起点：2026-10-20采用的工程流程，见 [ADR 0019](../docs/decisions/0019-pr-parallel-development.md)。本轮只改变协作合同、文档和 PR 模板，无数据库用户行为、API、持久布局或性能变化；不要求新增数据库场景测试。当前已按用户授权停用Actions，配置保留，不新增假成功门禁。远端保护未由本文件自动开启。
 
 ## 1. 验收、范围与角色
 
-验收结果：贡献者能从固定基点建立隔离任务，按文件归属并行开发，提交可追溯证据，通过 PR 评审、两版本 CI、按依赖顺序合入主线，再验证最终合并 commit。普通文档任务也走 PR；不再直接提交或推送 main。支持独立任务和有依赖任务，拒绝共享 dirty 目录、未声明的跨 owner 修改、绕过检查合并和强推历史。
+验收结果：贡献者能从固定基点建立隔离任务，按文件归属并行开发，提交可追溯证据，通过本机适用自测与独立评审、按依赖顺序合入主线，再验证最终合并 commit。普通文档任务也默认走 PR；用户明确授权的直接main任务须由集成者串行操作并保留本地证据。支持独立任务和有依赖任务，拒绝共享 dirty 目录、未声明的跨 owner 修改、绕过检查合并和强推历史。
 
-- 协调者在计划/Issue 中记录任务 ID、目标/非目标、可观察验收、owner、分支/worktree、起始 SHA/合同版本、允许文件域、依赖 PR、审查责任与集成顺序。小任务可直接写 PR；大型需求使用[变更计划](templates/change-plan.md)。
+- 协调者在计划/Issue 中记录任务 ID、目标/非目标、可观察验收、owner、分支/worktree、起始 SHA/合同版本、允许文件域、依赖 PR、审查责任与集成顺序。所有后续成员任务均需独立Issue和主模块标签，不以总协调Issue或PR代替；大型需求使用[变更计划](templates/change-plan.md)。
 - 实现者独占一个任务分支/worktree，维护用户文档先行合同、task receipt 和证据；同一 worktree 不由多个写入者操作。
 - 审查者单独阅读 diff、边界、负例、复杂度和证据，记录发现及处置，不能仅转述作者总结。高风险需独立审查轮次或人工复核，保留既有门禁要求。
 - 集成者只串行合入已满足条件的 PR，保存合并前 main、head、最终 merge SHA 和集成报告；上一项集成未验证不得继续下一项。
@@ -69,7 +71,7 @@ git push -u origin codex/<task>
 
 1. PR 为 Ready、目标 main、依赖已合入、文件范围与合同一致，审查发现均处置；高风险独立复核已完成，兼容/迁移/补偿明确。
 2. fetch 最新 main 并核对其 SHA 是任务分支的祖先。若落后，在干净分支执行 `git merge origin/main`，解决冲突后重新复核和执行完整 PR 原始 base 的 check，再正常 push；不 rebase 已共享分支，不 force-push。原始 task base 保留，禁止缩小验证范围。
-3. GitHub 当前 PR 测试合并树的 `quality (Python 3.11)` 和 `quality (Python 3.14)` 均 success。不能用分支 push CI、旧 head 的绿灯、仅 workflow_dispatch、skipped/cancelled/missing 代替。记录 PR head/base SHA、run URL 与 job 结论；证据与当前候选不一致则等待重验。
+3. 当前以本机适用自测、独立复核和精确源码报告判定准入。GitHub Actions已暂停，不要求两个远端quality job success；历史failed/missing不改写PASS，记录paused/not-run。缺失必要本地证据仍阻断，源码/冲突变化须补相应验证。
 4. 集成者保存合并前 main SHA 与已审查 head SHA，临合并再次核对主线未推进；如变化，停止并回到同步/验证。通过 GitHub **Create a merge commit** 合入，保留任务历史/receipt 可追溯性；不 squash/rebase merge，不使用管理员绕过。API/CLI 合入须提供 expected head SHA，防止 head 在审查后被替换。
 
 有远端 strict required checks 时由平台同时约束最新主线；没有保护时上述串行核对是协作约束，无法消除外部写入者在检查后推进 main 的竞争，不能宣称技术强制。不得因此自动降级门禁或补推 main。
@@ -85,13 +87,13 @@ cd <absolute-new-integration-worktree>
 .venv/bin/python scripts/harness.py checkpoint --label <task>-main-verified --report <report.json>
 ```
 
-核对该 merge commit 的主线 push Actions 两个 job 也通过，将 PR URL、原始任务 base、head、合并前 main、merge SHA、分支 receipt/checkpoint、主线报告/checkpoint 与远端 run 组成交付记录。若主线已被外部推进，先验证该精确 merge，再验证推进后的实际候选；停止下一次集成直到范围与证据明确。原 main 工作区若 dirty，不执行 pull/reset，保留并报告待同步状态。
+当前不等待主线push Actions；将远端CI状态如实记为暂停，再将 PR URL、原始任务 base、head、合并前 main、merge SHA、分支 receipt/checkpoint、主线报告/checkpoint 与远端 run 组成交付记录。若主线已被外部推进，先验证该精确 merge，再验证推进后的实际候选；停止下一次集成直到范围与证据明确。原 main 工作区若 dirty，不执行 pull/reset，保留并报告待同步状态。
 
 合并后失败：停止后续合入，保存日志/diff/基点，修复或撤销均走新分支与 PR。撤销 merge commit 需先复核父提交和依赖，再在干净任务分支执行 `git revert -m 1 <merge-sha>`，验证后创建 revert PR；不重写 main。代码撤销不恢复数据/外部副作用，按迁移/对账合同补偿。恢复遵循[安全恢复](version-control.md)。
 
-## 6. GitHub 保护设置与实际状态
+## 6. GitHub 保护设置与实际状态（恢复CI后另议）
 
-以下是管理员后续实施的目标配置；远端设置仍需用户另行授权。本轮不调用权限/保护设置 API，不因仓库内有模板就声称保护已启用。
+以下表格仅保留恢复CI后的候选配置，当前不启用远端required checks、不据此阻塞PR。暂停Actions及取消PR远端CI准入已经用户授权；其余权限/保护变化仍需明确授权。以下是管理员后续实施的目标配置；远端设置仍需用户另行授权。本轮不调用权限/保护设置 API，不因仓库内有模板就声称保护已启用。
 
 | 目标配置 | 要求与核验 |
 | --- | --- |

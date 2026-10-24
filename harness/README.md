@@ -27,7 +27,9 @@ python3 -m venv .venv
 .venv/bin/python scripts/harness.py check --scope release
 ```
 
-并行开发统一按 [GitHub PR 流程](parallel-development.md)：一任务一分支/worktree，独立证据与审查，依赖顺序串行合入 main；不直接推送主线。
+团队职责、独立任务Issue与模块标签见[团队协作](team-collaboration.md)及[标签清单](module-labels.json)。所有后续成员任务均独立登记并由PM核对标签/DRI后派发。当前[暂停远端Actions/PR CI准入](ci-cd.md)，本机适用自测、独审和精确main核验继续必需。
+
+并行开发统一按 [GitHub PR 流程](parallel-development.md)：一任务一分支/worktree，独立证据与审查，依赖顺序串行合入 main；本次治理变更依用户明确指令由单一集成者直接提交main，保留正常hook、本地验证和推送核对。
 
 ## 工作闭环
 
@@ -55,7 +57,8 @@ python3 -m venv .venv
 | [首次内核接入](runtime-onboarding.md) | 从 planned 到真实代码门禁的步骤 |
 | [Git 追溯与恢复](version-control.md) | 有限切片提交、检查点、提交前门禁与保留现场的恢复 |
 | [开发流程](development-workflow.md) | 任务起止、验收/复核、失败与交接、依赖/迁移及证据归档 |
-| [GitHub Actions CI/CD](ci-cd.md) | CI 事件/权限/预算、远端接入与后续部署晋升合同 |
+| [团队协作](team-collaboration.md) | 固定模块DRI、产品/架构/系统测试、独立任务Issue与模块标签 |
+| [本机质量与 CI 暂停](ci-cd.md) | 当前本地验收、Actions停用状态与重新启用条件 |
 
 本地依赖检查含 Cargo 普通、dev、build、target-specific 和 workspace 继承，以及包/模块循环。未归属代码、超过 600 行的源文件、检查范围内的符号链接会失败。600 行是可维护性门槛，不是性能指标；Python生产模块另做真实AST import DAG、compileall与锁/依赖检查；其它新语言仍需对应检查器，不能只靠Cargo lint。
 
@@ -71,4 +74,4 @@ M0/M1 已接入真实功能、组件基准和故障注入；完整性能、完�
 
 非小型任务用 task-start 记录目标与原始 base，task-status 恢复上下文，最终提交后 check，再用 task-finish --report/--review 验证整项范围并归档；task-abandon 只停止记录，保留文件与 Git 历史。checkpoint 同样重验报告/全部命令/日志 SHA-256，证据归档到共同 Git 管理目录，不依赖 artifacts 永久留存。
 
-GitHub Actions 在 PR/push/手动运行同一入口，配置 Python 3.11/3.14 和失败证据上传；共享 runner 不用于给数据库性能背书。此前bootstrap远端CI已通过，本轮M0矩阵待推送验证；保护规则未验证，尚不能保证阻止绕过CI。建立远端后将对应 quality jobs 设为必需检查，并对 harness、基线和持久化协议变更设置独立复核；仓库内自检不替代平台合并权限。CD 待服务/产物/环境合同，见 CI/CD 文档。
+GitHub Actions质量和诊断工作流当前已按用户指令停用，配置保留；PR不再等待远端quality检查。历史失败/缺失原样记录，本机适用检查、独审与main证据仍须真实通过；完整release的planned/missing仍阻断。未来恢复CI/CD与平台required checks须重新讨论授权，见[当前规则](ci-cd.md)。

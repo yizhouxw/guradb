@@ -1,0 +1,79 @@
+name: 团队独立任务
+description: 每位负责人的有限交付、审查、系统测试或阻塞解除任务
+title: "[模块] 可验收任务"
+body:
+  - type: markdown
+    attributes:
+      value: "派发前由 PM 添加一个主 module:* 和一个 role:* 标签并设置 assignee。下拉框不会自动贴标签；主协调单不能替代独立任务。"
+  - type: dropdown
+    id: module
+    attributes:
+      label: 主模块标签
+      options:
+        - module:common
+        - module:catalog
+        - module:storage
+        - module:connectors
+        - module:query
+        - module:index
+        - module:cluster
+        - module:gateway
+        - module:harness
+        - module:system
+        - module:project
+    validations:
+      required: true
+  - type: dropdown
+    id: role
+    attributes:
+      label: 责任角色标签
+      options:
+        - role:product
+        - role:architecture
+        - role:development
+        - role:system-test
+        - role:integration
+        - role:pm
+    validations:
+      required: true
+  - type: input
+    id: dri
+    attributes:
+      label: 唯一 DRI、GitHub assignee、独立 reviewer 与消费者
+      description: "同一账号下的 agent 必须写完整会话 ID；未分配写待派发并由 PM 补齐后开工。"
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 目标、验收与非目标
+      description: "用户/消费者可观察结果、支持/拒绝及模块/配对/系统/发布层级。"
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 文件域、原始 base、分支/worktree 与共享资源
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: 依赖、需求/ADR 与关联 PR
+      description: "blocked-by Issue/PR；没有则写无。PR 使用 Refs，未验收不提前关闭任务。"
+    validations:
+      required: true
+  - type: textarea
+    id: next
+    attributes:
+      label: 下一可验证动作、检查时间和阻塞时间盒
+      description: "写明时区、预期证据出口；阻塞附 blocked_since/原因/责任。"
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 实际验证、复核、main SHA 与剩余事项
+      description: "实施前写待验证；完成前补命令/报告/源码版本、发现处置、恢复和资源清理。"
+    validations:
+      required: true

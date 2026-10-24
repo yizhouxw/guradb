@@ -5,6 +5,8 @@
 - 依据：用户要求为本项目设定基于 GitHub Pull Request 的多分支并行开发流程
 - 规范：[PR 并行流程](../../harness/parallel-development.md)、[版本追溯](../../harness/version-control.md)、[CI/CD](../../harness/ci-cd.md)
 
+> 2026-10-24更新：[ADR0023](0023-team-issues-and-local-quality.md)已暂停GitHub Actions和PR远端CI准入，改由本机自测/独审/精确main证据保障质量，并规定固定模块DRI和独立任务Issue。本次治理任务依用户授权直接提交main。下文保留历史决定，其远端CI必需条件不再适用。
+
 ## 决定
 
 所有开发（含文档）默认一任务一 `codex/<task>` 分支和独立 worktree，以 main 为持续集成主线，通过 GitHub PR 审查与 CI 后串行合入。该决定替代 [ADR 0008](0008-git-traceability-and-recovery.md) 中普通任务直接main、开发后本地合并推送的约定；保留其非破坏恢复、原始范围门禁、commit绑定证据和checkpoint。
