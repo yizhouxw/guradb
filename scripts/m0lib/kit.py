@@ -119,7 +119,7 @@ class Lab:
             time.sleep(.05)
         raise AssertionError(f'service did not become ready: {last}')
 
-    def s3(self):
+    def s3(self, *, direct=False):
         credentials = {'identities': [{'name': 'test-driver', 'credentials': [{'accessKey': 'm0-test-key', 'secretKey': 'm0-test-secret'}],
                                        'actions': ['Admin', 'Read', 'Write', 'List', 'Tagging']}]}
         config = self.directory / 's3.json'
@@ -130,7 +130,17 @@ class Lab:
         endpoint = 'http://127.0.0.1:' + self.port(self.store, 8333)
         self.client = boto3.client('s3', endpoint_url=endpoint, region_name='us-east-1', aws_access_key_id='m0-test-key',
                                    aws_secret_access_key='m0-test-secret', config=Config(signature_version='s3v4', retries={'max_attempts': 0},
-                                                                                    connect_timeout=2, read_timeout=3, s3={'addressing_style': 'path'}))
+                                                                                    connect_timeout=2, read_timeout=3, s3={'addressing_style': 'path'},
+                                                                                    **({'proxies': {}} if direct else {})))
+        if direct:
+            store = json.loads(docker('inspect', self.store).stdout)[0]
+            image = json.loads(docker('image', 'inspect', store['Image']).stdout)[0]
+            assert store['Config']['Image'] == S3 and image['Id'] == store['Image']
+            # An owned driver may export these fields, never the raw inspect/config.
+            self.s3_certification = {'requested_image': S3, 'image_id': image['Id'],
+                                     'container_image_id': store['Image'], 'os': image['Os'],
+                                     'architecture': image['Architecture'],
+                                     'repo_digests': image.get('RepoDigests', [])}
         self.wait(lambda: self.client.list_buckets() is not None)
         self.client.create_bucket(Bucket='m0-data')
         for path in (self.directory / 'objects').glob('*.parquet'):

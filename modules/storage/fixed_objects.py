@@ -5,6 +5,7 @@ from modules.common.cf1a_ports import ObjectReadPort
 from modules.common.cf1a_primitives import ContractFailure, canonical, require, validate_shape
 from modules.common.cf1a_read import validate_access, validate_range
 from modules.storage.fixed_cache import VerifiedCache
+from modules.storage.fixed_parent import ControlledAuthority
 from modules.storage.fixed_proofs import ProofAuthority, verify_bytes
 from modules.storage.fixed_signing import FixedBackend, validate_key
 from modules.storage.fixed_transport import fetch
@@ -15,7 +16,11 @@ TRANSIENT_FIXED_BYTES = 128 << 10
 
 class FixedObjects:
     """One caller-owned cumulative scope; no catalog or cloud SDK leaks upward."""
-    def __init__(self, scope, backends, reauthorize, *, proofs=None, cache=None):
+    def __init__(self, scope, backends, reauthorize=None, *, proofs=None, cache=None, controlled=None):
+        require((reauthorize is None) != (controlled is None), 'choose exactly one authority slot')
+        require(controlled is None or (type(controlled) is ControlledAuthority and
+                controlled.parent is scope.parent), 'controlled authority differs from scope')
+        self.controlled = controlled
         require(type(backends) is dict and len(backends) == 1,
                 'exactly one explicit backend is certified', 'unsupported_capability')
         name, backend = next(iter(backends.items()))
@@ -39,10 +44,11 @@ class FixedObjects:
                           + self.proofs.memory_bytes * 4 + self.cache.capacity + 16384)
         self.port = ObjectReadPort(verify_proof=self.proofs.verify, read=self.read)
 
-    def _authorize(self):
+    def authorize(self):
         self.scope.check()
         try:
-            epoch = self.reauthorize(self.scope.binding)
+            epoch = (self.reauthorize(self.scope.binding) if self.controlled is None
+                     else self.controlled.authorize(self.scope))
         except ContractFailure:
             raise
         except Exception:
@@ -68,7 +74,7 @@ class FixedObjects:
             require(ref['backend_id'] == backend.backend_id, 'object backend is not configured', 'unsupported_capability')
             require(backend.versioning_certified and ref['bucket'] == backend.bucket and ref['version'] != 'null',
                     'immutable backend version is not certified', 'unsupported_capability')
-            self._authorize()
+            self.authorize()
             # Cache hits obey the same declared credential-expiry contract as GETs.
             backend.credentials.frozen(scope.context['deadline_unix_ms'])
             scope.output(length)
@@ -83,7 +89,7 @@ class FixedObjects:
                     scope.event('cache_hit')
                 require(len(data) == length, 'cached or backend length mismatch', 'corrupt_object')
                 verify_bytes(ref, offset, data, scope)
-                self._authorize()
+                self.authorize()
                 self.cache.put(key, data)
                 scope.delivered(length)
                 memory.keep(length + 64)
@@ -93,7 +99,7 @@ class FixedObjects:
         remaining = 3
         while True:
             remaining -= 1
-            self._authorize()
+            self.authorize()
             try:
                 return fetch(self.scope, backend, ref, offset, length)
             except ContractFailure as error:

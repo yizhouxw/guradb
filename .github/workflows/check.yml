@@ -24,7 +24,7 @@ jobs:
   quality:
     name: quality (Python ${{ matrix.python }})
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ inputs.scope == 'release' && 360 || 300 }}
+    timeout-minutes: ${{ inputs.scope == 'release' && 360 || 340 }}
     strategy:
       fail-fast: false
       matrix:

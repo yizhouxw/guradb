@@ -5,6 +5,7 @@ from modules.common.cf1a_primitives import ContractFailure, require
 from modules.common.cf1a_read import validate_access
 from modules.catalog.cf1a_access import live_grant, principal_for
 from modules.catalog.cf1a_codec import contract, stored_contract
+from modules.catalog.cf1a_control import finite, transaction
 from modules.catalog.cf1a_pg import remaining
 from modules.catalog.cf1a_store import CommitUnknown
 
@@ -34,7 +35,7 @@ class Bindings:
                 'stored view selector mismatch')
         return row, request, binding
 
-    def current(self, conn, row, principal, binding, deadline):
+    def current(self, conn, row, principal, binding, deadline, control=None):
         value = binding.value
         context = value['context']
         principal_for(principal, row['tenant'])
@@ -48,19 +49,23 @@ class Bindings:
                 all(value[name] == target.value[name] for name in ('resource', 'revision', 'view', 'indexes')),
                 'query no longer identifies retained published target', 'unauthorized')
         self.store.protection.verify(target, now, context['pin']['expires_unix_ms'])
-        remaining(deadline)
+        remaining(deadline, control)
         validate_access(value, self.store.now(conn), row['policy_epoch'])
+        if control is not None:
+            remaining(deadline, control)
         return row['policy_epoch']
 
-    def bind(self, principal, request):
+    def bind(self, principal, request, *, control=None):
         require(request.kind == 'bind_request', 'expected BindRequest')
         value = request.value
         principal_for(principal, value['tenant_id'])
         require(value['subject_id'] == principal.subject_id and value['delegation_ref'] == principal.delegation_ref,
                 'bind request does not authenticate subject', 'unauthorized')
         deadline = time.monotonic() + value['timeout_ms'] / 1000
+        if control is not None:
+            deadline = control.limit(value['timeout_ms'] / 1000)
         try:
-            with self.store.transaction(deadline) as conn:
+            with transaction(self.store, deadline, control) as conn:
                 row = self.store.dataset(conn, value['tenant_id'], value['dataset_id'])
                 old = conn.execute('SELECT query_id FROM gura_cf1a.queries WHERE dataset=%s AND query_id=%s',
                                    (value['dataset_id'], value['query_id'])).fetchone()
@@ -69,7 +74,7 @@ class Bindings:
                     require(original.sha256 == request.sha256 and original.encoded == request.encoded,
                             'query ID reused with different complete request', 'conflict')
                     require(not query['released'], 'released query identity cannot revive', 'expired_context')
-                    self.current(conn, row, principal, binding, deadline)
+                    self.current(conn, row, principal, binding, deadline, control)
                     return binding
                 now = self.store.now(conn)
                 grant = live_grant(conn, row, principal, ['read'], now)
@@ -77,10 +82,10 @@ class Bindings:
                 require(bool(selected), 'no published read view', 'conflict')
                 target_row, target = self.store.target(conn, row['tenant'], row['dataset'], selected)
                 require(target_row['state'] == 'published', 'target is not published', 'conflict')
-                until = now + min(value['timeout_ms'], int(remaining(deadline) * 1000))
+                until = now + min(value['timeout_ms'], int(remaining(deadline, control) * 1000))
                 self.store.protection.verify(target, now, until)
                 now = self.store.now(conn)
-                ttl = min(value['timeout_ms'], int(remaining(deadline) * 1000))
+                ttl = min(value['timeout_ms'], int(remaining(deadline, control) * 1000))
                 require(ttl > 0, 'bind deadline reached', 'deadline')
                 expires = now + ttl
                 require(grant['expires_unix_ms'] >= expires and
@@ -108,35 +113,45 @@ class Bindings:
                     (row['dataset'], value['query_id'], principal.subject_id, principal.delegation_ref,
                      request.encoded, request.sha256, binding.encoded, binding.sha256,
                      context['pin']['pin_id'], context['pin']['lease_id'], expires))
-                remaining(deadline)
+                remaining(deadline, control)
                 validate_access(binding.value, self.store.now(conn), row['policy_epoch'])
+                if control is not None:
+                    remaining(deadline, control)
                 return binding
         except CommitUnknown:
             raise ContractFailure('outcome_unknown', 'retry identical BindRequest/query ID to recover issued lease') from None
 
-    def reauthorize(self, principal, binding):
+    def reauthorize(self, principal, binding, *, control=None, operation_deadline=None):
         require(binding.kind == 'read_binding', 'expected issued ReadBinding')
         context = binding.value['context']
         # Keep this operation inside the original fixed query deadline.
         wall_remaining = context['deadline_unix_ms'] - int(time.time() * 1000)
         require(wall_remaining > 0, 'query deadline reached', 'deadline')
         deadline = time.monotonic() + min(5000, wall_remaining) / 1000
+        if control is not None:
+            deadline = control.limit(min(5000, wall_remaining) / 1000)
+        if operation_deadline is not None:
+            require(control is not None, 'child deadline requires controlled catalog read')
+            deadline = min(deadline, finite(operation_deadline))
+            control.remaining(deadline)
         try:
-            with self.store.transaction(deadline) as conn:
+            with transaction(self.store, deadline, control) as conn:
                 row = self.store.dataset(conn, context['tenant_id'], context['dataset_id'])
                 query, _, issued = self.stored(conn, row['dataset'], context['query_id'])
                 require(issued.encoded == binding.encoded, 'binding differs from issued immutable bytes', 'unauthorized')
                 require(not query['released'], 'query lease released', 'expired_context')
-                return self.current(conn, row, principal, binding, deadline)
+                return self.current(conn, row, principal, binding, deadline, control)
         except CommitUnknown:
             raise ContractFailure('backend_unavailable', 'reauthorization result not confirmed') from None
 
-    def release(self, principal, binding):
+    def release(self, principal, binding, *, control=None, deadline=None):
         require(binding.kind == 'read_binding', 'expected issued ReadBinding')
         context = binding.value['context']
         principal_for(principal, context['tenant_id'])
+        deadline = time.monotonic() + 5 if control is None else (
+            control.limit(5) if deadline is None else deadline)
         try:
-            with self.store.transaction(time.monotonic() + 5) as conn:
+            with transaction(self.store, deadline, control) as conn:
                 row = self.store.dataset(conn, context['tenant_id'], context['dataset_id'])
                 query, _, issued = self.stored(conn, row['dataset'], context['query_id'])
                 require(issued.encoded == binding.encoded, 'cleanup must match exact issued binding', 'unauthorized')

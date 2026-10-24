@@ -79,6 +79,16 @@ class PolicyTests(unittest.TestCase):
         self.assertTrue({"performance-smoke", "stability-component", "performance", "stability", "soak"}
                         .issubset(self.config[0]["release_suites"]))
 
+    def test_fixed_catalog_driver_changes_require_all_component_evidence(self):
+        required = {"python", "functional", "performance-smoke", "stability-component", "unit-coverage"}
+        for path in ("scripts/fixed_catalog_acceptance.py", "tests/catalog_support/__init__.py",
+                     "tests/catalog_support/pg_transport.py"):
+            with self.subTest(path=path):
+                result = plan(ROOT, [path], *self.config[:3])
+                self.assertTrue(required.issubset(result["required_suites"]))
+                self.assertFalse({"performance", "stability", "soak"}.intersection(result["required_suites"]))
+        docs = plan(ROOT, ["tests/catalog_support/README.md"], *self.config[:3])
+        self.assertFalse(required.intersection(docs["required_suites"]))
     def test_fixed_object_driver_and_support_cannot_bypass_component_gates(self):
         required = {"python", "functional", "performance-smoke", "stability-component", "unit-coverage"}
         for path in ("scripts/fixed_objects_acceptance.py", "tests/storage_support/__init__.py",
@@ -95,16 +105,34 @@ class PolicyTests(unittest.TestCase):
         self.assertFalse(documentation["runtime_changed"])
         self.assertEqual(set(documentation["required_suites"]), set(self.config[0]["bootstrap_suites"]))
 
-    def test_fixed_catalog_driver_changes_require_all_component_evidence(self):
+    def test_fixed_source_driver_and_support_cannot_bypass_component_gates(self):
         required = {"python", "functional", "performance-smoke", "stability-component", "unit-coverage"}
-        for path in ("scripts/fixed_catalog_acceptance.py", "tests/catalog_support/__init__.py",
-                     "tests/catalog_support/pg_transport.py"):
+        paths = ["scripts/fixed_sources_acceptance.py", "tests/source_support/__init__.py",
+                 "tests/source_support/fixed_fixture.py", "tests/source_support/fixed_acceptance.py",
+                 "tests/source_support/fixed_backend_cases.py", "tests/source_support/fixed_fault_cases.py",
+                 "tests/source_support/fixed_evidence.py"]
+        for path in paths:
             with self.subTest(path=path):
                 result = plan(ROOT, [path], *self.config[:3])
+                self.assertTrue(result["runtime_changed"])
                 self.assertTrue(required.issubset(result["required_suites"]))
-                self.assertFalse({"performance", "stability", "soak"}.intersection(result["required_suites"]))
-        docs = plan(ROOT, ["tests/catalog_support/README.md"], *self.config[:3])
-        self.assertFalse(required.intersection(docs["required_suites"]))
+                self.assertFalse({"rust", "performance", "stability", "soak"}
+                                 .intersection(result["required_suites"]))
+        documentation = plan(ROOT, ["tests/source_support/README.md"], *self.config[:3])
+        self.assertFalse(documentation["runtime_changed"])
+        self.assertEqual(set(documentation["required_suites"]), set(self.config[0]["bootstrap_suites"]))
+
+    def test_fixed_source_gates_execute_all_three_modes(self):
+        suites = self.config[0]["suites"]
+        for suite, mode in (("functional", "functional"), ("performance-smoke", "performance"),
+                            ("stability-component", "fault")):
+            commands = [command for command in suites[suite]["commands"]
+                        if "scripts/fixed_sources_acceptance.py" in command]
+            self.assertEqual(commands, [["{python}", "scripts/fixed_sources_acceptance.py", "--mode", mode,
+                                         "--run-dir", "{run_dir}/fixed-sources-" + mode]])
+        compileall = suites["python"]["commands"][0]
+        self.assertIn("scripts/fixed_sources_acceptance.py", compileall)
+        self.assertIn("tests/source_support", compileall)
 
     def test_client_cannot_hide_as_documentation(self):
         result = plan(ROOT, ["clients/cli/main.py"], *self.config[:3])

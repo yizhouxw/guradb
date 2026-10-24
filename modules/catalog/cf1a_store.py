@@ -26,19 +26,21 @@ class CatalogStore:
         conn.commit()
 
     @contextmanager
-    def transaction(self, deadline):
+    def transaction(self, deadline, control=None):
         conn = None
         committing = False
         try:
-            conn = connect(self.dsn, deadline)
-            millis = max(1, int(remaining(deadline) * 1000))
+            conn = connect(self.dsn, deadline) if control is None else connect(self.dsn, deadline, control)
+            millis = max(1, int(remaining(deadline, control) * 1000))
             conn.execute("SELECT set_config('statement_timeout',%s,true), "
                          "set_config('lock_timeout',%s,true)", (f'{millis}ms', f'{millis}ms'))
             yield conn
-            remaining(deadline)
+            remaining(deadline, control)
             committing = True
+            if control is not None:
+                conn.phase = 'commit'
             self.commit(conn)
-            remaining(deadline)
+            remaining(deadline, control)
         except BaseException as error:
             if committing:
                 raise CommitUnknown('catalog commit outcome unknown') from None

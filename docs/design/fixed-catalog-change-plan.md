@@ -1,5 +1,23 @@
 # 变更计划：P02 CF1-A 固定目录首片
 
+## C1 父控制读取供应方（先行合同与有限实际结果）
+
+原86fc任务已completed且树clean；新task a4ddd8fafdf04304a24bd4f474831ca5固定86fcaf093deaba98c0495f775ac1d4767bbbf950，checkpoint235149Z/15f99ffc。ROOT与P01 f08ffa52有限接口复核通过，完整before/receipt先保全；三leaf本节先于代码。仅本地/任务分支，远端CI阻塞保留，禁止合main。
+
+新增cf1a_control/controlled两个私有职责模块，必要适配catalog/binding/pg/store；两unit与pg_control_cases、原driver只加control分支。组合根bind前单一T0，受信control checkpoint返回当前只缩短的绝对mono期限并检查同一cancel，PG在connect/poll/select、generator首推进与完成、SQL/authority后、COMMIT前后fresh检查。effective=min父/原op cap/binding wall剩余，保留原10ms poll与1s页/5scohort/30sTTL。COMMIT尝试后中断仍unknown，precommit关闭不阻塞rollback/cancel。private invoice仅真实PG成本观察，不把重叠时段重复计入父elapsed，不假报PG/native内存或对象费用。
+
+facade首次bind就固定且consume完整原request，unknown不自动重bind。原request found cleanup同dataset锁严格复用stored验证，核subject/delegation与真实binding/pin/lease，撤权/过期后仍只精确released；独立cleanup control≤5s。absent只cleanup_unconfirmed，COMMIT未知仍unknown；不返回数据binding、不造空墓碑、不减容量、不改变schema。durable closed-request及迟到排除独立C2。
+
+事前profile：一个真实PG小published target，32新parent query每次1000ms内bind+reauth，独立≤5s cleanup；control整轮仍120s。100ms父黑洞/paused/行锁沿原50ms容差；cancel/更小child/晚authority/commitunknown及found/absent/wrongidentity清理逐独立SQL核对。原functional/performance/fault输入、配额7边、阈值和旧单位不删减，本次共享PG路径变更后各mode一次有影响回归。SOURCE/纯测稳定后冻结不并写再真实测，首FAIL保留定位，不无证据重试/抬预算。A/schema/锁/globalharness/21排除不改，每源≤600；真实Source/PG对象配对和内存总账/I1后续两端验收。
+
+### C1 本次有限实测
+
+冻结13源 `98b7032dce03f53f5f308f4e3607ce27f32a25cad10d42aaa247d863db21cfd6`，原base86fc/task a4ddd保持。首13纯测失败原件保留：controlled selector入场先检查parent与SQLite新fixture处理Composed的最小修复后13PASS；原26+新13共39纯单元PASS。未以此证明真实PG。
+
+真实control/functional/performance/fault各首次一次通过，driver分别5.179/1.896/29.888/8.008秒，外层actual exit均0，13source前后相同、cleanup0且所有owned进程/容器退出。四报告SHA依次 `a387c3799860eb4cf1f5f2ca8b771c1474e26152237fad70a70f1a5d558e82ba`、`24dd6ae5c669622f3cbc21c5284814062bdc3f618b8c0e46aee6532e6bd751d2`、`9dea744a0e256ffee2651ec550973e199e90267484c9376199051a95ed4cdb98`、`73de0b39e779d237ad605531a7389f06a329a9539c345adf7d471b42c82cb67d`。新control100raw/42case/32query及SQL账本由P01有限独审 `c8f3c52a729a35f403d5f0771a41f33ed922a81b73238f639ad181559ead394d` 核实；原容量4515raw此次未由P01重复扫描，不能将该有限审查说成全raw独审。
+
+准确入口：`artifacts/c1-parent-control-source/real-first/evidence-index.json` SHA `7ca85c56d7ac2889f367621c13cfde954d55d9f6d359fa85d179b708bfe05362`。客户端paused SQL100.228ms；含夹具unpause/恢复178.019ms单列，行锁取消26.722ms只证明客户端返回/FDclose。serverbackend停止、PG cancel确认、完整server费用/PGnative memory仍missing；strict/full/task出口、真实pair/Rust/bridge/I1未通过。本次仅更新3leaf结果，10生产/测试/driver冻结不变，不重跑服务。
+
 状态：恢复树运行前34文件冻结下，26项针对性单元、全量232项Python测试/4028执行行零排除及真实PG七容量performance组件通过，独立语义和全部原件复核PASS；本次只更新结果文档，完整原base门禁、Rust、新functional/fault和提交/CI/main验收仍pending。历史先行合同与失败记录保留，最新证据见文末。
 
 Git：`codex/p02-fixed-catalog`，worktree `/Users/chad/dev/guradb-p02-fixed-catalog`，起点 `4d6baca888421d90f146679ef71b0e555fe60881`，原树干净；task `08a01f79d8a347b0b429e072167318c3`，checkpoint `checkpoints/20261021T015356Z-before-p02-fixed-catalog-eee85479`。该起点的 CF1-A PR 双版本 CI、本地精确 main 十项门禁和真实双向互通已通过，main push run39528308712 的 Python3.11/3.14 也均 success，合同首片主线交付已闭合；真实 I1 仍待实现。

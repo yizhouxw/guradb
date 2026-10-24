@@ -1,5 +1,15 @@
 # 固定版本目录组件
 
+## C1 共同父控制读取（有限本地组件已验证）
+
+仅可信宿主可使用私有`controlled_reads(principal, control)`：T0在bind前创建，父取消和当前query/page/cohort的更小monotonic期限贯穿连接、等待、SQL、当前授权和COMMIT。原A wire、`port`、30秒TTL、1秒页/5秒cohort与各配额不改；此入口仍不是公开客户端或真实对象/源配对。control的checkpoint/clock仅有界内存，PG真实等待不再冒充内存callback认证。
+
+一次bind尝试消费该facade的完整原request身份，unknown后禁止自动重新bind。持有绑定时只精确release；无绑定时按原request/可信主体对账清理：found且COMMIT确认才released，absent只`cleanup_unconfirmed`，清理COMMIT未知仍`outcome_unknown`。cleanup使用独立至多5秒控制，不重开执行，不回收1024query身份/8MiB或改epoch。持久closed-request、阻迟到bind与schema迁移属于C2，不能把absence当终局无lease。原legacy显式重放行为保留，不能借它绕过C1未知状态约定。
+
+费用按私有有界invoice保留PGattempt/连接成败/SQL/commit/真实等待；整query elapsed从T0计算，嵌套phase不重复加、PG费不当对象费或填0。PG/libpq/native内存未接父reservation，真实PG→P03/P04、共享memory、Rust/bridge/I1及远端CI仍缺失，不据此认证。本次39项纯单元、新control与原functional/performance/fault真实PG组件均通过，源码绑定13文件`98b7032d`。32个父控query读耗时16.146–25.704ms（预算1000ms）；客户端黑洞和paused SQL分别100.262/100.228ms返回。paused SQL连同夹具恢复实际178.019ms，不能与客户端返回时限混同。P01有限独立复核通过。
+
+本次只验证客户端调用返回和FD关闭；没有确认远端server backend已经停止、PG cancel已确认或完整server成本。PG native memory仍未测。严格覆盖、完整任务门禁、真实PG→P03/P04配对及I1均未通过；远端CI阻塞保留。
+
 状态：**恢复树的局部单元、Python 严格覆盖与真实 PG 七项容量组件验收及独立复核已通过；完整仓库验收待完成**。结果绑定下文列出的运行前 34 文件清单，不代表本次文档更新后的整项任务已通过。这是供可信应用组合根嵌入的 CF1-A 目录组件合同，不是新增的 SQL、HTTP 或 CLI 用户入口。现有 alpha 操作仍按[能力白名单](features.md)执行。
 
 ## 场景和前置条件

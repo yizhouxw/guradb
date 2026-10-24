@@ -15,16 +15,24 @@ class ReadScope:
     Callbacks must be bounded in-memory operations, without blocking I/O.
     """
     def __init__(self, binding, cancelled=lambda: False, *, monotonic=time.monotonic,
-                 wall_ms=lambda: time.time_ns() // 1_000_000):
+                 wall_ms=lambda: time.time_ns() // 1_000_000, parent=None):
         require(binding.kind == 'read_binding', 'expected fixed read binding')
         self.binding = binding
         self.context = binding.value['context']
         self.budget = self.context['budget']
+        self.parent = parent
+        if parent is not None:
+            from modules.storage.fixed_parent import ReadParent
+            require(type(parent) is ReadParent, 'expected trusted read parent')
+            self.budget = parent.attach(self, binding)
+            cancelled, monotonic, wall_ms = parent.cancelled, parent.monotonic, parent.wall_ms
         self.cancelled, self.monotonic, self.wall_ms = cancelled, monotonic, wall_ms
         self.started = monotonic()
         remaining = min(self.context['remaining_ttl_ms'],
                         self.context['deadline_unix_ms'] - wall_ms()) / 1000
         self.deadline = self.started + max(0, remaining)
+        if parent is not None:
+            self.started, self.deadline = parent.started, min(self.deadline, parent.deadline)
         self.object_requests = self.object_bytes = self.output_bytes = 0
         self.header_bytes = self.wire_bytes = self.verified_bytes = 0
         self.last_header_positive_receive_elapsed_us = None
@@ -34,6 +42,8 @@ class ReadScope:
         self.trace = []
         self.trace_dropped = 0
         self._lock = threading.Lock()
+        if parent is not None:
+            parent.ready(self)
 
     def event(self, name):
         # No URI, headers, exceptions, credentials or caller text enters traces.
@@ -45,7 +55,13 @@ class ReadScope:
         else:
             self.trace_dropped += 1
 
+    def effective_deadline(self):
+        self.check()
+        return self.deadline
+
     def check(self, *, slack=0):
+        if self.parent is not None:
+            self.parent.checkpoint()
         try:
             cancelled = self.cancelled()
         except Exception:
