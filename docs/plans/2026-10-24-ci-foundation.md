@@ -1,5 +1,27 @@
 # CI基础执行台账（2026-10-24）
 
+## 失败后停止后续派发（Refs #76，实现候选，待独审/集成）
+
+依据 [#75预检](https://github.com/yizhouxw/guradb/issues/75#issuecomment-6387470445)，
+本片只补本地 check/hook 的失效停止，不改数据库用户行为、格式、成功路径或原预算。
+任一 selected suite missing、任一实际命令 failed/timeout/其它非passed，或 release 前置缺失后，
+本次 check 不再启动后续命令/suite。原失败状态、原因、argv、退出码和日志SHA保留；
+未执行命令单独列 `not_run`，只记原计划 index/argv 与 `blocked_by` 来源，不伪造执行日志、
+返回码或零耗时。受阻 suite 为 `blocked`，保原 planned state/原因，未实现义务仍保留在计划内。
+
+v1/v2 与 bootstrap/change/release 使用相同停止规则；不增加 schema2 顶级字段。
+真实 cost/fresh 只计已发生的runner调用前缀（含失败尝试，不代表成功完成），not_run不计；
+maximum 保完整原计划。全成功仍原顺序执行所有命令；
+源/profile/HEAD 结束守卫和现有证据准入保持，failed/missing/blocked 不可通过
+task-finish 或成功 checkpoint，篡改 `passed`/删受阻项/伪造blocked为PASS也须拒绝。
+
+工具负例由 `test_runner.py`、`test_validation_reports.py`、`test_evidence.py` 的自有临时仓库/
+Python小进程验证首/中间失败或超时、跨suite、missing及release前置、前缀日志/伪报告，
+新fixture每命令≤2秒、合计≤30秒并回收自己子进程；不执行真实system负载。只用本片实际
+engineering门禁/正常hook/精确H原B post及独审/main证据；39条system义务不删不缩。
+停止派新任务不证明超时原Docker/PG已停止，不补daemon/PG监督、全资源隔离或并行资格。
+IF-R1/完整system、live资源准入和N1/N2仍另授，旧2skip/P05/CI暂停不改写。
+
 ## CI-4A-R1a 候选闭包合同（Refs #69，实现候选，待独审/集成）
 
 本片为内部工程能力，无数据库用户行为、格式或数据迁移变化。依据架构

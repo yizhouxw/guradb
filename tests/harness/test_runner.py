@@ -1,8 +1,10 @@
 import copy
+import hashlib
 import json
 import os
 from pathlib import Path
 import subprocess
+import shutil
 import sys
 import tempfile
 import time
@@ -13,9 +15,153 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 from harnesslib.policy import load
 from harnesslib.runner import check, discover_changes, run_command
+from harnesslib.validation_binding import LOGIC_INPUTS
 
 
 class RunnerTests(unittest.TestCase):
+    def dispatch_fixture(self, root, version):
+        """Real planner/processes over a tiny registry with no product owners."""
+        self.init(root)
+        (root/".gitignore").write_text("artifacts/\n__pycache__/\n")
+        configuration = copy.deepcopy(load(ROOT))
+        configuration[1]["modules"] = {}
+        policy = configuration[0]
+        policy["bootstrap_suites"] = ["a-first", "z-later"]
+        policy["release_suites"] = ["a-first", "z-later"]
+        policy["suites"] = {name: {"state": "ready", "timeout_seconds": 1, "commands": []}
+                            for name in policy["bootstrap_suites"]}
+        if version == 2:
+            for name in LOGIC_INPUTS:
+                destination = root/name
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(ROOT/name, destination)
+            (root/"harness").mkdir(exist_ok=True)
+            (root/"harness/validation.toml").write_text('''schema_version = 1
+engineering_prefixes = []
+engineering_paths = []
+system_prefixes = []
+system_paths = []
+[modules]
+[components]
+[pairs]
+''')
+        return configuration
+
+    def marker(self, name):
+        return ["{python}", "-c", "from pathlib import Path; "
+                f"Path('artifacts/order').open('a').write({name!r}+'\\n'); print({name!r})"]
+
+    def test_first_or_middle_failure_and_timeout_stop_all_later_dispatch(self):
+        started = time.monotonic()
+        for version in (1, 2):
+            for scope in ("bootstrap", "change"):
+                for first in (0, 1):
+                    for failure in ("failed", "timeout"):
+                        with self.subTest(version=version, scope=scope, first=first, failure=failure), \
+                                tempfile.TemporaryDirectory() as temporary, \
+                                patch.dict(os.environ, {"PATH": os.environ["PATH"]}, clear=True):
+                            root = Path(temporary)
+                            config = self.dispatch_fixture(root, version)
+                            commands = [self.marker("prefix")]*first
+                            code = "print('original failure', flush=True); " + (
+                                "raise SystemExit(7)" if failure == "failed" else "import time; time.sleep(10)")
+                            commands += [["{python}", "-c", code], self.marker("never-same-suite")]
+                            config[0]["suites"]["a-first"]["commands"] = commands
+                            config[0]["suites"]["z-later"]["commands"] = [self.marker("never-later-suite")]
+                            report, path = check(root, scope, None, config, "auto" if version == 2 else None)
+                            self.assertFalse(report["passed"])
+                            self.assertEqual(report["schema_version"], version)
+                            row, tail = report["results"][:2]
+                            self.assertEqual(row["status"], "failed")
+                            self.assertEqual(row["blocked_by"], {"suite": "a-first", "command_index": first, "status": failure})
+                            self.assertEqual(row["commands"][-1]["status"], failure)
+                            self.assertEqual(len(row["commands"]), first+1)
+                            if failure == "failed":
+                                self.assertEqual(row["commands"][-1]["returncode"], 7)
+                            for result in row["commands"]:
+                                log = root/result["log"]
+                                self.assertTrue(log.exists())
+                                self.assertEqual(hashlib.sha256(log.read_bytes()).hexdigest(), result["log_sha256"])
+                            self.assertEqual(row["not_run"][0]["command_index"], first+1)
+                            self.assertEqual(tail["status"], "blocked")
+                            self.assertEqual(tail["blocked_by"], row["blocked_by"])
+                            self.assertNotIn("commands", tail)
+                            self.assertEqual(set(tail["not_run"][0]), {"command_index", "argv"})
+                            marker = root/"artifacts/order"
+                            self.assertEqual(marker.read_text().splitlines() if marker.exists() else [], ["prefix"]*first)
+                            self.assertEqual(len(list(path.parent.glob("*.log"))), first+1)
+                            if version == 2:
+                                self.assertEqual(report["validation_cost"]["fresh_commands"], first+1)
+                                self.assertEqual(report["validation_cost"]["maximum_command_seconds"], first+3)
+        self.assertLess(time.monotonic()-started, 20)
+
+    def test_missing_empty_and_release_precondition_never_launch_commands(self):
+        for version in (1, 2):
+            for scope, missing in (("bootstrap", "planned"), ("change", "planned"),
+                                   ("bootstrap", "empty"), ("release", "runtime")):
+                with self.subTest(version=version, scope=scope, missing=missing), \
+                        tempfile.TemporaryDirectory() as temporary, \
+                        patch.dict(os.environ, {"PATH": os.environ["PATH"]}, clear=True):
+                    root = Path(temporary)
+                    config = self.dispatch_fixture(root, version)
+                    for suite in config[0]["suites"].values():
+                        suite["commands"] = [self.marker("never")]
+                    if missing != "runtime":
+                        config[0]["suites"]["a-first"]["commands"] = []
+                    if missing == "planned":
+                        config[0]["suites"]["a-first"].update(state="planned", reason="original missing reason")
+                    report, path = check(root, scope, None, config, "auto" if version == 2 else None)
+                    self.assertFalse(report["passed"])
+                    first, tail = report["results"][0], report["results"][-1]
+                    self.assertEqual(first["status"], "missing")
+                    self.assertEqual(tail["status"], "blocked")
+                    self.assertEqual(tail["blocked_by"], {"suite": first["suite"], "status": "missing"})
+                    self.assertFalse((root/"artifacts/order").exists())
+                    self.assertEqual(list(path.parent.glob("*.log")), [])
+                    if missing == "planned":
+                        self.assertEqual(first["reason"], "original missing reason")
+                        self.assertIn("a-first", report["unimplemented_suites"])
+                    if version == 2:
+                        self.assertEqual(report["validation_cost"]["fresh_commands"], 0)
+
+    def test_success_keeps_every_command_order_argv_and_timeout(self):
+        for version in (1, 2):
+            with self.subTest(version=version), tempfile.TemporaryDirectory() as temporary, \
+                    patch.dict(os.environ, {"PATH": os.environ["PATH"]}, clear=True):
+                root = Path(temporary)
+                config = self.dispatch_fixture(root, version)
+                config[0]["suites"]["a-first"]["commands"] = [self.marker(x) for x in ("one", "two", "three")]
+                config[0]["suites"]["z-later"]["commands"] = [self.marker("last")]
+                with patch("harnesslib.runner.run_command", wraps=run_command) as execute:
+                    report, _ = check(root, "bootstrap", None, config, "auto" if version == 2 else None)
+                self.assertTrue(report["passed"])
+                self.assertEqual((root/"artifacts/order").read_text().splitlines(), ["one", "two", "three", "last"])
+                self.assertEqual([call.args[3] for call in execute.call_args_list], [1]*4)
+                actual = [command["argv"] for row in report["results"] for command in row["commands"]]
+                expected = [[sys.executable, *argv[1:]] for suite in config[0]["suites"].values() for argv in suite["commands"]]
+                self.assertEqual(actual, expected)
+                self.assertTrue(all("not_run" not in row for row in report["results"]))
+
+    def test_missing_tool_and_output_limit_also_stop_dispatch(self):
+        for version in (1, 2):
+            for failure in ("missing_tool", "output_limit"):
+                with self.subTest(version=version, failure=failure), tempfile.TemporaryDirectory() as temporary, \
+                        patch.dict(os.environ, {"PATH": os.environ["PATH"]}, clear=True):
+                    root = Path(temporary)
+                    config = self.dispatch_fixture(root, version)
+                    command = [str(root/"absent-tool")] if failure == "missing_tool" else [
+                        "{python}", "-c", "print('x'*5000)"]
+                    config[0]["suites"]["a-first"]["commands"] = [command]
+                    config[0]["suites"]["z-later"]["commands"] = [self.marker("never")]
+                    def bounded(argv, cwd, log, timeout):
+                        return run_command(argv, cwd, log, timeout, max_log_bytes=256)
+                    with patch("harnesslib.runner.run_command", side_effect=bounded):
+                        report, _ = check(root, "bootstrap", None, config, "auto" if version == 2 else None)
+                    self.assertFalse(report["passed"])
+                    self.assertEqual(report["results"][0]["commands"][0]["status"], failure)
+                    self.assertEqual(report["results"][1]["status"], "blocked")
+                    self.assertFalse((root/"artifacts/order").exists())
+
     def configuration(self):
         configuration = copy.deepcopy(load(ROOT))
         configuration[0]["bootstrap_suites"] = ["smoke"]
@@ -89,8 +235,14 @@ class RunnerTests(unittest.TestCase):
                 configuration[0]["suites"][name].update(state="planned", reason="fixture missing runtime", commands=[])
             report, path = check(root, "change", None, configuration)
             self.assertFalse(report["passed"])
-            self.assertEqual({item["suite"] for item in report["results"] if item["status"] == "missing"},
-                             {"rust", "functional", "performance-smoke", "stability-component"})
+            planned = {"rust", "functional", "performance-smoke", "stability-component"}
+            pending = {item["suite"] for item in report["results"] if item["status"] in {"missing", "blocked"}}
+            self.assertTrue(planned.issubset(pending))
+            self.assertEqual(sum(item["status"] == "missing" for item in report["results"]), 1)
+            for item in report["results"]:
+                if item["suite"] in planned and item["status"] == "blocked":
+                    self.assertEqual(item["planned_state"], "planned")
+                    self.assertEqual(item["planned_reason"], "fixture missing runtime")
             self.assertEqual(json.loads(path.read_text())["checkout_digest"], report["checkout_digest"])
 
     def test_bootstrap_reports_runtime_gaps_and_release_never_green_without_kernel(self):

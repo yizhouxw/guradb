@@ -180,10 +180,29 @@ def check(root: Path, scope: str, base: str | None, configuration: tuple,
         report["results"].append({"suite": "runtime-present", "status": "missing",
                                   "reason": "no database/client runtime implementation exists"})
     report_path = run_directory / "report.json"
+    # Execution evidence contains only the actual prefix. Plans that were never
+    # launched live separately, without invented return codes/logs/durations.
+    def not_run(suite, first=0):
+        return [{"command_index": index,
+                 "argv": [arg.replace("{python}", sys.executable).replace("{run_dir}", str(run_directory))
+                          for arg in command]}
+                for index, command in enumerate(suite["commands"]) if index >= first]
+
+    blocker = next(({"suite": item["suite"], "status": item["status"]}
+                    for item in report["results"] if item["status"] != "passed"), None)
     for name in suites:
         suite = suite_map[name]
-        if suite["state"] != "ready":
-            report["results"].append({"suite": name, "status": "missing", "reason": suite["reason"]})
+        if blocker is not None:
+            report["results"].append({"suite": name, "status": "blocked", "blocked_by": blocker,
+                                      "planned_state": suite["state"], "planned_reason": suite.get("reason"),
+                                      "not_run": not_run(suite)})
+            write_json(report_path, report)
+            continue
+        if suite["state"] != "ready" or not suite["commands"]:
+            report["results"].append({"suite": name, "status": "missing",
+                                      "reason": suite.get("reason", "no executable commands registered"),
+                                      "not_run": not_run(suite)})
+            blocker = {"suite": name, "status": "missing"}
             write_json(report_path, report)
             continue
         results = []
@@ -195,9 +214,13 @@ def check(root: Path, scope: str, base: str | None, configuration: tuple,
             result["log_sha256"] = hashlib.sha256((root / result["log"]).read_bytes()).hexdigest()
             results.append(result)
             if result["status"] != "passed":
+                blocker = {"suite": name, "command_index": index, "status": result["status"]}
                 break
         passed = all(result["status"] == "passed" for result in results)
-        report["results"].append({"suite": name, "status": "passed" if passed else "failed", "commands": results})
+        row = {"suite": name, "status": "passed" if passed else "failed", "commands": results}
+        if not passed:
+            row.update(blocked_by=blocker, not_run=not_run(suite, len(results)))
+        report["results"].append(row)
         write_json(report_path, report)
     if validation is not None:
         try:

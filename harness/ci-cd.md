@@ -20,6 +20,20 @@
 
 ## 本地分层入口与资格
 
+### 失败后停止后续派发（Refs #76，实现候选，证据见Issue/PR）
+
+本地 check/hook 在首个命令 failed/timeout/其它非passed、selected suite missing 或 release
+前置缺失后，应停止本次后续命令与suite派发。原失败/缺失、退出码、日志和SHA保留；
+未执行项明确 `blocked`/`not_run` 及来源，不能写PASS、伪造执行日志/零耗时或计入fresh完成。
+fresh计已发生的runner调用（含失败尝试），不是成功完成数；not_run不计。
+成功路径仍执行完整原计划，顺序、argv、timeout、分母/预算均不降低。当前报告的schema2
+顶级字段与成功证据准入保持，失败/受阻报告不得用于完成receipt或成功checkpoint。
+具体实现、负例与同H报告见[有限变更合同](../docs/plans/2026-10-24-ci-foundation.md)。
+
+这项能力只停止**后续派发**，不证明原Docker/PG/远端attempt已经停止或清理；原run资源未知
+仍须保全并交责任人对账。它不开放common/完整system、并行重测或远端CI，live资源/owned
+归属准入及N1/N2/P05、原skip/失败与完整发布门禁继续保留。
+
 先安装[现有锁定依赖](README.md)，在独占任务树以原始基点 `B` 运行 `python scripts/harness.py plan --base B --level auto`；读取 `validation.profile` 的实际层级、命令和闭包，再运行相同范围的 `check`。顶层legacy impact摘要不代替实际profile。以下是现有入口及义务，示例中的 `B/M/ID` 须替换为实际SHA/批次，不是本片运行结果。
 
 | 层级 | 实际入口与退出条件 |
