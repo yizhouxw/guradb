@@ -1,5 +1,6 @@
 """Coverage gates reject rounded totals, missing files and failing tests."""
 import json
+import subprocess
 from pathlib import Path
 import sys
 import tempfile
@@ -103,6 +104,9 @@ class CoverageGateTests(unittest.TestCase):
                 directory = Path(temporary)
 
                 def build(argv, **kwargs):
+                    if argv[:3] == ['docker', 'image', 'inspect']:
+                        return Mock(returncode=1, stdout=b'\n', stderr=(
+                            'Error response from daemon: No such image: '+argv[-1]+'\n').encode())
                     path = Path(argv[argv.index('--iidfile')+1])
                     if raw is not None:
                         path.write_bytes(raw)
@@ -133,9 +137,75 @@ class CoverageGateTests(unittest.TestCase):
 
     def test_inspect_rejects_invalid_or_different_identity_without_fallback(self):
         image = 'sha256:'+'a'*64
+        captured = {'image_id': image, 'retained_ref': 'fixture-owner', 'owner_token': 'owner'}
         for output in (b'sha256:'+b'b'*64, image.encode()+b'\n\n', b'not-an-id'):
             with self.subTest(output=output), patch.object(gate.subprocess, 'check_output', return_value=output) as inspect:
                 with self.assertRaises(ValueError):
-                    gate.image_identity(None, image)
+                    gate.image_identity(None, captured)
                 self.assertEqual(inspect.call_args.args[0][-1], image)
                 self.assertEqual(inspect.call_count, 1)
+
+    def test_owner_reference_is_distinct_across_trees_with_same_run_name(self):
+        owners = []
+        with tempfile.TemporaryDirectory() as temporary:
+            for tree in ('tree-a', 'tree-b'):
+                root = Path(temporary)/tree
+                directory = root/'unit-coverage'
+                directory.mkdir(parents=True)
+                commands = []
+
+                def execute(argv, **kwargs):
+                    commands.append(argv)
+                    if argv[1] == 'image':
+                        return Mock(returncode=1, stdout=b'', stderr=(
+                            'Error response from daemon: No such image: '+argv[-1]+'\n').encode())
+                    Path(argv[argv.index('--iidfile')+1]).write_bytes(b'sha256:'+b'a'*64)
+
+                with patch.object(gate, 'ROOT', root), patch.object(gate.secrets, 'token_hex', return_value='c'*64), \
+                        patch.object(gate.subprocess, 'run', side_effect=execute):
+                    owner = gate.build_image(directory, None)
+                owners.append(owner)
+                build = commands[1]
+                self.assertEqual([build[i+1] for i, word in enumerate(build) if word == '-t'],
+                                 [owner['retained_ref'], 'guradb-coverage:1.90.0'])
+                self.assertEqual(build[build.index('--label')+1], 'guradb.coverage.owner='+'c'*64)
+                intent = json.loads((directory/'coverage-image-owner.json').read_text())
+                self.assertEqual(intent['retained_ref'], owner['retained_ref'])
+                self.assertRegex(owner['retained_ref'], r'^guradb-coverage-run:[0-9a-f]{64}$')
+        self.assertNotEqual(owners[0]['retained_ref'], owners[1]['retained_ref'])
+
+    def test_existing_or_unconfirmed_reference_never_builds_or_overwrites(self):
+        for code, message, error in [(0, b'', FileExistsError),
+                                      (1, b'daemon unavailable', RuntimeError),
+                                      (2, b'No such image', RuntimeError)]:
+            with self.subTest(code=code), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                with patch.object(gate.subprocess, 'run', return_value=Mock(
+                        returncode=code, stdout=b'', stderr=message)) as command:
+                    with self.assertRaises(error):
+                        gate.build_image(directory, None)
+                self.assertEqual(command.call_count, 1)
+                self.assertEqual(command.call_args.args[0][1:3], ['image', 'inspect'])
+                self.assertTrue((directory/'coverage-image-owner.json').is_file())
+                self.assertFalse((directory/'coverage-image.id').exists())
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            intent = directory/'coverage-image-owner.json'
+            intent.write_bytes(b'old intent')
+            with patch.object(gate.subprocess, 'run') as command:
+                with self.assertRaises(FileExistsError):
+                    gate.build_image(directory, None)
+                command.assert_not_called()
+            self.assertEqual(intent.read_bytes(), b'old intent')
+
+    def test_missing_or_mismatched_retained_owner_never_falls_back(self):
+        image = 'sha256:'+'a'*64
+        captured = {'image_id': image, 'retained_ref': 'fixture-owner', 'owner_token': 'owner'}
+        for value in [(image+' wrong-owner\n').encode(), ('sha256:'+'b'*64+' owner\n').encode(),
+                      subprocess.CalledProcessError(1, ['inspect'])]:
+            with self.subTest(value=value), patch.object(gate.subprocess, 'check_output',
+                                                       side_effect=[image.encode(), value]) as inspect:
+                with self.assertRaises((ValueError, subprocess.CalledProcessError)):
+                    gate.image_identity(None, captured)
+                self.assertEqual(inspect.call_count, 2)
+                self.assertEqual(inspect.call_args.args[0][-1], 'fixture-owner')

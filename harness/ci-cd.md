@@ -81,3 +81,11 @@ CD仍需明确不可变构建物、版本/摘要、部署目标、身份与授�
 A函数fixture、B适用engineering门禁、C独立真实daemon竞争/取消观测和D外层原900秒完整coverage均为合入前必要证据，结果见任务Issue/PR。本段先行描述工程合同，不预填PASS。C仅两微fixture/测试专用tag，10秒握手、每条30秒、整轮180秒含最多30秒owned-CID收尾；D必须经现有runner读取policy900秒约束，不以裸CLI冒限时。unknown CID/退出/残留保原件并停后续重任务交PM，不把宿主进程组停止当daemon回收。
 
 首片不改普通cargo/M0消费者、target/计数目录、registry缓存、跨树锁或daemon监督；不开放并行重编译/coverage。完整源、未导入文件、JSON/LCOV分母、原参数/预算、Python80%/Rust100%和原21排除保持，失败/raw保留；CI仍暂停。本片不认证数据库system/release或其它CI-2能力。
+
+### 同次构建保留引用的必要前提（#60兼容增量，待验证）
+
+首次真实C中，A捕获IID曾可inspect，在shared tag改绑后却无法create/inspect；这不识别GC/builder等全部原因，旧FAIL保留。仅给fixture加keeper不能补证生产原出口。本次生产和fixture都在同一次build创建run独占ref/owner label，同时仍以本次iidfile的IID执行。
+
+新run先exclusive-create并落盘`coverage-image-owner.json`意图，引用含实际tree/run身份和随机owner，不复用常见子目录名；任何预存intent/IID/ref拒绝覆盖，只有明确No such image才允许build，daemon/权限/不可解析错误为unknown。build命令自带run ref及兼容shared tag；按IID和ref核内容/owner一致，collect/export均继续用IID，summary后仍核保留引用。evidence=None路径同样执行检查；不按tag恢复/重试或当作全局CAS/防管理员删除。
+
+intent/ref/IID、实际argv/phase和失败原件在成功、失败、中断后都保留，不自动删tag/image/target；新一次C/D预计3个keeper加2个测试alias共5个新引用，实际磁盘/耗时成本未知。后续清理由E核run所有权、当前映射与在途/其它引用，PM另行排窗授权，不能按shared或强删同IID。本片不新增清理/GC/daemon监督工具，A/B/C/D与原边界均须新准确候选实际通过才完成。
