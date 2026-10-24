@@ -34,7 +34,7 @@ commands = [["{python}", "scripts/cargo.py", "fmt", "--all", "--", "--check"], [
 [suites.functional]
 state = "ready"
 timeout_seconds = 900
-commands = [["{python}", "scripts/m0.py", "functional", "--run-dir", "{run_dir}/m0-functional"], ["{python}", "scripts/m1_acceptance.py", "functional", "--run-dir", "{run_dir}/m1-functional"], ["{python}", "scripts/m2_acceptance.py", "functional", "--run-dir", "{run_dir}/m2-functional"], ["{python}", "-m", "unittest", "tests.functional.graph"], ["{python}", "scripts/p0_acceptance.py", "--run-dir", "{run_dir}/p0-local"], ["{python}", "scripts/p0_acceptance.py", "--transport", "http", "--run-dir", "{run_dir}/p0-http"], ["{python}", "scripts/local_acceptance.py", "recovery", "--run-dir", "{run_dir}/m4-recovery"], ["{python}", "scripts/local_acceptance.py", "inspection", "--run-dir", "{run_dir}/state-inspection"], ["{python}", "scripts/local_acceptance.py", "rebuild", "--run-dir", "{run_dir}/index-rebuild"], ["{python}", "scripts/fixed_objects_acceptance.py", "--suite", "functional", "--run-dir", "{run_dir}/fixed-objects-functional"]]
+commands = [["{python}", "scripts/m0.py", "functional", "--run-dir", "{run_dir}/m0-functional"], ["{python}", "scripts/m1_acceptance.py", "functional", "--run-dir", "{run_dir}/m1-functional"], ["{python}", "scripts/m2_acceptance.py", "functional", "--run-dir", "{run_dir}/m2-functional"], ["{python}", "-m", "unittest", "tests.functional.graph"], ["{python}", "scripts/p0_acceptance.py", "--run-dir", "{run_dir}/p0-local"], ["{python}", "scripts/p0_acceptance.py", "--transport", "http", "--run-dir", "{run_dir}/p0-http"], ["{python}", "scripts/local_acceptance.py", "recovery", "--run-dir", "{run_dir}/m4-recovery"], ["{python}", "scripts/local_acceptance.py", "inspection", "--run-dir", "{run_dir}/state-inspection"], ["{python}", "scripts/local_acceptance.py", "rebuild", "--run-dir", "{run_dir}/index-rebuild"], ["{python}", "scripts/fixed_catalog_acceptance.py", "--mode", "functional", "--run-dir", "{run_dir}/fixed-catalog-functional"], ["{python}", "scripts/fixed_objects_acceptance.py", "--suite", "functional", "--run-dir", "{run_dir}/fixed-objects-functional"]]
 
 [suites.performance]
 state = "planned"
@@ -45,12 +45,12 @@ commands = []
 [suites.performance-smoke]
 state = "ready"
 timeout_seconds = 300
-commands = [["{python}", "scripts/m0.py", "performance-smoke", "--run-dir", "{run_dir}/m0-performance"], ["{python}", "scripts/m1_acceptance.py", "performance-smoke", "--run-dir", "{run_dir}/m1-performance"], ["{python}", "scripts/m2_acceptance.py", "performance-smoke", "--run-dir", "{run_dir}/m2-performance"], ["{python}", "scripts/p0_acceptance.py", "--transport", "http", "--duration", "60", "--run-dir", "{run_dir}/p0-duration"], ["{python}", "scripts/fixed_objects_acceptance.py", "--suite", "performance", "--run-dir", "{run_dir}/fixed-objects-performance"]]
+commands = [["{python}", "scripts/m0.py", "performance-smoke", "--run-dir", "{run_dir}/m0-performance"], ["{python}", "scripts/m1_acceptance.py", "performance-smoke", "--run-dir", "{run_dir}/m1-performance"], ["{python}", "scripts/m2_acceptance.py", "performance-smoke", "--run-dir", "{run_dir}/m2-performance"], ["{python}", "scripts/p0_acceptance.py", "--transport", "http", "--duration", "60", "--run-dir", "{run_dir}/p0-duration"], ["{python}", "scripts/fixed_catalog_acceptance.py", "--mode", "performance", "--run-dir", "{run_dir}/fixed-catalog-performance"], ["{python}", "scripts/fixed_objects_acceptance.py", "--suite", "performance", "--run-dir", "{run_dir}/fixed-objects-performance"]]
 
 [suites.stability-component]
 state = "ready"
 timeout_seconds = 300
-commands = [["{python}", "scripts/m0.py", "stability-component", "--run-dir", "{run_dir}/m0-stability"], ["{python}", "scripts/m1_acceptance.py", "stability-component", "--run-dir", "{run_dir}/m1-stability"], ["{python}", "scripts/m2_acceptance.py", "stability-component", "--run-dir", "{run_dir}/m2-stability"], ["{python}", "scripts/fixed_objects_acceptance.py", "--suite", "faults", "--run-dir", "{run_dir}/fixed-objects-faults"]]
+commands = [["{python}", "scripts/m0.py", "stability-component", "--run-dir", "{run_dir}/m0-stability"], ["{python}", "scripts/m1_acceptance.py", "stability-component", "--run-dir", "{run_dir}/m1-stability"], ["{python}", "scripts/m2_acceptance.py", "stability-component", "--run-dir", "{run_dir}/m2-stability"], ["{python}", "scripts/fixed_catalog_acceptance.py", "--mode", "fault", "--run-dir", "{run_dir}/fixed-catalog-fault"], ["{python}", "scripts/fixed_objects_acceptance.py", "--suite", "faults", "--run-dir", "{run_dir}/fixed-objects-faults"]]
 
 [suites.stability]
 state = "planned"
@@ -67,7 +67,7 @@ commands = []
 [suites.python]
 state = "ready"
 timeout_seconds = 60
-commands = [["{python}", "-m", "compileall", "-q", "modules", "clients", "scripts/m1.py", "scripts/m1_acceptance.py", "scripts/m2_acceptance.py", "scripts/p0_acceptance.py", "scripts/local_acceptance.py", "scripts/m4.py", "scripts/worker.py", "scripts/inspect_state.py", "scripts/sbom.py", "scripts/m1lib", "scripts/m2lib", "scripts/p0lib", "scripts/fixed_objects_acceptance.py", "tests/storage_support"], ["{python}", "-m", "pip", "check"]]
+commands = [["{python}", "-m", "compileall", "-q", "modules", "clients", "scripts/m1.py", "scripts/m1_acceptance.py", "scripts/m2_acceptance.py", "scripts/p0_acceptance.py", "scripts/local_acceptance.py", "scripts/m4.py", "scripts/worker.py", "scripts/inspect_state.py", "scripts/sbom.py", "scripts/m1lib", "scripts/m2lib", "scripts/p0lib", "scripts/fixed_catalog_acceptance.py", "tests/catalog_support", "scripts/fixed_objects_acceptance.py", "tests/storage_support"], ["{python}", "-m", "pip", "check"]]
 
 [suites.unit-coverage]
 state = "ready"

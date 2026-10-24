@@ -95,6 +95,17 @@ class PolicyTests(unittest.TestCase):
         self.assertFalse(documentation["runtime_changed"])
         self.assertEqual(set(documentation["required_suites"]), set(self.config[0]["bootstrap_suites"]))
 
+    def test_fixed_catalog_driver_changes_require_all_component_evidence(self):
+        required = {"python", "functional", "performance-smoke", "stability-component", "unit-coverage"}
+        for path in ("scripts/fixed_catalog_acceptance.py", "tests/catalog_support/__init__.py",
+                     "tests/catalog_support/pg_transport.py"):
+            with self.subTest(path=path):
+                result = plan(ROOT, [path], *self.config[:3])
+                self.assertTrue(required.issubset(result["required_suites"]))
+                self.assertFalse({"performance", "stability", "soak"}.intersection(result["required_suites"]))
+        docs = plan(ROOT, ["tests/catalog_support/README.md"], *self.config[:3])
+        self.assertFalse(required.intersection(docs["required_suites"]))
+
     def test_client_cannot_hide_as_documentation(self):
         result = plan(ROOT, ["clients/cli/main.py"], *self.config[:3])
         self.assertIn("functional", result["required_suites"])

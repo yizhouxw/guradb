@@ -10,7 +10,7 @@ GitHub Actions 作为本项目 CI/CD 的推荐执行平台。当前已有[质量
 | push | before 到当前树；初次 push 全树 | 不因本地干净而误用空差异；保留失败日志 |
 | workflow_dispatch | 默认 `base=all`；可明确选择已有 base；scope 为 change/release | 全树检查已提交代码，release 缺任何必需运行时 suite 都失败 |
 
-普通检查275分钟、release 360分钟是当前job上限，不是产品性能目标。按policy实际ready命令数×单命令超时并保留600秒安装/上传余量计算串行上界；普通检查保守计全部ready suites，包含Python和Rust。planned套件立即记录missing、不启动命令，因此没有虚设的一条执行时间，release仍因missing失败；未来变ready并配置命令时必须计入，超限须分段。固定对象首片追加三个真实driver后，当前全部ready及余量为16320秒/272分钟，unit-coverage工程watchdog为900秒，既有组件/工作负载阈值不变。GitHub-hosted job受[官方6小时上限](https://docs.github.com/en/actions/reference/limits)约束，自测拒绝写入超过360分钟。冷编译或工具安装超过预算明确失败，远端尚未验证，不能把本地缓存运行当作CI时长证据。完整性能/长稳接入后按受控硬件、对象区域和拓扑拆分专用job/runner；共享hosted runner只证明基础和smoke验证，不建立产品性能基线。
+普通检查300分钟、release 360分钟是当前job上限，不是产品性能目标。按policy实际ready命令数×单命令超时并保留600秒安装/上传余量计算串行上界；普通检查保守计全部ready suites，包含Python和Rust。planned套件立即记录missing、不启动命令，因此没有虚设的一条执行时间，release仍因missing失败；未来变ready并配置命令时必须计入，超限须分段。固定对象与固定PG目录首片合成六个真实driver后，当前全部ready及余量为17820秒/297分钟，unit-coverage工程watchdog为900秒，既有组件/工作负载阈值不变。GitHub-hosted job受[官方6小时上限](https://docs.github.com/en/actions/reference/limits)约束，自测拒绝写入超过360分钟。冷编译或工具安装超过预算明确失败，远端尚未验证，不能把本地缓存运行当作CI时长证据。完整性能/长稳接入后按受控硬件、对象区域和拓扑拆分专用job/runner；共享hosted runner只证明基础和smoke验证，不建立产品性能基线。
 
 权限仅 contents:read；Actions 固定 commit SHA，checkout 不保留写凭据；输入经 env 和带引号 argv 传给 harness，不将任意 ref 输入拼入 shell 代码。所有必需门禁禁止 continue-on-error。报告在 always 路径上传，matrix 产物各有独立名称；普通 push/release 不通过新任务自动取消。依赖安装或 runner 被中止时可能尚无报告，必须查看 Actions job 状态，不能以“没有红色报告”当通过。[工作流语法](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)。
 
@@ -37,6 +37,6 @@ staging/production 通过独立的 GitHub Environment 绑定授权、环境配�
 
 当前缺少发布构建/容器registry、目标运行环境、部署身份、健康/数据恢复合同及实际 release gate；这些是进入 CD 的实施前提，不阻止现有文档与 harness 开发。
 
-本地P0/HTTP worker、离线恢复与状态检查曾将job预算更新到change240/release360分钟。覆盖工具watchdog与实际ready执行模型修订后普通job曾为250分钟；固定对象新增三个真实命令后重算为275分钟；完整suite义务及每项预算未减少，尚未实现的release门禁继续missing。新driver增加实际命令时必须重新核对预算，不能复用旧时限通过结论。远端运行需按当前已授权的提交推送后核对实际结果。
+本地P0/HTTP worker、离线恢复与状态检查曾将job预算更新到change240/release360分钟。覆盖工具watchdog与实际ready执行模型修订后普通job曾为250分钟；固定对象与PG目录各新增三个真实命令，合成后重算为300分钟；完整suite义务及每项预算未减少，尚未实现的release门禁继续missing。新driver增加实际命令时必须重新核对预算，不能复用旧时限通过结论。远端运行需按当前已授权的提交推送后核对实际结果。
 
 固定对象组件的CI归档保留公开报告、输入摘要、trace与安全日志，明确排除每个`fixed-objects-*` run下的`lab/auth.json`和`lab/s3.json`本地测试配置；使用固定版本upload-artifact的多行path负匹配。配置原件仍保留在本地失败现场，不能整拷Lab作为公开raw。当前PR实际artifact ZIP目录须验证两配置不在其中且公开结果仍存在，源码配置本身不是上传成功证明。

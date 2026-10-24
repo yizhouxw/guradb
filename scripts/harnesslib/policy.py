@@ -195,6 +195,11 @@ def plan(root: Path, paths: list[str], policy: dict, architecture: dict,
                 runtime_changed = True
                 gates.update({"python", "functional", "performance-smoke",
                               "stability-component", "unit-coverage"})
+            if path == "scripts/fixed_catalog_acceptance.py" or path.startswith("tests/catalog_support/"):
+                # A standalone PG evidence driver change must run its actual
+                # module acceptance; unit/compile-only does not prove PG semantics.
+                gates.update({"python", "functional", "performance-smoke",
+                              "stability-component", "unit-coverage"})
         dependency_change = (PurePosixPath(path).name in {
             "Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "requirements-m0.lock", "requirements-m1.lock"}
             or path in {"scripts/cargo.py", "scripts/m0.py", "scripts/m1.py", "scripts/m1_acceptance.py"} or path.startswith(("scripts/m0lib/", "scripts/m1lib/")))
