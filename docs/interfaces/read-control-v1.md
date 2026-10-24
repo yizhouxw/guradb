@@ -1,15 +1,15 @@
 # R1 Read-Control v1：内部目录受控读合同
 
-版本：`read-control/1.0.0-rc1`。状态：IF-R0 作者候选，待 #46 独审、#47/#48/#49 逐方法签收、产品必要复核与 PM 登记冻结；不是已实现 API、后端通过或实施授权。
+版本：`read-control/1.0.0-rc2`。状态：IF-R0 作者候选，待 #46 独审、#47/#48/#49 逐方法签收、产品必要复核与 PM 登记冻结；不是已实现 API、后端通过或实施授权。
 
-规范摘要：`6cfb1886bd537dba7c38f42838f01532898e24d0f133469ac2d0462a580c18b4`。计算范围为下方 BEGIN/END 标记行之间的原始 UTF-8/LF 字节，不含两行标记及本段；不归一化空白。签收同时绑定版本、摘要、PR 完整 H 和方法 ID。语义修改升级 rc 并重签，H 变化按受影响范围重新复核；单一作者或独审通过不等于冻结。
+规范摘要：`da6a094b292dc382cfc48b305045753e67ed4bccf580dcafab81393db5d3d462`。计算范围为下方 BEGIN/END 标记行之间的原始 UTF-8/LF 字节，不含两行标记及本段；不归一化空白。签收同时绑定版本、摘要、PR 完整 H 和方法 ID。语义修改升级 rc 并重签，H 变化按受影响范围重新复核；单一作者或独审通过不等于冻结。
 
 本任务仅写本文与[模块合同](../design/module-delivery-contracts.md)，无数据库用户行为变化。既有 [A schema](../../api/cf1a/schema.json)、[类型](../../crates/guradb-common/src/cf1a/types.rs)和[同步 ports](../../crates/guradb-common/src/cf1a/ports.rs)保持原义；本文不修改其编码或假称旧签名已提供父控制。
 
 <!-- BEGIN READ-CONTROL-V1 -->
 ## 1. 版本、出口和责任
 
-规范版本为 `read-control/1.0.0-rc1`，profile 为 `r1-local-service`；未知版本/profile 在任何 PG I/O 前以 `unsupported_version` 拒绝，不协商降级。
+规范版本为 `read-control/1.0.0-rc2`，profile 为 `r1-local-service`；未知版本/profile 在任何 PG I/O 前以 `unsupported_version` 拒绝，不协商降级。
 
 唯一出口是：真实 Rust query 消费真实 Rust catalog/PG 签发的 binding，构造固定 schema/view 的内部计划、调用唯一 Compiler 并显式结束/交权。无源扫描、SQL 数据行结果、HTTP/PG 新用户入口或索引承诺，不称 I1。
 
@@ -42,6 +42,16 @@ HI-1：`resolve_host(config: &VerifiedHostConfig, alias: &Id) -> Result<HostPrin
 每个可信配置entry必须列 `alias: Id, principal: HostPrincipal, dataset_ids: Vec<Id>, permissions: Set<ReadR1|CleanupOwned|CustodyReconcile>`。这些权限来自宿主配置而非HostPrincipal/A wire，C必须拿到同一可信配置并复核：ReadR1仍需PG read grant；CleanupOwned只作用原owner/key；CustodyReconcile只作用同PG记录已指派给该宿主的key。未知权限拒绝，任何cleanup权限都不能签发新binding或返回受保护数据。
 
 上述entry为解析后的视图。配置canonical原文只含 `config_version, issuer_id, entries[{alias,tenant_id,subject_id,delegation_ref,dataset_ids,permissions}]`，不含派生principal或自身摘要；`config_sha256`为该完整原文的SHA256，随后注入HostPrincipal，避免摘要自引用。alias和principal三元组均唯一，冲突配置在请求准入前拒绝；摘要进入execution canonical时使用小写hex字符串。
+
+`config_version`必须为JSON/Rust **String**，当前唯一合法字面量为 **`"r1-host-config/1"`**（大小写敏感、不trim、不接受整数1）。HI-1先检查该字段存在且为String：缺失/null/数字/布尔/数组/对象均`invalid_contract`；其他字符串如`"r1-host-config/2"`均`unsupported_version`。两类错误均在Validate/任何PG I/O之前拒绝，不能签发HostPrincipal、补默认版本或按v1解析未知版本。版本是此私有配置格式标识，不是旧A wire版本或read-control的rc字面量。
+
+固定合法配置结构例值如下；它是受保护部署配置的解析/摘要测试输入，不自动建立issuer信任或PG grant：
+
+```json
+{"config_version":"r1-host-config/1","entries":[{"alias":"reader","dataset_ids":["dataset-1"],"delegation_ref":"host-1","permissions":["CleanupOwned","ReadR1"],"subject_id":"svc-1","tenant_id":"tenant-1"}],"issuer_id":"operator-1"}
+```
+
+版本字段连同其余完整原文进入config摘要，继而经HostPrincipal进入execution摘要。C/G必须消费同一已验证格式；未知版本不能先发principal再靠后端解释，历史缺版本输入不能自动填1。此修订不改A字段、认证服务或IF-R1五文件范围。
 
 本 profile 仅一个执行读取的受控宿主 service 身份，可另配具名维护托管身份；不支持任意多用户查询委派、跨宿主 mono、OIDC 或公网认证。首片目标由运维显式预装固定 target allowlist，并检查登记的保护到期；回执固定记录 `protection_level=FixtureOnly`，只认证该内部配对前提，不证明真实源对象存在、生产保留保护或索引完整。测试不能自称生产认证。未有配置匹配、grant 或有效 target 保护则失败关闭，不取 latest 补默认值。
 
@@ -124,6 +134,18 @@ fn finish_read(plan_or_key: ReadOwnerRef,
 
 RQ-1 用原 bind 结果的 ResourceDescriptor 构造 schema adapter，调用现有唯一 Compiler 进行受限投影/参数/类型准备，输出 query 私有 `AdmittedReadPlan { key, bound, prepared, schema_sha256 }`。它不能伪造 M0 Source/manifest 来冒充真实绑定，也不调用测试 PairQuery/stub 替代生产接缝。prepare 失败仍必须保留已发生的绑定费用/lease并进入RQ-2；plan不是执行许可，任何后续受保护使用仍需RC-A及fresh checkpoint。
 
+### 5.1 RQ-1的唯一relation与字段标识规则（HQ-01）
+
+本profile的唯一SQL relation symbol固定为 **`bound_resource`**，只代表本次RC-B已签发的那个ResourceDescriptor；schema adapter不做目录查找，不增加A/请求字段或另一张名字映射表。`dataset_id/namespace_id/display_name`均不作SQL表名，即使其本身恰为合法SQL标识符也不产生第二个可接受FROM。它们是A原值/显示信息，保留在binding与计划血缘中；合法A ID或display_name不满足SQL identifier子集，本身不构成拒绝该资源的理由。
+
+FROM仍须原白名单的单个未限定表名、无表alias/函数/额外修饰。使用现有`ident`规则：未引号名字仅ASCII小写化后检查，带引号保原字节；检查结果须精确等于`bound_resource`。因此`FROM bound_resource`、未引号`FROM BOUND_RESOURCE`和`FROM "bound_resource"`可接受；`FROM other_resource`、`FROM "BOUND_RESOURCE"`、`FROM public.bound_resource`或表alias均以 **`unsupported`、`ReadPhase::Prepare`** 拒绝，不查另一个资源、不回落display_name/ID/latest。此错误码属于新R1 profile，不改变旧M0自由表名查找的`not_found`行为。
+
+字段schema必须先整体满足现有`manifest::identifier`子集：非空、UTF-8字节长度≤63、首字节为ASCII小写字母或`_`，其余仅ASCII小写字母/数字/`_`。每个A Field.name原字节须通过，不将schema字段自动小写化/rename；即使SQL未引用某个不兼容字段，也拒绝整个该schema adapter。合法A字段名如`Field-1`、`Title`或64字节小写名在此profile拒绝 **`unsupported`、Prepare**，不是把合法A判为`invalid_contract`；引用不存在的合法SQL列也按既有Compiler拒绝。通过的字段保留field_id/type/nullable/role和schema SHA，不生成物理Source或重编号。
+
+上述relation/schema及原SQL AST/类型/参数准备检查发生在RC-B返回有效binding之后、RC-A及返回plan之前；失败不返回PreparedPlan/数据结果，回执保原key、已知ExactLease、Prepare phase和真实账，必须走RQ-2→RC-F或持久unknown托管，不能以`unsupported`推断没有pin。SQL+params的64KiB总上限不扩大现有SQL16KiB、参数64个或AST/表达式/NULL/int8/alias规则；泛化输入本身不合法仍按原Validate规则处理。
+
+大小写等价的FROM拼写只是语义接受规则，`execution_sha256`仍对原SQL取摘要；同query ID改SQL大小写仍是不同完整指纹，按既有conflict规则拒绝，不通过规范化SQL掩盖请求变化。rc1未冻结签收不能沿用为rc2；既有A字节不变，实验中的rc1 plan/托管记录也不自动当作rc2兼容或改写其摘要。
+
 顺序：HI-1/宿主预装身份→建单父Control及完整key→RC-B→核binding/schema→唯一Compiler→RC-A→返回内部准备结果→RQ-2/RC-F；取消/错误不能跳过finish或unknown交权。R1可只准备、不读一行；RQ-2既可消费成功plan，也可消费失败返回中原key，不能依赖成功拿到plan才能清理。
 
 ## 6. unknown的持久托管与迟到效果
@@ -178,6 +200,10 @@ R1沿用目录原每dataset至多1024个query身份与8MiB metadata预算，不�
 | V08 | 托管预约响应丢失不得发bind；容量满/metadata超额、宿主重启、CAS冲突、cleanup丢响应与proof缺失保持未收敛，原key/引用/预约可追溯 | M-C持久兼容/托管 |
 | V09 | Q Compiler准备错误/取消时仍可从失败回执的key finish；无Source/worker/stub依赖；结果不得变成公开行查询/永久授权 | M-Q1真实消费与P-R1 |
 | V10 | 旧ID/lease/未决请求兼容、未知记录禁止不兼容回退；不通过只删Python源码或缩分母验收退出 | M-C/Q1精确main与停旧证据 |
+| V11 / HQ-01 | 独立字面预期：同一有效A资源dataset_id=`Data-1`、display_name为中文显示文本、字段`id/title`均符合原A时，`SELECT title FROM bound_resource`及上述两种允许FROM拼写准备成功，计划保原dataset/view/field_id/schema血缘；不从显示名产生表别名 | M-Q1/RQ-1，不需要Source或R2 |
+| V12 / HQ-01 | 分别用新query ID核`FROM other_resource`、`FROM "BOUND_RESOURCE"`、限定名、表alias及错列均unsupported/Prepare；合法A schema含`Title`、`Field-1`或64字节字段名时，即使未引用该字段仍unsupported/Prepare；每案已签发原lease必须经RQ-2处理，未知清理不伪装释放 | Q独立成功/负例及T增量核 |
+| V13 / HQ-01 | 将成功请求在同query ID下仅改FROM大小写，完整execution摘要须不同并conflict；不得调用生产relation resolver生成唯一expected。独立PG核原lease/账和精确finish；各大小写成功案使用不同key，避免混淆重放 | RQ-1指纹/finish，不改A golden |
+| V14 / G49-01 | 上述完整例值的config_version是String且精确为r1-host-config/1；未知字符串r1-host-config/2/空串→unsupported_version，缺失/null/整数1/布尔/数组/对象→invalid_contract，均在PG I/O及principal签发前。独立按完整配置原字节/canonical核config→execution摘要，禁止补版本或类型强转 | HI-1，G/C同例值及T有限重核 |
 
 ## 8. IF-R1精确清单、消费者签收与后续边界
 

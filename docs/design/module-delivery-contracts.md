@@ -59,6 +59,10 @@
 
 用户已确定全Rust服务端内核目标，Python AI业务/训练、网络客户端与独立测试外围保留。[Read-Control v1](../interfaces/read-control-v1.md)固定本片具体方法、字段/单位、可信宿主身份、父控制/Err费用、精确lease与保守unknown持久托管、query真实admission/Compiler消费及IF-R1文件清单；它目前是待独审与直接消费者同版本签收的作者候选，未实现、未登记冻结。
 
+HQ-01修订为`read-control/1.0.0-rc2`：R1只用固定relation symbol `bound_resource`引用本次绑定资源，display_name/ID不作SQL表名；schema字段保现有identifier子集，错误FROM或合法A但不兼容的字段名在Prepare以unsupported拒绝并保原lease/账进入finish。此项不改A wire、旧M0表名解析或AST白名单，不引入Source/R2；rc1签收不得自动沿用，见合同V11–V13及同H/版本/摘要增量复核。
+
+同rc2合并G49-01：私有配置`config_version`是String，唯一合法值`r1-host-config/1`；未知字符串在PG I/O前unsupported_version，类型错/缺失invalid_contract，配置→execution指纹不得补默认或强转；固定例值和V14供C/G/T重核。它不是A编码或认证服务扩展。
+
 本批责任链为作者#44→非作者#46与catalog#47/query#48/gateway#49签收→产品必要词义复核/PM登记→唯一集成#51。必须绑定相同PR H、规范版本及摘要；文档门禁通过不代替接口运行或消费者签收。IF-R0仅文档，IF-R1再实现common类型/trait，后端依赖实际合入合同及类型；R2句柄/主体、A wire↔Arrow、R3产物与训练/多机只列后续依赖。
 
 下列§4历史“Python过渡优先／I1后评估”解释当时路径，不再作为新核心能力留在Python或推迟既定Rust目标的准入依据；旧运行权威在对应Rust能力兼容/真实配对/独审/精确main验证及在途引用处理完毕前保持显式legacy，不能双主或错误回落latest。全量旧能力不会因R1目录读一片而宣称退役。其它历史快照与未验收记录保留原义，本增量没有新增数据库用户行为、生产types、PG迁移或质量规则。
