@@ -107,6 +107,88 @@ class ValidationReportTests(unittest.TestCase):
         self.assertEqual(metadata["validation"], completed["validation"])
         self.assertEqual(metadata["validation"]["batch"], "fixture-batch")
 
+    def candidate_registry(self):
+        # Temporary registry and toy drivers exercise the protocol, not R1 qualification.
+        path = self.root/"harness/validation.toml"
+        path.write_text(path.read_text()+'''
+[candidate_closure]
+mode = "candidate"
+qa_source = "QA66-v0.1/6386816588 draft fixture"
+[candidate_closure.contract]
+version = "read-control/1.0.0-rc2"
+canonical_sha256 = "da6a094b292dc382cfc48b305045753e67ed4bccf580dcafab81393db5d3d462"
+[[candidate_closure.methods]]
+id = "Compiler"
+owner = "query"
+consumers = ["gateway"]
+trigger_paths = ["crates/guradb-query/src/lib.rs"]
+observations = ["O1", "O2", "O3", "O4"]
+[candidate_closure.methods.contract]
+version = "read-control/1.0.0-rc2"
+canonical_sha256 = "da6a094b292dc382cfc48b305045753e67ed4bccf580dcafab81393db5d3d462"
+[candidate_closure.methods.driver_profile]
+id = "compiler-fixture"
+state = "pending"
+reason = "real_driver_missing"
+''')
+        return path
+
+    def test_candidate_report_binds_pending_consumers_and_rejects_rehashed_forgery(self):
+        self.candidate_registry()
+        report, path = self.report()
+        closure = report["validation"]["profile"]["required_closure"]
+        self.assertEqual(closure["mode"], "candidate")
+        # This receipt also changes the registry itself: its unknown impact must stay unresolved.
+        self.assertIsNone(closure["required_consumers"])
+        self.assertEqual(closure["method_bindings"][0]["consumers"], ["gateway"])
+        self.assertEqual(report["validation"]["profile"]["modules"], [])
+        self.assertTrue(closure["unresolved"])
+        self.assertEqual(validate_report(self.root, path, self.config), report)
+        changes = [lambda c: c.pop("required_consumers"), lambda c: c.update(required_consumers=[]),
+                   lambda c: c["method_bindings"][0]["consumers"].clear(), lambda c: c.pop("unresolved"),
+                   lambda c: c["unresolved"].clear(), lambda c: c.update(mode="active"),
+                   lambda c: c["driver_profiles"][0].update(state="ready"),
+                   lambda c: c["contract"].update(version="forged"),
+                   lambda c: c.update(trigger_paths=["README.md"])]
+        for change in changes:
+            value = copy.deepcopy(report)
+            change(value["validation"]["profile"]["required_closure"])
+            value["validation"]["profile_sha256"] = digest(value["validation"]["profile"])
+            path.write_text(json.dumps(value))
+            with self.subTest(change=change), self.assertRaisesRegex(HarnessError, "profile/source denominator"):
+                validate_report(self.root, path, self.config)
+        # A real registry edit is also bound, even if checkout and the claimed digest are refreshed.
+        registry = self.root/"harness/validation.toml"
+        registry.write_text(registry.read_text().replace("real_driver_missing", "other_missing_driver"))
+        report["checkout_digest"] = checkout_digest(self.root, self.config[0])
+        report["validation"]["profile_sha256"] = digest(report["validation"]["profile"])
+        path.write_text(json.dumps(report))
+        with self.assertRaisesRegex(HarnessError, "profile/source denominator"):
+            validate_report(self.root, path, self.config)
+
+    def test_changed_candidate_trigger_contract_or_logic_cannot_adopt_old_evidence(self):
+        registry = self.candidate_registry()
+        original = registry.read_text()
+        for source in (original.replace("src/lib.rs", "src/other.rs"),
+                       original.replace("read-control/1.0.0-rc2", "different-contract")):
+            registry.write_text(original)
+            report, path = self.report()
+            registry.write_text(source)
+            report["checkout_digest"] = checkout_digest(self.root, self.config[0])
+            report["validation"]["profile_sha256"] = digest(report["validation"]["profile"])
+            path.write_text(json.dumps(report))
+            with self.assertRaises(HarnessError):
+                validate_report(self.root, path, self.config)
+        registry.write_text(original)
+        report, path = self.report()
+        logic = self.root/"scripts/harnesslib/validation_registry.py"
+        logic.write_text(logic.read_text()+"\n# different closure computation\n")
+        report["checkout_digest"] = checkout_digest(self.root, self.config[0])
+        report["validation"]["profile_sha256"] = digest(report["validation"]["profile"])
+        path.write_text(json.dumps(report))
+        with self.assertRaises(HarnessError):
+            validate_report(self.root, path, self.config)
+
     def test_forged_level_argv_hash_denominator_and_quality_claim_are_rejected(self):
         report, path = self.report()
         def level(value):
