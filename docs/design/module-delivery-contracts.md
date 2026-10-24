@@ -55,6 +55,16 @@
 
 ## 4. Rust/Python：单一权威与退出
 
+### 当前R1接口候选（IF-R0，2026-10-24）
+
+用户已确定全Rust服务端内核目标，Python AI业务/训练、网络客户端与独立测试外围保留。[Read-Control v1](../interfaces/read-control-v1.md)固定本片具体方法、字段/单位、可信宿主身份、父控制/Err费用、精确lease与保守unknown持久托管、query真实admission/Compiler消费及IF-R1文件清单；它目前是待独审与直接消费者同版本签收的作者候选，未实现、未登记冻结。
+
+本批责任链为作者#44→非作者#46与catalog#47/query#48/gateway#49签收→产品必要词义复核/PM登记→唯一集成#51。必须绑定相同PR H、规范版本及摘要；文档门禁通过不代替接口运行或消费者签收。IF-R0仅文档，IF-R1再实现common类型/trait，后端依赖实际合入合同及类型；R2句柄/主体、A wire↔Arrow、R3产物与训练/多机只列后续依赖。
+
+下列§4历史“Python过渡优先／I1后评估”解释当时路径，不再作为新核心能力留在Python或推迟既定Rust目标的准入依据；旧运行权威在对应Rust能力兼容/真实配对/独审/精确main验证及在途引用处理完毕前保持显式legacy，不能双主或错误回落latest。全量旧能力不会因R1目录读一片而宣称退役。其它历史快照与未验收记录保留原义，本增量没有新增数据库用户行为、生产types、PG迁移或质量规则。
+
+### 历史实施基线（保留追溯，按上述当前合同边界解释）
+
 - **Rust现在唯一语义核心**：SQL解析/类型/NULL/参数/过滤/排序/投影、Arrow/DF执行、最终选择与lineage；Python不得新增“临时SQL解释器”。HTTP/PG只映射到同一Rustfacade。关系/聚合/关联等不支持AST保持显式拒绝，按P01细化矩阵逐项扩展。
 - **Python过渡权威**：现有CF1-A PG adapter、固定对象传输、窄Parquet reader、BM25/精确向量实现是各自已实现范围的唯一运行权威。I1优先真实调用它们，不同时新写Rust PG/S3 SDK来“绕开”跨语言边界。Rust proxy只做私有协议/值验证与控制，不复制重试/授权/版本规则。
 - 双语言common validator是同一wire合同的验证器，不是两套业务；共用schema/golden/rejections。harness、独立truth、fixture writer保留Python，不属于必须迁移的数据库运行时。
