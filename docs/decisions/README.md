@@ -23,6 +23,7 @@ ADR 用来记录已经比较过的方案和取舍。编号只表示记录顺序�
 | [0018](0018-outline-design-and-module-contracts.md) | 概要设计基线与合同驱动的模块并行 | 接受责任与组织原则；端口schema、组件/性能/云/安全仍待实现验证 |
 | [0019](0019-pr-parallel-development.md) | GitHub PR 与多分支并行开发 | 已采用工程约定；远端保护设置待另行授权和核验 |
 | [0020](0020-product-review-and-vertical-delivery.md) | 图文到训练样板与提前纵向验收 | 接受产品/实施原则；新增schema、功能、规模和生产证据待验证 |
+| [0021](0021-cf1a-fixed-catalog.md) | CF1-A 固定目录与计划发布 | 提案；独立持久布局、真实 PG 与恢复边界待实现验证 |
 | [模板](0000-template.md) | 后续决策的记录格式 | 模板 |
 
 ## 优先讨论的问题
