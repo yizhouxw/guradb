@@ -1,5 +1,42 @@
 # CI基础执行台账（2026-10-24）
 
+## CI-4A-R1a 候选闭包合同（Refs #69，实现候选，待独审/集成）
+
+本片为内部工程能力，无数据库用户行为、格式或数据迁移变化。依据架构
+[#65 v0.1a](https://github.com/yizhouxw/guradb/issues/65#issuecomment-6386736711)、
+产品复核和 [QA66-v0.1 首表](https://github.com/yizhouxw/guradb/issues/66#issuecomment-6386816588)，
+只在六文件内实现候选方法消费者闭包、拒绝与 `validation.profile.required_closure` 证据。
+QA 首表尚未独审，其方法/owner/观察/pending 仅供工具 fixture，不冻结生产路径或 driver。
+
+生产 `harness/validation.toml`、ready 名单、执行命令与现有选择保持不变。
+registry 未接线时 `mode=unregistered`、`unresolved` 含 `registry_not_connected`；尚不可计算的
+合同/方法/owner/consumer/driver 为 `null`，不以空数组谎称无需消费者。临时 registry 可声明
+`candidate` 方法、合同摘要、触发路径、owner/consumer、观察点及 driver/profile 状态；
+同一合同下求方法影响的传递闭包，候选不能升 `active`。未知 owner/边、冲突方法ID、
+自环/循环、不一致合同、过窄或 pending 请求须拒绝；其它公共 A/未知影响仍保守扩大或拒绝。
+`profile.modules=[]` 和全树源码分母不能替代方法闭包或真实 driver。
+
+可选输入节 `candidate_closure` 含 `mode/contract/qa_source/methods`；合同含版本和完整规范摘要。
+每个方法声明 ID、同一合同、owner、消费者、精确仓库相对路径、观察需求及 driver/profile。
+同一 owner 文件可以触发多个方法；沿消费者 owner 保守传播其所有候选方法，观察ID仅为需求，
+不冒已实现 driver。本片 driver 仅允许有原因的 `pending/unregistered`，不接受 `ready`。
+未知触发保留已知方法绑定，但所需方法/owner/consumer 总集合为 `null` 并列 `unmapped_trigger`；
+已知纯文档无命中时才可用确知空集合。无候选方法说明的消费者另列未注册，不能静默丢弃。
+
+沿用完整 profile 摘要及现有报告重建比较，篡改消费者、unresolved、状态、合同、触发或
+registry/logic 后仅重填摘要仍须拒绝。旧报告保留原义，不补字段冒充新源码证据。
+测试只证明框架：三类 fixture 为 common Read-Control→C/Q/G、C受控接缝→Q、Q共享Compiler→G；
+不将 R1 子集当全 A 生产映射，不从配对参与者列表推导新依赖。完整 owner 双语言与缺语言
+拒绝保持；N/A、生产 route 的 missing 接线及真实 driver 仍另片实施。
+
+验收映射：`test_validation_levels.py` 核闭包/触发/边与请求拒绝，
+`test_validation_reports.py` 核全值重建/原B追溯/伪报告拒绝，
+`test_coverage_scope.py` 核完整源/语言不被候选缩小。实际完整原B plan 决定门禁，
+静态 engineering 单轮合同为普通四命令合300秒＋native900秒，不是实耗或ETA；
+选中额外命令/system、需下载或未知资源残留先停交PM。单native窗、正常hook、精确H原B
+post/receipt/checkpoint/PR、非作者同H复核及另授精确main集成均保留。不运行新C/D或并行重测，
+不删除五保留引用。工程通过不授新R1模块、真实P/S/release资格。
+
 状态：CI-1工程合同文档；后续工程与模块资格均待独立任务实施/验收。本片只写本文件与[harness/ci-cd.md](../../harness/ci-cd.md)，不改变数据库用户行为、源码、机器配置、门禁或远端开关。
 
 来源：[作者#43](https://github.com/yizhouxw/guradb/issues/43)、[CI方案#41](https://github.com/yizhouxw/guradb/issues/41#issuecomment-6384225600)、[架构无环增量](https://github.com/yizhouxw/guradb/issues/22#issuecomment-6384391970)、[产品规划复核](https://github.com/yizhouxw/guradb/issues/25#issuecomment-6384419795)。规划接收不是接口冻结或实现通过；本片[非作者#45](https://github.com/yizhouxw/guradb/issues/45)和[集成#50](https://github.com/yizhouxw/guradb/issues/50)另行接权。

@@ -11,7 +11,21 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 from harnesslib.policy import HarnessError, load
 from harnesslib.validation import validation_plan
-from harnesslib.validation_registry import digest, load_registry, source_inventory
+from harnesslib.validation_registry import digest, load_registry, required_closure, source_inventory, validate_candidate
+
+
+def candidate_fixture():
+    contract = {"version": "read-control/1.0.0-rc2", "canonical_sha256":
+                "da6a094b292dc382cfc48b305045753e67ed4bccf580dcafab81393db5d3d462"}
+    methods = []
+    for name, producer, consumers, path in (
+            ("Read-Control", "common", ["catalog", "query", "gateway"], "crates/guradb-common/src/cf1a/read_control.rs"),
+            ("RC-B", "catalog", ["query"], "crates/guradb-catalog/src/read_control.rs"),
+            ("Compiler", "query", ["gateway"], "crates/guradb-query/src/compile.rs")):
+        methods.append({"id": name, "owner": producer, "consumers": consumers, "trigger_paths": [path],
+                        "contract": dict(contract), "observations": ["O1", "O2", "O3", "O4"],
+                        "driver_profile": {"id": name+"-fixture", "state": "pending", "reason": "real_driver_missing"}})
+    return {"mode": "candidate", "contract": contract, "qa_source": "QA66-v0.1/6386816588 draft", "methods": methods}
 
 
 class ValidationLevelsTests(unittest.TestCase):
@@ -170,10 +184,94 @@ class ValidationLevelsTests(unittest.TestCase):
         policy["suites"]["stability-component"].update(state="planned", commands=[], reason="not ready")
         with self.assertRaises(HarnessError):
             load_registry(ROOT, policy, architecture)
+
         policy, architecture = copy.deepcopy(self.configuration[:2])
         architecture["modules"]["new-owner"] = {"paths": ["new/"], "allowed": []}
         with self.assertRaises(HarnessError):
             load_registry(ROOT, policy, architecture)
+
+    def test_unregistered_is_unresolved_and_preserves_production_selection(self):
+        value = self.select(["crates/guradb-query/src/compile.rs"])["profile"]
+        self.assertEqual(value["level"], "module")
+        closure = value["required_closure"]
+        self.assertEqual(closure["mode"], "unregistered")
+        self.assertEqual(closure["unresolved"], [{"reason": "registry_not_connected"}])
+        for key in ("contract", "methods", "required_owners", "required_consumers", "driver_profiles"):
+            self.assertIsNone(closure[key])
+
+    def test_candidate_propagates_all_explicit_consumers_with_pending_evidence(self):
+        policy, architecture, invariants = self.configuration[:3]
+        registry = copy.deepcopy(load_registry(ROOT, policy, architecture))
+        registry["candidate_closure"] = candidate_fixture()
+        common, catalog, query = [item["trigger_paths"][0] for item in registry["candidate_closure"]["methods"]]
+        expected = [(common, ["catalog", "common", "gateway", "query"], ["Compiler", "RC-B", "Read-Control"]),
+                    (catalog, ["catalog", "gateway", "query"], ["Compiler", "RC-B"]),
+                    (query, ["gateway", "query"], ["Compiler"])]
+        for path, owners, methods in expected:
+            with self.subTest(path=path), patch("harnesslib.validation.load_registry", return_value=registry):
+                selected = validation_plan(ROOT, [path], policy, architecture, invariants)
+                profile = selected["profile"]
+                closure = profile["required_closure"]
+                self.assertEqual(profile["level"], "system")
+                self.assertEqual(profile["modules"], [])
+                self.assertEqual(closure["required_owners"], owners)
+                self.assertEqual(closure["methods"], methods)
+                self.assertIn("gateway", closure["required_consumers"])
+                self.assertTrue(closure["unresolved"])
+                self.assertEqual({row["state"] for row in closure["driver_profiles"]}, {"pending"})
+                for level, requested in (("module", ["query"]), ("pair", ["query", "storage"])):
+                    with self.assertRaisesRegex(HarnessError, "candidate pending"):
+                        validation_plan(ROOT, [path], policy, architecture, invariants, level, requested)
+        combined = required_closure([query, common, catalog], registry, architecture)
+        reordered = required_closure([catalog, common, query], registry, architecture)
+        self.assertEqual(combined, reordered)
+        # Deleted/not-yet-created trigger paths remain meaningful inputs.
+        self.assertFalse((ROOT/common).exists())
+        self.assertEqual(required_closure([common], registry, architecture)["methods"], expected[0][2])
+        unknown = required_closure([common, "crates/guradb-common/src/old_ports.rs"], registry, architecture)
+        self.assertIsNone(unknown["required_consumers"])
+        self.assertIsNone(unknown["methods"])
+        self.assertEqual(unknown["unresolved"][-1]["reason"], "unmapped_trigger")
+        empty = required_closure(["README.md"], registry, architecture)
+        self.assertEqual(empty["methods"], [])  # Resolved no matching interface, unlike unknown input.
+        self.assertEqual(empty["unresolved"], [])
+        overlapping = copy.deepcopy(registry)
+        finish = copy.deepcopy(overlapping["candidate_closure"]["methods"][1])
+        finish["id"] = "RC-F"
+        overlapping["candidate_closure"]["methods"].append(finish)
+        self.assertEqual(required_closure([catalog], overlapping, architecture)["methods"],
+                         ["Compiler", "RC-B", "RC-F"])
+
+    def test_candidate_registry_rejects_unknown_conflicting_and_unqualified_data(self):
+        policy, architecture = self.configuration[:2]
+        changes = [lambda c: c.update(mode="active"), lambda c: c.update(extra=True),
+                   lambda c: c["contract"].update(canonical_sha256="not-a-digest"),
+                   lambda c: c["methods"].append(copy.deepcopy(c["methods"][0])),
+                   lambda c: c["methods"][0].update(owner="unknown"),
+                   lambda c: c["methods"][0].update(consumers=["unknown"]),
+                   lambda c: c["methods"][0].update(consumers=["common"]),
+                   lambda c: c["methods"][2].update(consumers=["storage"]),
+                   lambda c: c["methods"][1]["contract"].update(version="different"),
+                   lambda c: c["methods"][0].update(trigger_paths=["../escape.rs"]),
+                   lambda c: c["methods"][0].update(trigger_paths=["crates/guradb-query/src/compile.rs"]),
+                   lambda c: c["methods"][0].update(observations=[]),
+                   lambda c: c["methods"][0]["driver_profile"].update(state="ready"),
+                   lambda c: c["methods"][0]["driver_profile"].update(state=[])]
+        for change in changes:
+            candidate = candidate_fixture()
+            change(candidate)
+            registry = copy.deepcopy(load_registry(ROOT, policy, architecture))
+            registry["candidate_closure"] = candidate
+            with self.subTest(change=change), patch("harnesslib.validation_registry.read_toml", return_value=registry):
+                with self.assertRaises(HarnessError):
+                    load_registry(ROOT, policy, architecture)
+        # Even a fixture architecture permitting reciprocal edges cannot hide a cycle.
+        cyclic = copy.deepcopy(architecture)
+        cyclic["modules"]["common"]["allowed"] = ["catalog"]
+        candidate = candidate_fixture()
+        candidate["methods"][1]["consumers"] = ["common"]
+        with self.assertRaisesRegex(HarnessError, "cycle"):
+            validate_candidate(candidate, cyclic)
 
 
 if __name__ == "__main__":

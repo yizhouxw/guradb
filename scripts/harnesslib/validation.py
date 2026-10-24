@@ -6,7 +6,7 @@ else:
 from pathlib import PurePosixPath
 
 from .policy import HarnessError, normalize_path, owner, plan as legacy_plan
-from .validation_registry import digest, load_registry, source_inventory
+from .validation_registry import digest, load_registry, required_closure, source_inventory
 
 LEVELS = ("auto", "module", "pair", "system", "release")
 
@@ -79,6 +79,14 @@ def validation_plan(root, paths, policy, architecture, invariants, level="auto",
     paths = sorted({normalize_path(path) for path in paths})
     registry = load_registry(root, policy, architecture)
     minimum, affected, pair, reasons = classify(paths, registry, architecture)
+    required = required_closure(paths, registry, architecture)
+    if required["mode"] == "candidate" and required["unresolved"]:
+        if level in {"module", "pair"}:
+            raise HarnessError("candidate pending/unknown closure cannot qualify module/pair execution")
+        # An unresolved candidate is never permission to run a narrower profile.
+        if minimum not in {"engineering", "documentation"}:
+            minimum, pair = "system", None
+            reasons = [*reasons, "candidate closure unresolved; system does not certify its drivers"]
     modules = list(modules)
     if len(modules) != len(set(modules)) or set(modules) - set(registry["modules"]):
         raise HarnessError("unknown/duplicate requested module")
@@ -133,7 +141,8 @@ def validation_plan(root, paths, policy, architecture, invariants, level="auto",
                "architecture_sha256": digest(architecture), "source_closure": closure,
                "denominator": {"rule": "complete-owner-production-sources", "threshold_percent": dict(THRESHOLDS),
                                "sources": sorted(closure)} if closure else {"rule": "not-production-coverage"},
-               "components": components, "suites": suites, "reuse": "none; every command fresh"}
+               "components": components, "suites": suites, "reuse": "none; every command fresh",
+               "required_closure": required}
     return {"requested_level": level, "requested_modules": modules, "minimum_level": minimum,
             "selection_reasons": reasons, "profile": profile, "profile_sha256": digest(profile),
             "legacy_impact": legacy_plan(root, paths, policy, architecture, invariants)}

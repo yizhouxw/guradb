@@ -18,8 +18,11 @@ def load_registry(root, policy, architecture):
     value = read_toml(root / "harness/validation.toml")
     expected = {"schema_version", "engineering_prefixes", "engineering_paths", "system_prefixes",
                 "system_paths", "modules", "components", "pairs"}
-    if set(value) != expected or set(value["modules"]) != set(architecture["modules"]):
+    if (set(value) - {"candidate_closure"} != expected
+            or set(value["modules"]) != set(architecture["modules"])):
         raise HarnessError("validation registry must cover every architecture owner and no unknown fields")
+    if "candidate_closure" in value:
+        validate_candidate(value["candidate_closure"], architecture)
     for key in ("engineering_prefixes", "engineering_paths", "system_prefixes", "system_paths"):
         entries = value[key]
         if not isinstance(entries, list) or len(entries) != len(set(entries)):
@@ -73,6 +76,113 @@ def load_registry(root, policy, architecture):
                 or set(pair["modules"]) - set(value["components"][pair["component"]]["modules"])):
             raise HarnessError(f"{name}: invalid real paired closure")
     return value
+
+
+def _strings(value, label, allow_empty=False):
+    if (not isinstance(value, list) or not allow_empty and not value
+            or any(not isinstance(item, str) or not item.strip() for item in value)
+            or len(value) != len(set(value))):
+        raise HarnessError(f"candidate closure: invalid {label}")
+    return value
+
+
+def validate_candidate(candidate, architecture):
+    """Validate declarative tool candidates, never grant an executable route."""
+    if (not isinstance(candidate, dict)
+            or set(candidate) != {"mode", "contract", "qa_source", "methods"}
+            or candidate["mode"] != "candidate"):
+        raise HarnessError("candidate closure cannot assert active qualification")
+    contract = candidate["contract"]
+    if (not isinstance(contract, dict) or set(contract) != {"version", "canonical_sha256"}
+            or not isinstance(contract["version"], str) or not contract["version"].strip()
+            or not isinstance(contract["canonical_sha256"], str)
+            or not re.fullmatch(r"[0-9a-f]{64}", contract["canonical_sha256"])
+            or not isinstance(candidate["qa_source"], str) or not candidate["qa_source"].strip()
+            or not isinstance(candidate["methods"], list) or not candidate["methods"]):
+        raise HarnessError("candidate closure needs an exact contract and QA source")
+    methods, graph = set(), {}
+    for method in candidate["methods"]:
+        if (not isinstance(method, dict) or set(method) != {"id", "owner", "consumers", "trigger_paths",
+                "contract", "observations", "driver_profile"}
+                or not isinstance(method["id"], str) or not re.fullmatch(r"[A-Za-z0-9_.-]+", method["id"])
+                or method["id"] in methods or method["contract"] != contract
+                or not isinstance(method["owner"], str) or method["owner"] not in architecture["modules"]):
+            raise HarnessError("candidate closure has a conflicting method/contract/owner")
+        methods.add(method["id"])
+        producer = method["owner"]
+        consumers = _strings(method["consumers"], "consumers", allow_empty=True)
+        for consumer in consumers:
+            if (consumer not in architecture["modules"] or consumer == producer
+                    or producer not in architecture["modules"][consumer]["allowed"]):
+                raise HarnessError("candidate closure has an unknown or forbidden consumer edge")
+        graph.setdefault(producer, set()).update(consumers)
+        for path in _strings(method["trigger_paths"], "trigger paths"):
+            if normalize_path(path) != path or owner(path, architecture) != producer:
+                raise HarnessError("candidate closure has a conflicting/noncanonical trigger")
+        _strings(method["observations"], "observations")
+        driver = method["driver_profile"]
+        if (not isinstance(driver, dict) or set(driver) != {"id", "state", "reason"}
+                or not isinstance(driver["id"], str) or not driver["id"].strip()
+                or not isinstance(driver["state"], str) or driver["state"] not in {"pending", "unregistered"}
+                or not isinstance(driver["reason"], str) or not driver["reason"].strip()):
+            raise HarnessError("candidate driver/profile remains pending or unregistered, never ready")
+    visiting, visited = set(), set()
+
+    def visit(node):
+        if node in visiting:
+            raise HarnessError("candidate consumer graph contains a cycle")
+        if node in visited:
+            return
+        visiting.add(node)
+        for consumer in sorted(graph.get(node, ())):
+            visit(consumer)
+        visiting.remove(node)
+        visited.add(node)
+
+    for producer in sorted(graph):
+        visit(producer)
+
+
+def required_closure(paths, registry, architecture):
+    """Method impact evidence is separate from the selected executable profile."""
+    base = {"mode": "unregistered", "contract": None, "qa_source": None, "methods": None,
+            "trigger_paths": sorted(paths), "required_owners": None, "required_consumers": None,
+            "method_bindings": None, "driver_profiles": None,
+            "unresolved": [{"reason": "registry_not_connected"}]}
+    candidate = registry.get("candidate_closure")
+    if candidate is None:
+        return base
+    validate_candidate(candidate, architecture)
+    selected, consumers = {}, set()
+    for method in candidate["methods"]:
+        if set(paths) & set(method["trigger_paths"]):
+            selected[method["id"]] = method
+            consumers.update(method["consumers"])
+    while True:
+        added = [method for method in candidate["methods"]
+                 if method["owner"] in consumers and method["id"] not in selected]
+        if not added:
+            break
+        for method in added:
+            selected[method["id"]] = method
+            consumers.update(method["consumers"])
+    declared = {path for method in candidate["methods"] for path in method["trigger_paths"]}
+    unknown = sorted(path for path in paths if path not in declared and Path(path).suffix not in {".md", ".rst"})
+    ordered = [selected[name] for name in sorted(selected)]
+    unresolved = [{"method": method["id"], "reason": method["driver_profile"]["reason"],
+                   "state": method["driver_profile"]["state"]} for method in ordered]
+    unresolved.extend({"owner": consumer, "reason": "consumer_method_unregistered"}
+                      for consumer in sorted(consumers - {method["owner"] for method in ordered}))
+    if unknown:
+        unresolved.append({"reason": "unmapped_trigger", "paths": unknown})
+    return {**base, "mode": "candidate", "contract": candidate["contract"], "qa_source": candidate["qa_source"],
+            "methods": sorted(selected) if not unknown else None,
+            "required_owners": sorted({method["owner"] for method in ordered} | consumers) if not unknown else None,
+            "required_consumers": sorted(consumers) if not unknown else None,
+            "method_bindings": [{key: method[key] for key in ("id", "owner", "consumers", "trigger_paths", "observations")}
+                                for method in ordered],
+            "driver_profiles": [{"method": method["id"], **method["driver_profile"]} for method in ordered],
+            "unresolved": unresolved}
 
 
 def _runtime_path(path):
