@@ -6,6 +6,7 @@ import fcntl
 import hashlib
 import json
 import os
+import secrets
 from pathlib import Path
 import subprocess
 import sys
@@ -75,12 +76,83 @@ def evidence_inputs():
             for path in sorted(paths)}
 
 
-def image_identity(evidence, image):
-    value = subprocess.check_output(['docker', 'image', 'inspect', '--format', '{{.Id}}', image],
-                                    cwd=ROOT, text=True).strip()
+def checked_image_id(raw):
+    value = raw.removesuffix(b'\n').decode('ascii')
     if len(value) != 71 or not value.startswith('sha256:') or any(c not in '0123456789abcdef' for c in value[7:]):
         raise ValueError('Docker image identity is not a SHA-256 ID')
-    evidence.record('tool_identity', image_tag=image, image_id=value, observation='after_image_build')
+    return value
+
+
+def build_image(directory, evidence):
+    path = directory/'coverage-image.id'
+    if path.exists() or path.is_symlink():
+        raise FileExistsError('preserve the existing coverage image identity')
+    owner = {'schema_version': 1, 'record_kind': 'coverage-image-owner', 'state': 'intent',
+             'owner_token': secrets.token_hex(32), 'source_root': str(ROOT.resolve()),
+             'run_directory': str(directory.resolve()),
+             'driver_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+    owner['retained_ref'] = 'guradb-coverage-run:' + hashlib.sha256(
+        json.dumps(owner, sort_keys=True).encode()).hexdigest()
+    with (directory/'coverage-image-owner.json').open('x') as stream:
+        json.dump(owner, stream, sort_keys=True)
+        stream.write('\n')
+        stream.flush()
+        os.fsync(stream.fileno())
+    inspect = ['docker', 'image', 'inspect', '--format', '{{.Id}}', owner['retained_ref']]
+    if evidence is not None:
+        evidence.record('tool_invocation', phase='docker_image_build', phase_id=evidence.sequence,
+                        operation='reference_preflight', argv=inspect, **owner)
+    result = subprocess.run(inspect, cwd=ROOT, capture_output=True)
+    if result.returncode == 0:
+        raise FileExistsError('preserve the existing image reference; do not adopt or overwrite it')
+    absent = ('Error response from daemon: No such image: '+owner['retained_ref']+'\n').encode()
+    if result.returncode != 1 or result.stdout.strip() or result.stderr != absent:
+        raise RuntimeError('image reference absence is unconfirmed; preserve owner intent')
+    argv = ['docker', 'build', '-q', '--iidfile', str(path), '-t', owner['retained_ref'],
+            '-t', 'guradb-coverage:1.90.0', '--label', 'guradb.coverage.owner='+owner['owner_token'],
+            '-f', 'tools/test-coverage/Dockerfile', '.']
+    if evidence is not None:
+        evidence.record('tool_invocation', phase='docker_image_build', phase_id=evidence.sequence,
+                        argv=argv, iidfile=str(path), **owner)
+    subprocess.run(argv, cwd=ROOT, check=True)
+    if path.is_symlink() or not path.is_file():
+        raise ValueError('build did not produce a regular coverage image identity file')
+    with path.open('rb') as stream:
+        return {**owner, 'image_id': checked_image_id(stream.read(73))}
+
+
+def image_identity(evidence, captured, phase='docker_image_identity'):
+    image = captured['image_id']
+    argv = ['docker', 'image', 'inspect', '--format', '{{.Id}}', image]
+    if evidence is not None:
+        evidence.record('tool_invocation', phase=phase, phase_id=evidence.sequence,
+                        argv=argv, image_id=image)
+    value = checked_image_id(subprocess.check_output(argv, cwd=ROOT))
+    if value != image:
+        raise ValueError('inspected image differs from the captured build identity')
+    argv = ['docker', 'image', 'inspect', '--format',
+            '{{.Id}} {{index .Config.Labels "guradb.coverage.owner"}}', captured['retained_ref']]
+    if evidence is not None:
+        evidence.record('tool_invocation', phase=phase, phase_id=evidence.sequence, argv=argv,
+                        image_id=image, retained_ref=captured['retained_ref'], owner_token=captured['owner_token'])
+    observed = subprocess.check_output(argv, cwd=ROOT).removesuffix(b'\n')
+    if observed != (image+' '+captured['owner_token']).encode():
+        raise ValueError('retained image reference/owner differs from this run')
+    if evidence is not None:
+        evidence.record('tool_identity', image_id=value, image_reference=image,
+                        retained_ref=captured['retained_ref'], owner_token=captured['owner_token'],
+                        observation='after_image_build' if phase == 'docker_image_identity' else phase)
+    return value
+
+
+def run_coverage_tool(evidence, phase, argv, captured):
+    def execute():
+        image = image_identity(evidence, captured, phase)
+        if evidence is not None:
+            evidence.record('tool_invocation', phase=phase, phase_id=evidence.sequence,
+                            argv=argv, image_id=image)
+        return subprocess.run(argv, cwd=ROOT, check=True)
+    return measured(evidence, phase, execute)
 
 
 def record_identity(evidence, observation, scope=None):
@@ -135,24 +207,25 @@ def python_coverage(directory, scope=None):
 
 
 def rust_coverage(directory, evidence=None, scope=None):
-    image = 'guradb-coverage:1.90.0'
-    measured(evidence, 'docker_image_build', lambda: subprocess.run(
-        ['docker', 'build', '-q', '-t', image, '-f', 'tools/test-coverage/Dockerfile', '.'], cwd=ROOT, check=True))
-    if evidence is not None:
-        evidence.run('docker_image_identity', lambda: image_identity(evidence, image))
+    captured = measured(evidence, 'docker_image_build', lambda: build_image(directory, evidence))
+    image = measured(evidence, 'docker_image_identity', lambda: image_identity(evidence, captured))
     output = directory/'rust.json'
-    measured(evidence, 'rust_collect_test_json', lambda: subprocess.run(
+    run_coverage_tool(evidence, 'rust_collect_test_json',
                     ['docker', 'run', '--rm', '-v', f'{ROOT}:/workspace', '-w', '/workspace',
                     '-v', 'guradb-cargo-registry:/usr/local/cargo/registry', image,
                     'cargo', 'llvm-cov', *package_args(scope), '--locked', '--ignore-filename-regex', ignore_regex(ROOT, scope), '--json', '--output-path',
-                    '/workspace/'+output.relative_to(ROOT).as_posix()], cwd=ROOT, check=True))
+                    '/workspace/'+output.relative_to(ROOT).as_posix()], captured)
     lcov = directory/'rust.lcov'
-    measured(evidence, 'rust_lcov_export', lambda: subprocess.run(
+    run_coverage_tool(evidence, 'rust_lcov_export',
                     ['docker', 'run', '--rm', '-v', f'{ROOT}:/workspace', '-w', '/workspace',
                     '-v', 'guradb-cargo-registry:/usr/local/cargo/registry', image,
                     'cargo', 'llvm-cov', 'report', *(package_args(scope) if scope else []), '--locked', '--ignore-filename-regex', ignore_regex(ROOT, scope),
-                    '--lcov', '--output-path', '/workspace/'+lcov.relative_to(ROOT).as_posix()], cwd=ROOT, check=True))
-    return measured(evidence, 'rust_summary', lambda: rust_summary(directory, output, lcov, scope))
+                    '--lcov', '--output-path', '/workspace/'+lcov.relative_to(ROOT).as_posix()], captured)
+    result = measured(evidence, 'rust_summary', lambda: rust_summary(directory, output, lcov, scope))
+    if result is False:
+        return False
+    measured(evidence, 'docker_image_retained', lambda: image_identity(evidence, captured, 'docker_image_retained'))
+    return result
 
 
 def rust_summary(directory, output, lcov, scope=None):
