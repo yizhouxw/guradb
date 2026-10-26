@@ -27,7 +27,7 @@ python3 -m venv .venv
 .venv/bin/python scripts/harness.py check --scope release
 ```
 
-团队职责、独立任务Issue与模块标签见[团队协作](team-collaboration.md)及[标签清单](module-labels.json)。所有后续成员任务均独立登记并由PM核对标签/DRI后派发。当前[暂停远端Actions/PR CI准入](ci-cd.md)，本机适用自测、独审和精确main核验继续必需。
+团队职责、技术升级与派发规则统一见[团队协作规范](team-collaboration.md)，模块标签见[清单](module-labels.json)。PM 只做管理协调，调度提示引用规范及当前任务/检查点。当前[暂停远端Actions/PR CI准入](ci-cd.md)，本机适用自测、独审和精确main核验继续必需。
 
 并行开发统一按 [GitHub PR 流程](parallel-development.md)：一任务一分支/worktree，独立证据与审查，依赖顺序串行合入 main；本次治理变更依用户明确指令由单一集成者直接提交main，保留正常hook、本地验证和推送核对。
 
