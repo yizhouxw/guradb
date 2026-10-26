@@ -28,6 +28,6 @@
 
 高风险变更记录功能、性能/质量/成本、故障恢复和回滚证据，并单独复核。修改 baseline/门禁不能只为消除回归；缺失真实 driver 时保留 planned/missing 状态。接入步骤见 [runtime-onboarding](harness/runtime-onboarding.md)。
 
-版本管理按 [Git 工作流](harness/version-control.md)：起始记录基点，有限切片提交，提交后报告绑定 commit 并建立 checkpoint；复杂实验/已有改动用独立 worktree。安装本仓库 pre-commit hook，禁止绕过失败。恢复默认在新目录检出 checkpoint，主线撤销用 revert 保留历史；代码恢复不替代数据恢复。私有远端已配置；用户已授权后续开发提交经门禁、复核与提交后验证后推送任务分支到现有 `origin` 并创建 PR；所有任务按 [PR 并行流程](harness/parallel-development.md) 使用独立分支/worktree，CI 与复核通过后串行合入 `main`。不直接推送主线，不强推，远端设置与部署另行授权。
+版本管理按 [Git 工作流](harness/version-control.md)：起始记录基点，有限切片提交，提交后报告绑定 commit 并建立 checkpoint；复杂实验/已有改动用独立 worktree。安装本仓库 pre-commit hook，禁止绕过失败。恢复默认在新目录检出 checkpoint，主线撤销用 revert 保留历史；代码恢复不替代数据恢复。私有远端已配置；用户已授权后续开发提交经门禁、复核与提交后验证后推送任务分支到现有 `origin` 并创建 PR；所有任务按 [PR 并行流程](harness/parallel-development.md) 使用独立分支/worktree，当前适用本机自测与独立复核通过后串行合入 `main`。不直接推送主线，不强推，远端设置与部署另行授权。
 
 提交说明应描述具体变化及验证方式。发布、项目许可证与贡献授权政策仍需单独确定，不能从骨架推断。

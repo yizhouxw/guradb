@@ -1,19 +1,22 @@
 # PM交接状态JSON模板
 
-这是可复制的数据示例，不是Schema或可执行调度配置。填写规则、字段语义和七场景演练见[PM协调规则](../pm-coordination.md)。初始值未配置、未授权；复制代码块为动态JSON记录时先填实际值并完成规定核验，再将可定位的当前记录链接保存在项目PM协调Issue。勿将实时状态回写本模板。
+这是可复制的数据示例，不是Schema或可执行调度配置。填写规则、字段语义和七场景演练见[PM协调规则](../pm-coordination.md)。初始值未配置、未授权；复制代码块为动态JSON记录时先填实际值并完成规定核验，再从PM START定位唯一共享活跃根；不在每个worktree各建current。勿将实时状态回写本模板。
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "record_kind": "pm-handoff-state",
   "template_only": true,
   "record_revision": 0,
   "project": {
     "repository_url": null,
     "coordination_issue_url": null,
-    "current_record_url": null
+    "shared_state_root": null,
+    "host": null,
+    "current_record_path": "pm/CURRENT.md"
   },
   "pm": {
+    "member_id": "pm",
     "role": "pm",
     "dri_session_id": null,
     "execution_owner_session_id": null,
@@ -27,7 +30,10 @@
   "timezone": "Asia/Shanghai",
   "waiting_on": [
     {
-      "task_issue_url": null,
+      "task_id": null,
+      "task_path": null,
+      "optional_issue_ref": null,
+      "member_id": null,
       "role": null,
       "dri_session_id": null,
       "input_version": null,
@@ -38,6 +44,7 @@
     }
   ],
   "next_action": {
+    "owner_member_id": null,
     "owner_session_id": null,
     "description": null,
     "trigger": null
@@ -107,3 +114,5 @@
 ```
 
 `null`表示未填或未知，不是成功/无成本；`template_only`填写后改为false不构成授权。所有`*_ref`必须指向可定位且允许访问的证据；本地路径须填机器归属与可取性。只有顶层`next_check_at`为当前有效检查点；`pending_change`是未生效更新意图，平台回读确认前不得冒充有效代际。
+
+稳定member_id不能取session/任务UUID。模板是未授权结构示例；活跃记录轻量维护，长期规范/记忆在稳定点受审归档。不同worktree须显式同一共享根，跨机缺副本标unavailable/HOLD，本文不实现同步/锁/CAS。

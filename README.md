@@ -86,4 +86,6 @@ make check
 
 版本追溯已接入 [Git 工作流](harness/version-control.md)：切片提交、提交前检查、checkpoint 与独立目录恢复。已配置私有远端 [yizhouxw/guradb](https://github.com/yizhouxw/guradb)；用户已授权后续开发提交经验证后推送任务分支到现有 `origin`，并通过 [GitHub PR 并行流程](harness/parallel-development.md) 审查、验证后合入 `main`；不直接推送主线，不强推，远端设置与部署另行授权。
 
-后续开发使用[固定模块团队与独立Issue](harness/team-collaboration.md)和[任务验收闭环](harness/development-workflow.md)。2026-10-24起按用户决定[暂停GitHub Actions CI/CD与PR远端CI准入](harness/ci-cd.md)，当前以本机自测、独立系统测试/复核和精确main证据保障合入；恢复CI/CD待项目完整度与环境条件明确后重新讨论。
+离线恢复由[PM START](harness/pm/START.md)进入[当前索引](harness/pm/START.md)、[本地任务](harness/tasks/README.md)及[成员记忆](harness/members/README.md)；规范见[ADR0025](docs/decisions/0025-local-member-memory-and-task-delegation.md)。GitHub Issue可选，普通分支/PR与本机质量义务保留。
+
+后续开发使用[稳定成员、本地任务与有界委派](harness/team-collaboration.md)和[任务验收闭环](harness/development-workflow.md)。2026-10-24起按用户决定[暂停GitHub Actions CI/CD与PR远端CI准入](harness/ci-cd.md)，当前以本机自测、独立系统测试/复核和精确main证据保障合入；恢复CI/CD待项目完整度与环境条件明确后重新讨论。

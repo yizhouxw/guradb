@@ -1,5 +1,7 @@
 # 团队与本机质量治理变更计划
 
+历史：2026-10-24合同及当时验证记录；强制Issue和固定会话组织规则已由[ADR0025](../docs/decisions/0025-local-member-memory-and-task-delegation.md)定向替代，不是当前派发前置。
+
 任务[#20](https://github.com/yizhouxw/guradb/issues/20)，2026-10-24，用户授权本次直接提交main。准备基点8e925532；隔离树用于准备，ROOT唯一串行提交main，不创建额外PR。
 
 验收：固定七模块DRI及产品/架构/专职系统测试/集成/PM分责；每位成员后续任务独立Issue、主模块/角色标签、唯一DRI和验收；现有Actions远端disabled、PR不等CI；本机自测/独审/证据/预算保持。没有数据库用户行为、持久格式或数据迁移变化。

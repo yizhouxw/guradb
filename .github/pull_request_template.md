@@ -4,8 +4,8 @@
 
 ## 并行任务与合入顺序
 
-- 独立任务 Issue / 主 module:* 标签 / role:* 标签 / 唯一 DRI与GitHub assignee：
-- task ID / owner / 分支 / worktree：
+- 本地TASK路径 / 稳定member_id与贡献集合 / 执行实例 / 独立reviewer member_id / 可选Issue ref：
+- task ID / 预授权包与预算/停止条件 / owner / 分支 / worktree / receipt：
 - PR base（默认 main）/ 原始 task base SHA / 合同版本：
 - 允许文件域、共享热点 owner 与交权情况：
 - 依赖 PR / blocked-by / 集成顺序（无依赖明确写无）：

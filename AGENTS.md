@@ -4,7 +4,9 @@
 
 先阅读 [README](README.md)、受影响目录的 AGENTS、对应 ADR 和 [harness 入口](harness/README.md)。长任务/上下文恢复时检查 Git 状态、当前变更计划、未解决风险与最新报告；旧摘要里的“通过”不能替代当前代码证据。
 
-团队职责、技术升级及独立 Issue 派发以[团队协作规范](harness/team-collaboration.md)为唯一入口。PM 只做管理协调，技术工作由相应责任角色承担；任务开工、交接与验收须遵守该规范。
+团队职责、技术升级、本地任务与稳定成员派发以[团队协作规范](harness/team-collaboration.md)为唯一入口。PM全项目唯一执行会话，只做管理协调；统一开发负责人按有界任务委派subagent，非PM成员可多执行实例，身份与项目内成员记忆绑定而非session；技术工作由相应责任角色承担；任务开工、交接与验收须遵守该规范。
+
+离线恢复先读 [PM START](harness/pm/START.md)、[本地任务](harness/tasks/README.md)与[成员记忆](harness/members/README.md)；GitHub Issue为可选ref，普通分支/PR和原门禁保持，见[ADR0025](docs/decisions/0025-local-member-memory-and-task-delegation.md)。
 
 默认中文说明，英文代码标识符。按需加载相关文档，不把全部历史塞进上下文；长期决定进入 ADR，根文件保留导航和全局规则。
 

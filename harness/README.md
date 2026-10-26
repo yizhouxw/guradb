@@ -27,6 +27,8 @@ python3 -m venv .venv
 .venv/bin/python scripts/harness.py check --scope release
 ```
 
+离线首先从[PM START](pm/START.md)读取[当前索引](pm/START.md)、[本地任务](tasks/README.md)与[成员记忆](members/README.md)。session仅执行实例，PM全项目唯一会话，GitHub Issue可选；[ADR0025](../docs/decisions/0025-local-member-memory-and-task-delegation.md)不改变harness执行行为。
+
 团队职责、技术升级与派发规则统一见[团队协作规范](team-collaboration.md)，模块标签见[清单](module-labels.json)。PM 只做管理协调，调度提示引用规范及当前任务/检查点。当前[暂停远端Actions/PR CI准入](ci-cd.md)，本机适用自测、独审和精确main核验继续必需。
 
 并行开发统一按 [GitHub PR 流程](parallel-development.md)：一任务一分支/worktree，独立证据与审查，依赖顺序串行合入 main；本次治理变更依用户明确指令由单一集成者直接提交main，保留正常hook、本地验证和推送核对。
@@ -57,7 +59,7 @@ python3 -m venv .venv
 | [首次内核接入](runtime-onboarding.md) | 从 planned 到真实代码门禁的步骤 |
 | [Git 追溯与恢复](version-control.md) | 有限切片提交、检查点、提交前门禁与保留现场的恢复 |
 | [开发流程](development-workflow.md) | 任务起止、验收/复核、失败与交接、依赖/迁移及证据归档 |
-| [团队协作](team-collaboration.md) | 固定模块DRI、产品/架构/系统测试、独立任务Issue与模块标签 |
+| [团队协作](team-collaboration.md) | 稳定成员与七模块责任、统一开发负责人委派、本地任务和可选Issue |
 | [本机质量与 CI 暂停](ci-cd.md) | 当前本地验收、Actions停用状态与重新启用条件 |
 
 本地依赖检查含 Cargo 普通、dev、build、target-specific 和 workspace 继承，以及包/模块循环。未归属代码、超过 600 行的源文件、检查范围内的符号链接会失败。600 行是可维护性门槛，不是性能指标；Python生产模块另做真实AST import DAG、compileall与锁/依赖检查；其它新语言仍需对应检查器，不能只靠Cargo lint。

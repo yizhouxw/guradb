@@ -1,5 +1,7 @@
 # ADR 0023：固定模块团队、独立 Issue 与本机质量阶段
 
+> 2026-10-26 定向替代：[ADR0025](0025-local-member-memory-and-task-delegation.md)采用本地任务权威、稳定member_id/成员记忆和统一开发负责人按任务委派；旧强制Issue及固定成员会话条件不再适用。下文保留历史合同；普通分支/PR、作者独审分离、本地质量、预算与CI暂停仍保持。
+
 - 状态：接受，2026-10-24 用户明确授权；团队席位的具体任命须在 Issue 登记
 - 依据：用户要求核心模块设开发负责人，配套架构、产品、专职系统测试；每人工作独立 GitHub Issue/模块标签；暂停 GitHub Actions CI/CD 和 PR CI 卡点，当前靠本机自测；本次治理变更直接提交 main
 - 规范：[团队协作](../../harness/team-collaboration.md)、[PR 集成](../../harness/parallel-development.md)、[本机质量与 CI 暂停](../../harness/ci-cd.md)

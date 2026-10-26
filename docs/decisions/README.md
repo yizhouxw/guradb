@@ -26,6 +26,7 @@ ADR 用来记录已经比较过的方案和取舍。编号只表示记录顺序�
 | [0021](0021-cf1a-fixed-catalog.md) | CF1-A 固定目录与计划发布 | 提案；独立持久布局、真实 PG 与恢复边界待实现验证 |
 | [0022](0022-module-delivery-and-validation-levels.md) | 模块交付、真实配对与四层验证 | 接受用户实施原则；机器接线/用户能力分别以报告验收 |
 | [0024](0024-controlled-worker-catalog-dependency.md) | 私有受控worker读取catalog | 已有受控C1依赖边；不新增公开入口或认证完整FD预算 |
+| [0025](0025-local-member-memory-and-task-delegation.md) | 本地成员记忆与有界任务委派 | 已接受；稳定member、本地TASK和统一开发负责人，普通PR/质量不变 |
 | [模板](0000-template.md) | 后续决策的记录格式 | 模板 |
 
 ## 优先讨论的问题

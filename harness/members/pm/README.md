@@ -1,0 +1,17 @@
+# pm 成员记忆
+
+## profile
+
+member_id: `pm`；角色：PM。仅维护全项目交付图、跨角色优先级、总预算/实际槽/共享窗、用户承诺/风险与最终收口，不承担技术执行；全项目唯一PM会话。预定A/T接链及资源后，development自主维护已批准包内任务图/实例并可直接触发已授权独审，不逐项转发技术细节、不代T验收。 稳定身份不随session或role改变；这是责任记忆入口，不自动派发。当前实例、写权、过期/接管登记读唯一共享活跃根 `members/pm/CURRENT.md`，未登记不得写。源码归属以harness/architecture.toml为准。
+
+## knowledge
+
+产品执行结果未刷新：UNKNOWN；不得从责任位推定已实现或已派发。 来源：[团队合同](../../team-collaboration.md)、[ADR0025](../../../docs/decisions/0025-local-member-memory-and-task-delegation.md)；版本=2026-10-26本次候选，观察日期2026-10-26，verified=文档已读取，运行/可取性验证=UNKNOWN；新版本或后继证据需重新确认。
+
+## decisions
+
+采用[成员单写/发现/接管规则](../README.md)，决定依据为2026-10-26用户批准的ADR0025。此合同不授超任务scope权限，不证明机器全局锁。过期授权/不匹配head/不可取证据保持UNKNOWN/HOLD。
+
+## tasks
+
+唯一既有会话与schedule读共享活跃根pm/CURRENT.md；旧/新实例交权不明只读HOLD。 development只向PM报短结论/限制/下一动作，任务状态只有同一活跃TASK，PM不复制包内任务图或另设技术调度。旧会话长goal/恢复指令只作历史，不据其扩域或恢复旧权限。当前任务状态只读唯一共享根任务记录，不在本页另记第二份。长期归档写者=具名受审任务作者；日常活跃写者/发现归属在共享根登记。最后初始化：2026-10-26，development；独审/正式归档待本治理验收。

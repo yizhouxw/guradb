@@ -2,6 +2,8 @@
 
 状态：已接入本地 Git/harness 和私有远端；用户已授权验证后的任务分支推送与 PR 合入；异地可恢复性仍需独立验证。
 
+协作状态权威为[本地TASK](tasks/README.md)，[成员记忆](members/README.md)保存稳定身份与知识，Git管理目录receipt保存harness生命周期证据；互不替代。离线可推进本地允许阶段，未知远端状态保持UNKNOWN，普通推送/PR/合入待网络恢复对账，不把可选Issue作为开工前置。
+
 ## 日常开发
 
 1. 开始/恢复任务先执行 `git status --short --branch` 和 `harness.py git-status`，记录起始 commit、分支、现有改动和检查点。已有未提交的用户改动先保持原样，辨明归属并避免混入任务；不自动 stage、stash、reset 或覆盖。
