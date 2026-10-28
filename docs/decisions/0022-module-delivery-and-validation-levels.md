@@ -1,5 +1,7 @@
 # ADR 0022：按模块交付、真实配对与四层验证
 
+历史注：文中的Issue19协调及ROOT人员安排已被[ADR0026](0026-goal-driven-collaboration.md)撤销；验证的阶段优先级以[ADR0027](0027-core-flow-first-validation.md)为准。历史技术结果保留。
+
 日期：2026-10-21。状态：接受用户要求的实施原则；机器接线和当前能力分别以 task/报告验收。
 
 ## 背景

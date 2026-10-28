@@ -4,7 +4,7 @@
 
 ## 并行任务与合入顺序
 
-- 本地TASK路径 / 稳定member_id与贡献集合 / 执行实例 / 独立reviewer member_id / 可选Issue ref：
+- 本地TASK路径 / 稳定member_id与贡献集合 / 执行实例 / 复核方式/技术独立reviewer member_id / 可选Issue ref：
 - task ID / 预授权包与预算/停止条件 / owner / 分支 / worktree / receipt：
 - PR base（默认 main）/ 原始 task base SHA / 合同版本：
 - 允许文件域、共享热点 owner 与交权情况：
@@ -24,7 +24,7 @@
 ## 复核与合入条件
 
 - [ ] 文件范围/合同一致，依赖已合入；分支包含最新 main，冲突处理已复核。
-- [ ] 当前候选适用本机自测/真实配对或系统检查与独审证据完整；远端Actions/PR CI当前暂停，记录PAUSED_BY_USER/NOT_RUN，历史失败不写PASS。
+- [ ] 当前候选适用本机检查与复核证据完整（技术任务须独验；纯协作治理可由PM单独自审，明确标注）；远端Actions/PR CI当前暂停，记录PAUSED_BY_USER/NOT_RUN，历史失败不写PASS。
 - [ ] 单独复核发现与处置已记录；高风险/门禁/持久协议由独立审查轮次或人工复核。单人记录不冒充 GitHub Approval。
 - [ ] 由集成者串行使用 merge commit 合入，不 bypass、不直接 push main、不强推。
 

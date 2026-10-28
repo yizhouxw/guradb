@@ -27,6 +27,8 @@ ADR 用来记录已经比较过的方案和取舍。编号只表示记录顺序�
 | [0022](0022-module-delivery-and-validation-levels.md) | 模块交付、真实配对与四层验证 | 接受用户实施原则；机器接线/用户能力分别以报告验收 |
 | [0024](0024-controlled-worker-catalog-dependency.md) | 私有受控worker读取catalog | 已有受控C1依赖边；不新增公开入口或认证完整FD预算 |
 | [0025](0025-local-member-memory-and-task-delegation.md) | 本地成员记忆与有界任务委派 | 已接受；稳定member、本地TASK和统一开发负责人，普通PR/质量不变 |
+| [0026](0026-goal-driven-collaboration.md) | 目标驱动协作与PM治理责任 | 用户已要求整改；五角色、领域知识分离、最少消息与上下文；执行效果待后续交付验证 |
+| [0027](0027-core-flow-first-validation.md) | 核心数据流优先的分阶段验收 | 用户已决定阶段取舍；选择器适配未实现，产品/CI仍暂停 |
 | [模板](0000-template.md) | 后续决策的记录格式 | 模板 |
 
 ## 优先讨论的问题
@@ -50,4 +52,4 @@ ADR 用来记录已经比较过的方案和取舍。编号只表示记录顺序�
 
 - [ADR 0015：严格生产源行覆盖与双接口场景](0015-unit-coverage-and-dual-interface-scenarios.md)：已采用测试门禁，覆盖率目标仍需实际证据达标；不扩展SQL产品白名单。
 
-- [ADR0023：固定模块团队、独立Issue与本机质量阶段](0023-team-issues-and-local-quality.md)：7个核心模块DRI、产品/架构/专职系统测试/集成/PM分责；暂停GitHub Actions与PR CI准入，保留本机质量。
+- [ADR0023：固定模块团队、独立Issue与本机质量阶段](0023-team-issues-and-local-quality.md)：旧组织规则由0025/0026替代；暂停GitHub Actions与PR CI准入、本机质量义务保留。

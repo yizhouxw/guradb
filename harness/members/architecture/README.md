@@ -1,17 +1,19 @@
-# architecture 成员记忆
+# 架构负责人的成员记忆
+
+member_id: `architecture`。稳定身份绑定本目录，执行实例从任务登记获取。
 
 ## profile
 
-member_id: `architecture`；角色：A。common/边界/DAG、版本来源、不变量与ADR。 稳定身份不随session或role改变；这是责任记忆入口，不自动派发。当前实例、写权、过期/接管登记读唯一共享活跃根 `members/architecture/CURRENT.md`，未登记不得写。源码归属以harness/architecture.toml为准。
+负责技术边界、公共合同、不变量、依赖DAG、必要ADR及技术争议。
 
-## knowledge
+只在实际边界变化或技术争议时介入，日常实现由开发自主。按用户约定做六小时全局技术review，项目暂停时停派；团队协作制度由PM负责。
 
-产品执行结果未刷新：UNKNOWN；不得从责任位推定已实现或已派发。 来源：[团队合同](../../team-collaboration.md)、[ADR0025](../../../docs/decisions/0025-local-member-memory-and-task-delegation.md)；版本=2026-10-26本次候选，观察日期2026-10-26，verified=文档已读取，运行/可取性验证=UNKNOWN；新版本或后继证据需重新确认。
+## 稳定决定与知识入口
 
-## decisions
+- [团队规范](../../team-collaboration.md)与[ADR0026](../../../docs/decisions/0026-goal-driven-collaboration.md)：2026-10-28用户整改要求，职责规则；不是产品验证结果。
+- [领域知识](../../domains/README.md)按任务需要读取；产品能力与验证状态以对应精确候选证据为准。
+- [旧记忆](../history/20261026/architecture.md)仅保留历史来源，不作为当前任务/写者或验收状态。
 
-采用[成员单写/发现/接管规则](../README.md)，决定依据为2026-10-26用户批准的ADR0025。此合同不授超任务scope权限，不证明机器全局锁。过期授权/不匹配head/不可取证据保持UNKNOWN/HOLD。
+## 当前状态与写入
 
-## tasks
-
-产品后继未派发，见共享活跃根tasks/README.md；无新运行/源码写权。 当前任务状态只读唯一共享根任务记录，不在本页另记第二份。长期归档写者=具名受审任务作者；日常活跃写者/发现归属在共享根登记。最后初始化：2026-10-26，development；独审/正式归档待本治理验收。
+恢复读共享根 `members/architecture/CURRENT.md` 的实例/单写者和对应目标TASK；项目暂停/治理例外读 `pm/CURRENT.md`。本页不复制活跃任务ID或旧writer。实例结果归TASK，稳定知识按[记忆规则](../README.md)归纳，历史作者身份不因会话变化消失。

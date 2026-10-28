@@ -1,5 +1,7 @@
 # 当前本机质量保障与 CI/CD 暂停
 
+**2026-10-28现行阶段策略：** 先按[核心链路优先验收](validation-strategy.md)验证用户用例、资源模型与数据流；全面覆盖/回归/性能长稳分阶段推进。本页旧全面前置条款仅描述现有执行器或后续强化/发布义务，不再定义前期产品优先级。机器选择器尚未适配，不能把文档决定冒称工具已生效或绕过hook。产品/Actions继续暂停。
+
 2026-10-24用户明确要求：暂时停用GitHub Actions CI/CD及PR CI卡点，当前使用本机自测保障代码合入质量；项目达到一定完整度后重新讨论。依据[ADR0023](../docs/decisions/0023-team-issues-and-local-quality.md)，优先于ADR0009/0019及旧计划的远端必需检查条款。
 
 本地基础与后续工程任务按[CI基础执行台账](../docs/plans/2026-10-24-ci-foundation.md)推进（Refs [#43](https://github.com/yizhouxw/guradb/issues/43)）。该台账是合同与排程输入，不表示隔离、消费者接线、新模块资格或远端CI已经落实。本片无数据库用户行为、生产代码或质量政策变化。
@@ -52,7 +54,7 @@ fresh计已发生的runner调用（含失败尝试），不是成功完成数；
 
 ## 本机合入质量闭环
 
-1. 模块负责人按[开发流程](development-workflow.md)对实际变更自测：单元/静态、真实依赖功能与负例，以及适用的性能/预算/故障。用现有harness/script，不把mock通过升级为系统通过。
+1. development委派的任务作者按[开发流程](development-workflow.md)对实际变更自测：单元/静态、真实依赖功能与负例，以及适用的性能/预算/故障。用现有harness/script，不把mock通过升级为系统通过。
 2. 专职系统测试独立负责真实跨模块配对和用户旅程，独立oracle、同view/版本/权限、总预算/取消/unknown/清理/恢复；性能与长稳在受控环境单独验收。
 3. 集成者核源码、依赖、文件范围、复核和本地报告，正常hook提交；合入后核精确main、适用检查、报告/checkpoint和远端SHA。只因实际修改、失败或未解决风险补验证，不为管理格式无风险重跑全部历史。
 4. 当前CI记为 `PAUSED_BY_USER / NOT_RUN`；既有失败保留，不能改成PASS。缺少本地命令/证据、timeout/failure/missing仍不能标绿。模块、配对、main和release分层记录，完整performance/stability/soak planned仍阻断release。
@@ -61,7 +63,7 @@ fresh计已发生的runner调用（含失败尝试），不是成功完成数；
 
 每项任务保存原始B、当前H、审阅H及真实命令/报告/receipt/checkpoint；H更新后重新核完整范围与独审。集成前保存M，以expected H串行merge commit，再在独立干净目录对实际G验证完整M→G、建checkpoint并确认远端SHA。PR合成checkout SHA与H/实际G分别记录，预览merge SHA不是已合入G。原始B不被CI当前PR base替代。
 
-现有harness校验范围、源/profile/命令/日志哈希及前后身份，并归档可验证报告；它不证明审查者独立、真实driver语义或跨宿主资源锁。PM人工分配唯一文件写权及重测/coverage/性能/迁移/main窗口，作者与非作者分离。现有coverage锁仅覆盖同checkout，共享CPU/Docker tag/registry仍需排窗；独立target、缓存、消费者扩散和远端身份接线的工程缺口见台账，不能称已实现。
+现有harness校验范围、源/profile/命令/日志哈希及前后身份，并归档可验证报告；它不证明审查者独立、真实driver语义或跨宿主资源锁。development管理包内文件写权及重测/coverage/性能/迁移/main窗口，跨目标资源冲突由PM协调，作者与非作者分离。现有coverage锁仅覆盖同checkout，共享CPU/Docker tag/registry仍需排窗；独立target、缓存、消费者扩散和远端身份接线的工程缺口见台账，不能称已实现。
 
 失败保留日志、diff、原始测量/raw与现场；同条件两次无新证据失败停止盲试。网络/S3独立阻塞先给20分钟排障时间盒，交PM记录owner/下一动作；该时间盒不改变driver原timeout或负载。恢复在新目录按[Git恢复流程](version-control.md)进行，必要修复/revert另走PR，不覆盖原失败。报告/命令日志归档不等于全部raw已异地备份。
 
@@ -102,4 +104,4 @@ A函数fixture、B适用engineering门禁、C独立真实daemon竞争/取消观�
 
 新run先exclusive-create并落盘`coverage-image-owner.json`意图，引用含实际tree/run身份和随机owner，不复用常见子目录名；任何预存intent/IID/ref拒绝覆盖，只有明确No such image才允许build，daemon/权限/不可解析错误为unknown。build命令自带run ref及兼容shared tag；按IID和ref核内容/owner一致，collect/export均继续用IID，summary后仍核保留引用。evidence=None路径同样执行检查；不按tag恢复/重试或当作全局CAS/防管理员删除。
 
-intent/ref/IID、实际argv/phase和失败原件在成功、失败、中断后都保留，不自动删tag/image/target；新一次C/D预计3个keeper加2个测试alias共5个新引用，实际磁盘/耗时成本未知。后续清理由E核run所有权、当前映射与在途/其它引用，PM另行排窗授权，不能按shared或强删同IID。本片不新增清理/GC/daemon监督工具，A/B/C/D与原边界均须新准确候选实际通过才完成。
+intent/ref/IID、实际argv/phase和失败原件在成功、失败、中断后都保留，不自动删tag/image/target；新一次C/D预计3个keeper加2个测试alias共5个新引用，实际磁盘/耗时成本未知。后续清理由E核run所有权、当前映射与在途/其它引用，development在任务已授权资源内排窗，越界交PM处置，不能按shared或强删同IID。本片不新增清理/GC/daemon监督工具，A/B/C/D与原边界均须新准确候选实际通过才完成。

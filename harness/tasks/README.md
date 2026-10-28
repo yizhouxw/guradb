@@ -7,3 +7,5 @@
 按[模板](../templates/local-task.md)建独立task ID，先查重。本地TASK是协作状态权威，Git-admin receipt是原始B/生命周期证据；必须分别核TASK与 `task-status`，不手工结束receipt。Issue仅可选ref。每次更新标revision、观察时刻、写者实例/稳定身份、证据可取性和下一动作；过期/未知不推PASS或授权。
 
 本次版本化[治理TASK](20261026-offline-governance/TASK.md)记录变更计划与归档证据，不承担后续日常当前状态；本次活跃副本同ID，见共享根任务索引。最终归档由E显式合并回此任务，不自动同步两边。
+
+现行目标卡与最小执行包见[团队协作](../team-collaboration.md)；[2026-10-28治理审查](20261028-collaboration-redesign/AUDIT.md)记录本轮整改覆盖。旧治理TASK只作归档，不恢复其角色、会话或direct-main例外。

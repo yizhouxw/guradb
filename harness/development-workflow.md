@@ -1,14 +1,16 @@
 # 开发流程：从任务到可验证交付
 
+**2026-10-28现行阶段策略：** 先按[核心链路优先验收](validation-strategy.md)验证用户用例、资源模型与数据流；全面覆盖/回归/性能长稳分阶段推进。本页旧全面前置条款仅描述现有执行器或后续强化/发布义务，不再定义前期产品优先级。机器选择器尚未适配，不能把文档决定冒称工具已生效或绕过hook。产品/Actions继续暂停。
+
 状态：本地任务与证据工具已接入；运行时范围见 [README](../README.md)，远端 CI 证据及待建立的 CD 合同见 [CI/CD 方案](ci-cd.md)。
 
 ## 1. 开始前确定什么
 
-所有后续成员任务先按[团队协作](team-collaboration.md)查重并建立[本地TASK](templates/local-task.md)，明确稳定member_id、贡献身份、执行实例、预授权包、验收/写域/预算/停止条件与消费者；统一开发负责人按目标委派有界任务subagent，普通设计→实现→自测→修复→独审→集成同scope自主推进。GitHub Issue仅可选ref，离线可派发/恢复；网络阻塞不得伪造PR/合入。TASK为协作状态权威，Git管理目录receipt仍为原始范围及生命周期证据。
+每个目标先按[团队协作](team-collaboration.md)查重并建立[本地TASK](templates/local-task.md)，写明目标验收、DRI和范围/预算/停止条件；技术细节由development按需补充。包内子任务在父卡登记执行实例/贡献身份/写域，不为每个动作另建计划。统一开发负责人按目标委派有界subagent，普通设计→实现→自测→修复→独审→集成同scope自主推进。PM亲自完成纯协作治理，不为此委派技术负责人。GitHub Issue仅可选ref，离线可派发/恢复；网络阻塞不得伪造PR/合入。TASK为协作状态权威，Git管理目录receipt仍为原始范围及生命周期证据。
 
 普通需求先写可观察结果、非目标、所在里程碑、支持/拒绝白名单和验收案例；缺少规模/性能预算时先做有界测量，不能承诺尚无依据的 SLO。涉及跨模块、持久协议、公开接口、热点、基线或门禁，使用[变更计划](templates/change-plan.md)，关联 ADR/INV、功能真值、资源预算、故障断言及恢复边界。小型文字修订只需提交说明，不强制立项文档。
 
-开始时读取 AGENTS/相关模块、Git 状态和最近失败，检查依赖锁与身份/hook；新环境按 README/setup 安装。已有用户改动先保留并辨明归属，不自动暂存、藏起或覆盖。所有任务默认使用独立分支/worktree，经 GitHub PR 合入 `main`；本次团队/harness治理任务经用户明确授权直接main提交，由唯一集成者协调串行窗口；并行范围、依赖和合入条件见 [PR 并行流程](parallel-development.md)，追溯与恢复见 [Git 工作流](version-control.md)。非小型实现启动任务：
+开始时读取 AGENTS/相关模块、Git 状态和最近失败，检查依赖锁与身份/hook；新环境按 README/setup 安装。已有用户改动先保留并辨明归属，不自动暂存、藏起或覆盖。所有任务默认使用独立分支/worktree，经 GitHub PR 合入 `main`；2026-10-26治理的direct-main为单次历史例外，后续任务不得沿用；并行范围、依赖和合入条件见 [PR 并行流程](parallel-development.md)，追溯与恢复见 [Git 工作流](version-control.md)。非小型实现启动任务：
 
 ```sh
 .venv/bin/python scripts/harness.py task-start \
@@ -71,7 +73,7 @@ CI/CD 分层与 GitHub 接入步骤见 [GitHub Actions](ci-cd.md)。
 
 ## 6. 模块出口、层级选择与成本
 
-需求 ID、唯一 module owner、文件域、输入合同、预算、正负真值及消费者是 task-start 前置。常规模块改动只验完整 owner 生产源及其真实依赖；固定跨包 fixture 要注明版本和未认证边界。module 通过即登记下一真实 pair，不等待大包全部完成。主线系统候选与 release 义务仍需各自实际报告。
+产品技术目标须有需求引用、源码module owner、文件域、输入合同、预算、正负真值及消费者；module owner指代码归属，不是长期模块负责人。纯协作治理说明无产品行为变化，使用文档检查与单独自审，不硬套完整产品执行包。常规模块改动只验完整 owner 生产源及其真实依赖；固定跨包 fixture 要注明版本和未认证边界。module 通过即登记下一真实 pair，不等待大包全部完成。主线系统候选与 release 义务仍需各自实际报告。
 
 gates-v2 将默认 check/pre-commit 接到 auto 选择器；显式 module/pair 不能排除实际影响文件、未知 owner 或必要 planned 套件。旧 v1 报告按旧语义保留；v2 固定 level/modules/profile/source closure/原始 base。task-finish 与 checkpoint 的层级声明须匹配报告，不能用局部验收冒充系统/发布。该工具任务尚待独审与实际报告时，本文只规定目标，不表示机器实现已通过。
 

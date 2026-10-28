@@ -4,9 +4,9 @@
 
 先阅读 [README](README.md)、受影响目录的 AGENTS、对应 ADR 和 [harness 入口](harness/README.md)。长任务/上下文恢复时检查 Git 状态、当前变更计划、未解决风险与最新报告；旧摘要里的“通过”不能替代当前代码证据。
 
-团队职责、技术升级、本地任务与稳定成员派发以[团队协作规范](harness/team-collaboration.md)为唯一入口。PM全项目唯一执行会话，只做管理协调；统一开发负责人按有界任务委派subagent，非PM成员可多执行实例，身份与项目内成员记忆绑定而非session；技术工作由相应责任角色承担；任务开工、交接与验收须遵守该规范。
+团队职责、技术升级、本地任务与稳定成员派发以[团队协作规范](harness/team-collaboration.md)为唯一入口。PM全项目唯一执行会话，亲自负责目标、排程、组织与协作harness治理；产品技术执行由统一开发负责人按目标委派subagent并自主完成验收交付链。活跃成员仅PM/产品/架构/开发/测试五角色，模块是领域知识，集成为开发职能。非PM成员可多执行实例，身份与项目内成员记忆绑定而非session。只在结果、阻塞或越界时沟通，任务恢复按需加载最小上下文。
 
-离线恢复先读 [PM START](harness/pm/START.md)、[本地任务](harness/tasks/README.md)与[成员记忆](harness/members/README.md)；GitHub Issue为可选ref，普通分支/PR和原门禁保持，见[ADR0025](docs/decisions/0025-local-member-memory-and-task-delegation.md)。
+离线恢复先读 [PM START](harness/pm/START.md)、[本地任务](harness/tasks/README.md)与[成员记忆](harness/members/README.md)；GitHub Issue仅为可选外部ref，原#19协调模式/动态评论/长期约束索引明确撤销，禁止用于派发或恢复；普通分支/PR保持，见[ADR0026](docs/decisions/0026-goal-driven-collaboration.md)；[ADR0025](docs/decisions/0025-local-member-memory-and-task-delegation.md)保留历史来源。
 
 默认中文说明，英文代码标识符。按需加载相关文档，不把全部历史塞进上下文；长期决定进入 ADR，根文件保留导航和全局规则。
 
@@ -14,7 +14,7 @@
 
 遵循 [Git 工作流](harness/version-control.md) 与 [ADR 0008](docs/decisions/0008-git-traceability-and-recovery.md)。开始记录 `git status`、起始 commit/分支与检查点；不能自动 stage/stash/覆盖已有用户改动。
 
-当前采用 [GitHub PR 并行流程](harness/parallel-development.md)与 [ADR 0019](docs/decisions/0019-pr-parallel-development.md)：所有开发任务（含文档）默认使用 `codex/<task>` 分支，每个并行任务独占 worktree、task receipt 和文件范围；通过本机适用自测与独立复核后由集成者按依赖顺序串行合入 `main`，不直接向主线提交或推送。失败现场恢复仍在新目录。本次团队/harness治理变更经用户明确授权直接提交main，由唯一集成者协调串行窗口、正常hook/推送并核验；普通后续任务仍默认独立分支/PR。该约定替代此前普通任务直接 main 的规则；已存在的 dirty 任务保留原现场，迁移办法见流程。
+当前采用 [GitHub PR 并行流程](harness/parallel-development.md)与 [ADR 0019](docs/decisions/0019-pr-parallel-development.md)：所有开发任务（含文档）默认使用 `codex/<task>` 分支，每个并行任务独占 worktree、task receipt 和文件范围；通过本机适用自测与独立复核后由集成者按依赖顺序串行合入 `main`，不直接向主线提交或推送。失败现场恢复仍在新目录。2026-10-26治理任务曾获单次直接main授权，仅适用于该历史任务；后续治理与普通任务仍默认独立分支/PR。该约定替代此前普通任务直接 main 的规则；已存在的 dirty 任务保留原现场，迁移办法见流程。
 
 有限切片通过门禁和复核后提交，记录变更、验证与恢复点；提交后生成精确绑定新 commit 的检查报告并建立 checkpoint。本仓库作者使用 `yizhouxw <yizhou.xw@gmail.com>`。用户已授权本仓库后续开发在门禁和复核通过、提交后验证完成后直接推送任务分支到现有 `origin` 并创建 PR，满足合入条件后通过 GitHub PR 合入 `main`，不再逐次询问；不得强推或覆盖远端新提交。当前已获用户授权暂停GitHub Actions CI/CD和PR远端CI准入，见[ADR0023](docs/decisions/0023-team-issues-and-local-quality.md)；其余远端设置和部署仍需另行授权。禁止为过门禁使用 `--no-verify` 或关闭 hook。
 
@@ -30,6 +30,10 @@
 - [ADR 0007](docs/decisions/0007-incremental-delivery-and-gates.md)：按路线图切片实施；身份/版本/保留遵循[数据合同](docs/product/data-contracts.md)，组件验证与完整产品发布分别验收。
 - 需求、推荐设计、已接受决定与已实测能力分别描述。不得把骨架/目录/契约或模拟测试写成已支持功能。
 - PG18 语法/类型、wire、目录、事务、扩展分别验收；格式按版本、方向、删除/schema/快照语义验收，不解析后忽略不支持行为。
+
+## 阶段优先级
+
+用户2026-10-28明确要求前期先跑通核心用例，重点保证资源模型和数据流。按[分阶段验收策略](harness/validation-strategy.md)与[ADR0027](docs/decisions/0027-core-flow-first-validation.md)执行：核心链路先验真实路径/结果、资源生命周期和关键失败；全面覆盖、兼容/故障矩阵、性能和长稳在强化/发布阶段落实。纯治理文档只应做文档检查。本页后述原覆盖及全面门禁不是首次核心用例跑通前置；机器适配尚未完成，禁止绕hook或假写通过，产品与CI仍暂停。
 
 ## 每次变更的闭环
 
@@ -64,6 +68,6 @@ Python 3.11+ 开发依赖安装与 make 替代入口见 [harness/README.md](harn
 - 只使用本项目约定，不沿用其它仓库的分支/提交/推送规则。
 - 在制槽、共享写权、作者与独审分离及交付记账统一遵循[团队协作规范](harness/team-collaboration.md)，不在会话提示中另设职责规则。
 
-## 2026-10-24 用户授权的现行覆盖阈值（Refs #23）
+## 强化/发布覆盖义务（2026-10-24阈值，2026-10-28调整适用阶段）
 
 Python 全部自研生产源行覆盖率至少80%；Rust仍为现有经审查排除后的适用行100%。两者用合法整数covered/total交叉相乘判断，total必须大于0，不用显示百分比或舍入。完整源分母、未导入文件、身份前后绑定、测试失败拒绝保持；Python仍不允许行排除，Rust原21行清单不扩大。旧100%要求/历史报告保留为当时合同，不改写原失败或测量。本次政策实现与边界验证另记；80%不等于完整产品验收。

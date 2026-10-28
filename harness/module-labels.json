@@ -6,57 +6,57 @@
     {
       "name": "module:common",
       "color": "1d76db",
-      "description": "架构师：公共合同与跨语言编码"
+      "description": "公共合同与跨语言编码知识域"
     },
     {
       "name": "module:catalog",
       "color": "1d76db",
-      "description": "目录负责人：身份、版本、发布和pin"
+      "description": "目录知识域：身份、版本、发布和pin"
     },
     {
       "name": "module:storage",
       "color": "1d76db",
-      "description": "对象存储负责人：版本、传输、完整性和预算"
+      "description": "对象存储知识域：版本、传输、完整性和预算"
     },
     {
       "name": "module:connectors",
       "color": "1d76db",
-      "description": "源适配负责人：格式、快照、批次和接入"
+      "description": "源与格式知识域：快照、批次和接入"
     },
     {
       "name": "module:query",
       "color": "1d76db",
-      "description": "查询负责人：SQL、Arrow/DataFusion和执行"
+      "description": "查询知识域：SQL、Arrow/DataFusion和执行"
     },
     {
       "name": "module:index",
       "color": "1d76db",
-      "description": "索引负责人：构建、覆盖和候选"
+      "description": "索引知识域：构建、覆盖和候选"
     },
     {
       "name": "module:cluster",
       "color": "1d76db",
-      "description": "运行时负责人：worker、取消、背压和资源"
+      "description": "运行时知识域：worker、取消、背压和资源"
     },
     {
       "name": "module:gateway",
       "color": "1d76db",
-      "description": "入口负责人：HTTP/PG、客户端、CLI/MCP"
+      "description": "入口知识域：HTTP/PG、客户端、CLI/MCP"
     },
     {
       "name": "module:harness",
       "color": "1d76db",
-      "description": "工程负责人：本地门禁、依赖和协作规范"
+      "description": "工程与协作文件域；不定义成员身份"
     },
     {
       "name": "module:system",
       "color": "1d76db",
-      "description": "专职系统测试负责人：真实配对和系统验收"
+      "description": "真实配对与系统验收范围"
     },
     {
       "name": "module:project",
       "color": "1d76db",
-      "description": "产品/PM/集成负责人：需求、排程和跨模块交付"
+      "description": "需求、协作和目标排程范围"
     },
     {
       "name": "role:product",
@@ -71,7 +71,7 @@
     {
       "name": "role:development",
       "color": "5319e7",
-      "description": "模块开发负责人"
+      "description": "统一开发负责人"
     },
     {
       "name": "role:system-test",
@@ -81,7 +81,7 @@
     {
       "name": "role:integration",
       "color": "5319e7",
-      "description": "集成与工程负责人"
+      "description": "历史职能标签；当前集成为development内部职责"
     },
     {
       "name": "role:pm",

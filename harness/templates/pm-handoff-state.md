@@ -1,118 +1,33 @@
-# PM交接状态JSON模板
+# PM当前状态模板
 
-这是可复制的数据示例，不是Schema或可执行调度配置。填写规则、字段语义和七场景演练见[PM协调规则](../pm-coordination.md)。初始值未配置、未授权；复制代码块为动态JSON记录时先填实际值并完成规定核验，再从PM START定位唯一共享活跃根；不在每个worktree各建current。勿将实时状态回写本模板。
+在共享根 `pm/CURRENT.md` 维护一份，非可执行Schema/调度配置。职责见[团队规范](../team-collaboration.md)，恢复/调度见[PM协调](../pm-coordination.md)。
 
-```json
-{
-  "schema_version": 2,
-  "record_kind": "pm-handoff-state",
-  "template_only": true,
-  "record_revision": 0,
-  "project": {
-    "repository_url": null,
-    "coordination_issue_url": null,
-    "shared_state_root": null,
-    "host": null,
-    "current_record_path": "pm/CURRENT.md"
-  },
-  "pm": {
-    "member_id": "pm",
-    "role": "pm",
-    "dri_session_id": null,
-    "execution_owner_session_id": null,
-    "machine_id": null,
-    "authorization_ref": null,
-    "owner_generation": 0,
-    "authority_state": "unassigned"
-  },
-  "state": "uninitialized",
-  "checked_at": null,
-  "timezone": "Asia/Shanghai",
-  "waiting_on": [
-    {
-      "task_id": null,
-      "task_path": null,
-      "optional_issue_ref": null,
-      "member_id": null,
-      "role": null,
-      "dri_session_id": null,
-      "input_version": null,
-      "input_evidence_ref": null,
-      "ready_eta": null,
-      "eta_basis": "unknown",
-      "latest_commitment_at": null
-    }
-  ],
-  "next_action": {
-    "owner_member_id": null,
-    "owner_session_id": null,
-    "description": null,
-    "trigger": null
-  },
-  "next_check_at": null,
-  "next_check_basis": null,
-  "latest_commitment_at": null,
-  "unknown_backoff_step": 0,
-  "schedule": {
-    "id": null,
-    "state": "not_configured",
-    "machine_id": null,
-    "target_session_id": null,
-    "generation": 0,
-    "readback_evidence_ref": null,
-    "last_handled_event_ref": null,
-    "last_handled_input_version": null,
-    "last_handled_action_ref": null,
-    "capability_evidence_ref": null,
-    "exact_one_shot": "unverified",
-    "pending_change": {
-      "desired_next_check_at": null,
-      "desired_generation": null,
-      "intent_evidence_ref": null
-    }
-  },
-  "handoff": {
-    "state": "not_requested",
-    "from_session_id": null,
-    "from_machine_id": null,
-    "to_session_id": null,
-    "to_machine_id": null,
-    "authorization_ref": null,
-    "old_schedule_stop_state": "unconfirmed",
-    "old_schedule_stop_evidence_ref": null,
-    "new_owner_acceptance_ref": null
-  },
-  "blocked": {
-    "since": null,
-    "reason": null,
-    "resolution_owner_session_id": null,
-    "next_action": null,
-    "fallback_owner_session_id": null,
-    "fallback_action": null
-  },
-  "evidence": [
-    {
-      "issue_or_pr_url": null,
-      "commit_sha": null,
-      "repository_relative_ref": null,
-      "sha256": null,
-      "source_machine_id": null,
-      "accessibility": "unknown",
-      "accessible_copy_ref": null
-    }
-  ],
-  "local_resources": [
-    {
-      "machine_id": null,
-      "description": null,
-      "local_path": null,
-      "accessibility": "unknown",
-      "recovery_ref": null
-    }
-  ]
-}
-```
+## 执行权与项目状态
 
-`null`表示未填或未知，不是成功/无成本；`template_only`填写后改为false不构成授权。所有`*_ref`必须指向可定位且允许访问的证据；本地路径须填机器归属与可取性。只有顶层`next_check_at`为当前有效检查点；`pending_change`是未生效更新意图，平台回读确认前不得冒充有效代际。
+- record_revision / checked_at / timezone：
+- 唯一PM member_id、完整会话、机器、owner_generation、授权来源：
+- project_state：ACTIVE / PAUSED_BY_USER / BLOCKED / HANDOFF_BLOCKED
+- 当前产品目标与成功标准；治理等有限例外任务及授权：
 
-稳定member_id不能取session/任务UUID。模板是未授权结构示例；活跃记录轻量维护，长期规范/记忆在稳定点受审归档。不同worktree须显式同一共享根，跨机缺副本标unavailable/HOLD，本文不实现同步/锁/CAS。
+## 当前目标索引（只链接TASK，不复制包内状态）
+
+| 目标TASK | DRI | 结论/关键阻塞 | 下一决定/责任人/交付点 |
+| --- | --- | --- | --- |
+| 待填 | 待填 | 待填 | 待填 |
+
+## 等待与唯一调度
+
+- next_action / waiting_on及输入版本或结果引用：
+- ready_eta或unknown、依据、最晚承诺；唯一next_check_at或null及原因：
+- schedule ID / 状态 / 目标会话与机器 / generation / 实际回读证据：
+- 仅更新期间填pending意图，保留旧有效值直到回读；重复输入/动作的去重引用：
+- architecture_review：scheduled_for / last_review / next_due；暂停时不派发：
+- 阻塞/失联：since、具体原因、解除owner/动作、真实兜底：
+
+## 暂停、接管与历史
+
+- 暂停来源、已停止/尚未确认对象、恢复条件；未知资源不得写成已清：
+- 跨机时填旧owner/新owner、旧调度停止证据、新owner签收；unknown保持只读：
+- 证据原件的机器/可取性、旧状态归档链接（不内嵌历史流水）：
+
+只在状态变化时更新。空字段/模板/旧快照不是授权；本地路径不是备份，人工代际不是全局锁，分钟回退不是精确one-shot。用户决定和既有质量边界优先于模板。

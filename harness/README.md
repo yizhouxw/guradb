@@ -1,5 +1,7 @@
 # GuraDB Agent Harness
 
+**2026-10-28现行阶段策略：** 先按[核心链路优先验收](validation-strategy.md)验证用户用例、资源模型与数据流；全面覆盖/回归/性能长稳分阶段推进。本页旧全面前置条款仅描述现有执行器或后续强化/发布义务，不再定义前期产品优先级。机器选择器尚未适配，不能把文档决定冒称工具已生效或绕过hook。产品/Actions继续暂停。
+
 这是仓库内的工程质量控制入口，面向 agent 与人共同维护的长期代码库。它把工作流程、架构边界、质量门禁和执行证据连接起来；不是数据库实现，也不是自动证明正确性的系统。
 
 ## 立即使用
@@ -27,11 +29,11 @@ python3 -m venv .venv
 .venv/bin/python scripts/harness.py check --scope release
 ```
 
-离线首先从[PM START](pm/START.md)读取[当前索引](pm/START.md)、[本地任务](tasks/README.md)与[成员记忆](members/README.md)。session仅执行实例，PM全项目唯一会话，GitHub Issue可选；[ADR0025](../docs/decisions/0025-local-member-memory-and-task-delegation.md)不改变harness执行行为。
+离线首先从[PM START](pm/START.md)读取[当前索引](pm/START.md)、[本地任务](tasks/README.md)与[成员记忆](members/README.md)。session仅执行实例，PM全项目唯一会话，GitHub Issue可选；[ADR0026](../docs/decisions/0026-goal-driven-collaboration.md)明确五角色与按需领域知识，不改变harness执行行为。
 
-团队职责、技术升级与派发规则统一见[团队协作规范](team-collaboration.md)，模块标签见[清单](module-labels.json)。PM 只做管理协调，调度提示引用规范及当前任务/检查点。当前[暂停远端Actions/PR CI准入](ci-cd.md)，本机适用自测、独审和精确main核验继续必需。
+团队职责、技术升级与派发规则统一见[团队协作规范](team-collaboration.md)，模块标签见[清单](module-labels.json)。PM亲自负责组织、协作制度与记忆治理；开发负责人自主完成技术目标包，调度提示只引用恢复入口。当前[暂停远端Actions/PR CI准入](ci-cd.md)，本机适用自测、独审和精确main核验继续必需。
 
-并行开发统一按 [GitHub PR 流程](parallel-development.md)：一任务一分支/worktree，独立证据与审查，依赖顺序串行合入 main；本次治理变更依用户明确指令由单一集成者直接提交main，保留正常hook、本地验证和推送核对。
+并行开发统一按 [GitHub PR 流程](parallel-development.md)：一任务一分支/worktree，独立证据与审查，依赖顺序串行合入 main；2026-10-26直接main治理例外仅属历史任务；本次及后续治理仍走普通分支/PR，保留正常hook和本地验证。
 
 ## 工作闭环
 
@@ -59,14 +61,14 @@ python3 -m venv .venv
 | [首次内核接入](runtime-onboarding.md) | 从 planned 到真实代码门禁的步骤 |
 | [Git 追溯与恢复](version-control.md) | 有限切片提交、检查点、提交前门禁与保留现场的恢复 |
 | [开发流程](development-workflow.md) | 任务起止、验收/复核、失败与交接、依赖/迁移及证据归档 |
-| [团队协作](team-collaboration.md) | 稳定成员与七模块责任、统一开发负责人委派、本地任务和可选Issue |
+| [团队协作](team-collaboration.md) | 五活跃角色、目标包自主交付、模块领域知识、最少沟通与上下文 |
 | [本机质量与 CI 暂停](ci-cd.md) | 当前本地验收、Actions停用状态与重新启用条件 |
 
 本地依赖检查含 Cargo 普通、dev、build、target-specific 和 workspace 继承，以及包/模块循环。未归属代码、超过 600 行的源文件、检查范围内的符号链接会失败。600 行是可维护性门槛，不是性能指标；Python生产模块另做真实AST import DAG、compileall与锁/依赖检查；其它新语言仍需对应检查器，不能只靠Cargo lint。
 
 ## 现在能证明什么
 
-当前可执行：仓库检查、OpenAPI 标准/语义契约、policy/架构检查、harness 自测、性能比较器和稳定性证据校验器。新增unit-coverage纳入全部Python/Rust生产源，适用源码行要求严格100%覆盖，Rust有限排除按[清单](coverage-exclusions.json)绑定源码并单列原始数值，未豁免缺口使门禁失败；工具ready不表示当前代码已经达标，见[测试入口](../tests/README.md)。
+当前可执行：仓库检查、OpenAPI 标准/语义契约、policy/架构检查、harness 自测、性能比较器和稳定性证据校验器。新增unit-coverage纳入全部Python/Rust生产源，现行要求Python全部自研生产源至少80%、Rust原适用源100%覆盖，Rust有限排除按[清单](coverage-exclusions.json)绑定源码并单列原始数值，未豁免缺口使门禁失败；工具ready不表示当前代码已经达标，见[测试入口](../tests/README.md)。
 
 M0/M1 已接入真实功能、组件基准和故障注入；完整性能、完整fault registry、长稳/升级在 policy 中仍为 `planned`。涉及运行时的变更要求相应 suite；未接入时返回 `missing` 并失败，不跳过成绿。`release` 当前也必须失败。
 
@@ -80,7 +82,7 @@ GitHub Actions质量和诊断工作流当前已按用户指令停用，配置保
 
 ## 模块交付 v2 的本地入口
 
-[策略v2](../docs/plans/2026-10-21-modular-delivery-v2.md)、[需求矩阵](../docs/product/requirements-v2.md)及[模块合同](../docs/design/module-delivery-contracts.md)保留。机器接线使用module/pair/system/release分层，完整owner生产源strict100%、真实依赖、原预算/负例/恢复/追溯不变；未知映射扩大为system，工程工具自测不冒充产品验收。CI当前暂停，不改变本地层级与release missing。
+[策略v2](../docs/plans/2026-10-21-modular-delivery-v2.md)、[需求矩阵](../docs/product/requirements-v2.md)及[模块合同](../docs/design/module-delivery-contracts.md)保留。机器接线使用module/pair/system/release分层，完整owner生产源分母、Python80%/Rust100%、真实依赖、原预算/负例/恢复/追溯不变；未知映射扩大为system，工程工具自测不冒充产品验收。CI当前暂停，不改变本地层级与release missing。
 
 ## 2026-10-24 用户授权的现行覆盖阈值（Refs #23）
 

@@ -1,25 +1,27 @@
-# 稳定成员记忆与执行实例
+# 五个稳定成员与项目记忆
 
-项目member_id是持久身份，不能取任务/session UUID。角色变更不改member；会话/subagent仅执行实例，作者和贡献成员跨实例保留。下表是责任位和已初始化记忆入口，不代表全部成员已派发或13个并发会话。
+活跃成员名单只由本表定义。成员身份绑定项目记忆，session/subagent是可替换执行实例；PM全项目唯一会话，其余按任务需要有多个实例。目录存在和旧任务出现某名字都不授予成员资格或写权。
 
-| member_id | 角色/责任记忆 |
+| member_id | 稳定职责与记忆 |
 | --- | --- |
-| pm | [PM](pm/README.md) |
-| product | [P](product/README.md) |
-| architecture | [A/common](architecture/README.md) |
-| development | [统一开发负责人](development/README.md) |
-| system-test | [T](system-test/README.md) |
-| integration | [E](integration/README.md) |
-| catalog | [catalog](catalog/README.md) |
-| storage | [storage](storage/README.md) |
-| connectors | [connectors](connectors/README.md) |
-| query | [query](query/README.md) |
-| index | [index](index/README.md) |
-| cluster | [cluster](cluster/README.md) |
-| gateway | [gateway](gateway/README.md) |
+| pm | [组织、协作机制、目标与排程](pm/README.md) |
+| product | [用户场景与验收标准](product/README.md) |
+| architecture | [技术边界与设计裁决](architecture/README.md) |
+| development | [统一研发与集成交付](development/README.md) |
+| system-test | [独立验证](system-test/README.md) |
 
-每成员README分profile/knowledge/decisions/tasks，是受审版本化长期记忆与任务索引，不复制活跃任务状态。活跃写者/实例登记、短记忆和发现放唯一共享根 `/Users/chad/dev/guradb/artifacts/team-state/members/<member_id>/`，host=`local/xiaoweideMac-Studio.local`；所有worktree指同根，不各建一份。记忆单写者在 `CURRENT.md` 登记，其他实例只写 `discoveries/<task-id>/<instance-id>/NOTES.md` 独占追加域，不覆盖他人记录。单写者具名合并并记录接纳/拒绝/来源/版本，长期事实稳定点批量审查归档本目录，日常保存不逐条源码门禁/提交。
+七模块与工程/集成知识在[领域目录](../domains/README.md)。它们不是独立成员，不设长期负责人/会话/审批节点。开发subagent通常归属development，在父TASK保留实际作者实例和历史贡献来源；不为每个执行实例增加长期成员目录。历史module/integration/engineering身份已退出活跃名册，但贡献关系永久保留，不能借迁移把作者变成非作者，见[历史映射](history/README.md)。
 
-每条可复用事实含相对来源、观察版本/时刻、verified/UNKNOWN/expired、原件可取性与有效范围。来源含本地TASK/相对报告，绝对路径另附host，不复制raw/凭据/大历史。本文登记或引用不证明证据可取；取不到保持UNKNOWN/HOLD。旧快照不得覆盖新记录；接管先核旧写者停止、版本和可取副本，再由新写者签收，未知只读。共享根被artifacts忽略，不是异地备份、CAS、认证或机器全局锁。
+## 默认只读什么
 
-角色名相似的目录不是自动身份映射：当前父E稳定member_id=development、role=integration，不成为integration第二成员，integration责任入口当前未派发；独审仍须不同member。任务源码唯一写域与记忆单写权分开；有记忆写权不等于源码权。reviewer必须是任务贡献集合以外的不同稳定成员；换session/角色/新subagent不能洗掉作者。PM全项目仅唯一会话和既有schedule，其他成员可多实例但不得共享同一任务写域。规范见[团队协作](../team-collaboration.md)与[PM恢复](../pm/START.md)。
+恢复只需本成员README、当前目标TASK的当前段、任务明确引用的必要领域/ADR。没有本次任务需要就不读其它成员、全量历史、旧CURRENT或大raw。任务派发使用[执行包](../templates/execution-brief.md)，默认不继承全聊天。
+
+成员README保存短profile、稳定决定、知识/历史来源和当前状态入口，不保存滚动任务ID、旧writer或“当前通过”快照。知识分为：职责稳定规则放成员记忆；跨任务技术知识放domains或已有设计文档；进度/失败/候选版本放TASK。可复用事实须有来源、观察日期/版本、适用范围和verified/UNKNOWN/expired；没有新验证不能提升旧事实。
+
+## 写入与恢复
+
+唯一活跃根 `/Users/chad/dev/guradb/artifacts/team-state` 的 `members/<member_id>/CURRENT.md` 只登记该成员的记忆写者、实例与任务链接，任务真值仍是TASK。一个成员一个记忆合并写者；其它实例在各自 `discoveries/<task-id>/<instance-id>/NOTES.md` 写发现，完成后由单写者归纳可复用结论，不搬整段聊天。PM负责组织/记忆结构治理和迁移；成员各自负责职责内知识，不能因此把协作制度交给开发负责。
+
+历史区不自动加载。过期活跃记录移入共享根 `history/members/`，保留旧来源引用索引；旧路径若仍有引用只保留退休跳转，正文不再嵌入旧active段。跨机不可取则记录unavailable，不从历史快照授写。普通产品任务接管先核旧writer停止和Git/receipt；记忆写权不等于代码写权。
+
+技术独验必须来自贡献集合外的稳定成员，development的另一个subagent不是独立system-test。纯协作规则由PM亲自维护并自审，不声称技术独验。当前规则见[团队协作](../team-collaboration.md)，项目暂停/目标授权见[PM START](../pm/START.md)。

@@ -35,6 +35,6 @@ PM回执中的实际prompt（引用，不在本任务更新）：
 
 ## 待派后继与不能继承的授权
 
-F connectors（活跃根 `tasks/backlog-connectors/TASK.md`）、K cluster（活跃根 `tasks/backlog-cluster/TASK.md`）、S storage（活跃根 `tasks/backlog-storage/TASK.md`）、X index（活跃根 `tasks/backlog-index/TASK.md`）仅迁移记录，不授新运行/写权；旧grant用尽或未授予。E199全12 Python fake有限接受见[集成成员](../members/integration/README.md)，不替S full10。其它模块未刷新=UNKNOWN。50–100GB真实三模态/九场景/完整发布未验，原目标与预算均保留。
+F connectors（活跃根 `tasks/backlog-connectors/TASK.md`）、K cluster（活跃根 `tasks/backlog-cluster/TASK.md`）、S storage（活跃根 `tasks/backlog-storage/TASK.md`）、X index（活跃根 `tasks/backlog-index/TASK.md`）仅迁移记录，不授新运行/写权；旧grant用尽或未授予。E199全12 Python fake有限接受见[历史集成记忆](../members/history/20261026/integration.md)，不替S full10。其它模块未刷新=UNKNOWN。50–100GB真实三模态/九场景/完整发布未验，原目标与预算均保留。
 
 离线演练：本页→当前治理TASK→development记忆→正确worktree task-status/Git→核当前授权与停写/复核状态。若切到storage后继，只能读其诊断与冻结receipt记录，不执行full10；schedule旧停未知时其它实例只读并交PM。此为人工恢复路径，不是执行器测试。

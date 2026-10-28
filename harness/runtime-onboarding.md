@@ -1,5 +1,7 @@
 # 首次运行时接入清单
 
+协作职责以[团队规范](team-collaboration.md)为准；本页技术合同不生成长期模块成员。现行覆盖阈值及CI暂停以[根约定](../AGENTS.md)和[CI规则](ci-cd.md)为准，历史报告保持原义。
+
 M0 已接入 Rust workspace、真实HTTP/Parquet/S3/PG18 driver，rust/functional/performance-smoke/stability-component 为 ready；完整performance/stability/soak仍planned。后续新增运行时沿用本清单，不复用旧结果冒充当前证据。
 
 ## 第一个 crate / 客户端代码

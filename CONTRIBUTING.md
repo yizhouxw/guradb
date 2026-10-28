@@ -1,6 +1,6 @@
 # 贡献指南
 
-当前重点是建立一致的设计依据，再逐步实现可验证的能力。
+以[团队协作](harness/team-collaboration.md)的目标包交付可验证结果。活跃成员只有PM/产品/架构/开发/测试；模块是按需领域知识，PM亲自负责协作治理，开发负责人负责技术包全链。
 
 ## 开始工作
 
@@ -22,12 +22,12 @@
 
 ## 代码与验证
 
-模块说明定义责任归属，不要求一个模块对应一个进程。Rust 推荐 POC 栈见 ADR 0003，具体构建版本在联编后固定。生产源文件必须登记模块归属，Cargo 本地依赖遵守 harness 中的允许边与无环约束。
+模块说明定义源码/知识归属，不代表独立负责人，也不要求一个模块对应一个进程。Rust 推荐 POC 栈见 ADR 0003，具体构建版本在联编后固定。生产源文件必须登记模块归属，Cargo 本地依赖遵守 harness 中的允许边与无环约束。
 
 `make check` 运行实际变更所需门禁，`make check-docs` 才是基础文档检查。开发依赖使用 `requirements-dev.lock`；harness 执行报告放在 artifacts。后续测试按 [质量模型](harness/quality-model.md) 与 [测试规划](tests/README.md) 分层，文档改动无需编造内核测试。
 
 高风险变更记录功能、性能/质量/成本、故障恢复和回滚证据，并单独复核。修改 baseline/门禁不能只为消除回归；缺失真实 driver 时保留 planned/missing 状态。接入步骤见 [runtime-onboarding](harness/runtime-onboarding.md)。
 
-版本管理按 [Git 工作流](harness/version-control.md)：起始记录基点，有限切片提交，提交后报告绑定 commit 并建立 checkpoint；复杂实验/已有改动用独立 worktree。安装本仓库 pre-commit hook，禁止绕过失败。恢复默认在新目录检出 checkpoint，主线撤销用 revert 保留历史；代码恢复不替代数据恢复。私有远端已配置；用户已授权后续开发提交经门禁、复核与提交后验证后推送任务分支到现有 `origin` 并创建 PR；所有任务按 [PR 并行流程](harness/parallel-development.md) 使用独立分支/worktree，当前适用本机自测与独立复核通过后串行合入 `main`。不直接推送主线，不强推，远端设置与部署另行授权。
+版本管理按 [Git 工作流](harness/version-control.md)：起始记录基点，有限切片提交，提交后报告绑定 commit 并建立 checkpoint；复杂实验/已有改动用独立 worktree。安装本仓库 pre-commit hook，禁止绕过失败。恢复默认在新目录检出 checkpoint，主线撤销用 revert 保留历史；代码恢复不替代数据恢复。私有远端已配置；用户已授权后续开发提交经门禁、复核与提交后验证后推送任务分支到现有 `origin` 并创建 PR；所有任务按 [PR 并行流程](harness/parallel-development.md) 使用独立分支/worktree，当前适用本机适用检查与对应复核（产品技术独验，纯协作治理单独自审）通过后串行合入 `main`。不直接推送主线，不强推，远端设置与部署另行授权。
 
 提交说明应描述具体变化及验证方式。发布、项目许可证与贡献授权政策仍需单独确定，不能从骨架推断。

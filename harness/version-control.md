@@ -7,10 +7,10 @@
 ## 日常开发
 
 1. 开始/恢复任务先执行 `git status --short --branch` 和 `harness.py git-status`，记录起始 commit、分支、现有改动和检查点。已有未提交的用户改动先保持原样，辨明归属并避免混入任务；不自动 stage、stash、reset 或覆盖。
-2. 所有开发任务默认从核对后的 `origin/main`（合同冻结任务可记录显式已提交基点）创建 `codex/<task>` 分支与独立 worktree，不在 dirty 工作区切分支。按 [GitHub PR 并行流程](parallel-development.md) 划定 owner、依赖和文件范围；本次团队/harness治理任务经用户明确授权直接提交main，其他任务仍默认分支/PR；直接main同样必须协调唯一写窗口并正常hook/本地验证/推送核对。开始时创建 checkpoint，非小型任务 task-start 固定原始 base。
+2. 所有开发任务默认从核对后的 `origin/main`（合同冻结任务可记录显式已提交基点）创建 `codex/<task>` 分支与独立 worktree，不在 dirty 工作区切分支。按 [GitHub PR 并行流程](parallel-development.md) 划定 owner、依赖和文件范围；2026-10-26治理直接main例外仅属该历史任务，后续任务仍默认分支/PR。开始时创建 checkpoint，非小型任务 task-start 固定原始 base。
 3. 有限切片运行 plan/check 并单独复核，只 stage 本任务文件，检查 staged diff 后提交；禁止绕过 hook。未经门禁的 WIP 只能保留在任务分支，不得合入主线。
 4. 提交后对任务原始 base 执行 `harness.py check --base <task-base>`，报告须绑定当前 commit/checkout；完成分支任务时 task-finish 归档并创建 checkpoint。更新分支后旧报告失效，重新验证；原始 base 不得随同步主线缩短。
-5. fetch 核对远端后正常推送任务分支，在 GitHub 创建以 main 为目标的 PR；本机适用检查与独立复核通过（当前Actions暂停、PR不设远端CI准入）、依赖已合入且当前分支包含最新主线后，由集成者使用 merge commit 串行合入。禁止本地 merge 后直接 push main 绕开 PR；具体操作和主线竞争处理见并行流程。
+5. fetch 核对远端后正常推送任务分支，在 GitHub 创建以 main 为目标的 PR；本机适用检查与对应复核通过（产品技术任务独立复核；纯协作治理PM单独自审，不冒平台Approval；当前Actions暂停、PR不设远端CI准入）、依赖已合入且当前分支包含最新主线后，由集成者使用 merge commit 串行合入。禁止本地 merge 后直接 push main 绕开 PR；具体操作和主线竞争处理见并行流程。
 6. 合并后在独立干净 worktree 对合并前 main 到最终 merge commit 的完整范围运行 check，建立主线 checkpoint；当前远端Actions暂停，记录paused/not-run而非PASS；最终交付关联分支和主线两组证据。失败停止下一 PR，保留现场，通过修复或 revert PR 恢复。
 7. 用户已授权验证后的任务分支推送、PR 创建与满足门禁后的 PR 合入，不再逐次询问。不得强推、覆盖远端新提交或自动删除旧分支/检查点；暂停GitHub Actions及取消PR远端CI准入已获用户明确授权，恢复须重新讨论；其余远端权限/保护设置、发布和部署仍需另行授权。结束报告基点/最终 commit、PR、报告、checkpoint 和剩余改动。
 

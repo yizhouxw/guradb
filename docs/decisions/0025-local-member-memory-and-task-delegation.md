@@ -1,6 +1,6 @@
 # ADR0025：本地成员记忆与有界任务委派
 
-- 状态：接受；2026-10-26用户明确授权立即落地
+- 状态：2026-10-26接受；角色名册、PM治理职责与协作方式已由[ADR0026](0026-goal-driven-collaboration.md)于2026-10-28定向替代。以下为历史决定；稳定记忆/本地任务/正常质量与PR仍保留。
 - 规范：[团队协作](../../harness/team-collaboration.md)、[PM恢复](../../harness/pm/START.md)、[任务](../../harness/tasks/README.md)、[成员](../../harness/members/README.md)
 
 ## 决定与替代范围

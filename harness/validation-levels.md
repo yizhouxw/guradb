@@ -1,5 +1,9 @@
 # 验证层级 v2（工程工具片，验收状态见下文）
 
+**2026-10-28现行阶段策略：** 先按[核心链路优先验收](validation-strategy.md)验证用户用例、资源模型与数据流；全面覆盖/回归/性能长稳分阶段推进。本页旧全面前置条款仅描述现有执行器或后续强化/发布义务，不再定义前期产品优先级。机器选择器尚未适配，不能把文档决定冒称工具已生效或绕过hook。产品/Actions继续暂停。
+
+协作职责以[团队规范](team-collaboration.md)为准；本页技术合同不生成长期模块成员。现行覆盖阈值及CI暂停以[根约定](../AGENTS.md)和[CI规则](ci-cd.md)为准，历史报告保持原义。
+
 本轮按用户2026-10-21策略修订实施；不是数据库行为/性能门槛变更。原base、失败现场、全部system/release真实命令/预算、strict100与21行有限排除不变。旧报告保留旧语义，不转写成新层级。
 
 `plan/check --level auto|module|pair|system|release [--module NAME ...]`：auto闭集推导；module需要单一owner和真实组件映射；pair需要精确两个端点的已登记真实生产者/消费者profile。未知owner、未登记模块/driver、共享A/API/锁及多owner不在已登记配对中时auto明确fallback system；显式较低层级拒绝。文档只运行cheap checks，不给数据库质量背书。`--scope bootstrap`继续只工程bootstrap，不能task-finish；release仍包含所有planned/missing且失败。
