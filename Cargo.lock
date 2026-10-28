@@ -1543,6 +1543,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "guradb-index"
+version = "0.1.0"
+
+[[package]]
 name = "guradb-query"
 version = "0.1.0"
 dependencies = [
