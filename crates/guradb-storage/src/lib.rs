@@ -141,3 +141,9 @@ mod tests;
 #[cfg(test)]
 #[path = "../tests/unit/stream.rs"]
 mod stream_tests;
+
+pub mod fixed_request;
+
+#[cfg(test)]
+#[path = "../tests/unit/fixed_request.rs"]
+mod fixed_request_tests;

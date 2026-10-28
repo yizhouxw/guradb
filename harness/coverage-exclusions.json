@@ -205,7 +205,7 @@
     },
     {
       "path": "crates/guradb-storage/src/lib.rs",
-      "source_sha256": "fd04ded1513bff015d2322868d7c5792c66d0b197c66bd7b055fb65c454514af",
+      "source_sha256": "fc101e47b5f155996fd99cf474639af9bab7a9161d2ee9c3374a5a6ca72afebe",
       "category": "library-invariant",
       "reason": "S3 builder已显式设置bucket/region/endpoint/静态凭据且不开放自定义HTTP/TLS构造选项；当前SDK把endpoint连接错误延后到GET。build错误保留作上游SDK配置变化防御。",
       "evidence": "crates/guradb-storage/tests/unit/storage.rs: s3_configuration在子进程覆盖凭据缺失、会话token和格式异常endpoint；stream.rs及真实S3故障场景覆盖GET失败/取消。",
