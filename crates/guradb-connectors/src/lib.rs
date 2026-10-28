@@ -8,6 +8,9 @@ use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
 use std::sync::Arc;
 use tokio_util::sync::CancellationToken;
 
+pub mod fixed_manifest;
+pub mod fixed_mapping;
+
 pub fn schema(manifest: &Manifest) -> SchemaRef {
     Arc::new(Schema::new(
         manifest
@@ -89,3 +92,11 @@ pub async fn decode(
 #[cfg(test)]
 #[path = "../tests/unit/parquet.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "../tests/unit/fixed_manifest.rs"]
+mod fixed_manifest_tests;
+
+#[cfg(test)]
+#[path = "../tests/unit/fixed_mapping.rs"]
+mod fixed_mapping_tests;

@@ -3,13 +3,13 @@
   "rust": [
     {
       "path": "crates/guradb-connectors/src/lib.rs",
-      "source_sha256": "d61417efa4045d50a2322ce233420c38e4d203074f0971c501bb0b8ff35ad494",
+      "source_sha256": "924d1ef8b9d82a73a9ff97d2f4a09edcc8e06ed98ddf8988285e8d727e075d4d",
       "category": "library-invariant",
       "reason": "当前Parquet reader已校验actual.fields()==expected.fields()；required列无definition-level空值，额外null检查用于底层库异常防御。构造不安全Arrow数组或替换reader不属于有效输入单元验证。",
       "evidence": "crates/guradb-connectors/tests/unit/parquet.rs: parquet_truth_schema_cancellation_and_budgets验证真实读回、nullable NULL、schema不符及损坏列拒绝；Cargo.lock固定Arrow/Parquet。",
       "lines": [
         {
-          "number": 71,
+          "number": 74,
           "text": "                return Err(invalid());"
         }
       ]
