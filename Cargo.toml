@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/guradb-common", "crates/guradb-storage", "crates/guradb-catalog", "crates/guradb-connectors", "crates/guradb-query", "crates/guradb-gateway"]
+members = ["crates/guradb-common", "crates/guradb-storage", "crates/guradb-catalog", "crates/guradb-connectors", "crates/guradb-query", "crates/guradb-gateway", "crates/guradb-cluster"]
 resolver = "2"
 
 [workspace.package]

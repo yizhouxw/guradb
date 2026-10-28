@@ -1489,6 +1489,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "guradb-cluster"
+version = "0.1.0"
+dependencies = [
+ "guradb-common",
+]
+
+[[package]]
 name = "guradb-common"
 version = "0.1.0"
 dependencies = [
