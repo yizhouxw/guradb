@@ -30,7 +30,7 @@ docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspac
 
 已持有COCO2017标注ZIP时，[真实32条元数据→Parquet→Rust结果](docs/user/simple-alpha.md#真实coco元数据入口)提供离线准备与确切5行断言；不下载或读取图像。
 
-已有对应图片ZIP时，[图片描述关键词检索](docs/user/simple-alpha.md#图片描述关键词检索)可把原caption与真实本地JPEG关联；仅一图五条描述，不是视觉识别。
+已有对应图片ZIP时，[图片描述关键词检索](docs/user/simple-alpha.md#图片描述关键词检索)可把原caption与真实本地JPEG关联；默认一图五条描述；[固定三图十五条](docs/user/simple-alpha.md#跨图片的描述关键词检索)可区分厨房、街道和浴室，不是视觉识别。
 
 源码位于crates/guradb；固定工具链入口scripts/cargo.py。Python仅负责工程工具、离线数据准备和独立黑盒验证。
 完整Docker复现及自动化入口见[验证说明](tests/README.md)。

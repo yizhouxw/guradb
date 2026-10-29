@@ -100,6 +100,38 @@ caption/标注归属COCO Consortium，按[COCO annotations CC BY4.0条款](https
 原Flickr来源为http://farm7.staticflickr.com/6116/6255196340_da26cf2c9e_z.jpg；该条目未提供摄影者姓名，保留来源及未知项。
 本例本机读取/解码不构成对其它图片授权或公开分发的认证，不把COCO的标注许可套到图像；无新图片下载或发布。
 
+## 跨图片的描述关键词检索
+
+状态：固定三图及原caption关联、实际解码与现Rust跨图查询已通过非作者验收。
+
+复用上节同一prepare入口，新增固定`--sample three`；不传该选项仍是原单图5caption示例，输入/列/旧操作保持。
+三图预设精确为397133（厨房）、252219（街道）、403385（浴室），各5条原caption，共15行、一个Parquet。
+不提供任意ID列表/重复选择或全库导入；`--sample`其它值拒绝。
+
+```sh
+COCO_SOURCE_ROOT=/Users/chad/dev/guradb-data/public-multimodal-20261025
+GURADB_MULTI_DIR=artifacts/coco-multi
+.venv/bin/python scripts/prepare_coco_caption.py --annotations-zip "$COCO_SOURCE_ROOT/archives/annotations_trainval2017.zip" --images-zip "$COCO_SOURCE_ROOT/archives/val2017.zip" --output-dir "$GURADB_MULTI_DIR" --sample three
+docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspace:ro" -w /workspace guradb-rust:1.90.0 /workspace/target/debug/guradb query --config "/workspace/$GURADB_MULTI_DIR/config.json" --sql "SELECT image_id, caption_id, caption, image_path FROM records WHERE caption LIKE '%street%' ORDER BY caption_id ASC LIMIT 20"
+```
+
+street严格命中image_id252219的caption_id107395/111433/114199/114511，路径images/000000252219.jpg；
+将同一SQL关键词换bathroom，严格命中image_id403385的501985/507367/508369/510313，路径images/000000403385.jpg；
+kitchen仍是image_id397133的370509/372252/372765，路径images/000000397133.jpg；zzqnonexistent为空。
+所有caption是原源原文，包括大小写/标点/末尾空格，不清洗改写。完整JSON/exit0、source_sha256等于config/Parquet、truncated=false；
+粒度仍每caption一行，重复image_id不是去重图片或相关性排名。关键词仍由既有Rust LIKE运行时计算，无引擎/SQL扩展。
+
+三图JPEG总425263B：397133为200576B/640×427；252219为143225B/640×428；403385为81462B/640×511。
+新增两图固定memberSHA分别1cf48bddb1bcab80d9f4d18514ae438c3e4f57d18e80c4fbea9d5d22396f514a、
+11632ed3fb470d62f7fe5f0445c4f10ec91225c4a820c95d1c3946af9426d4c7；准备逐图实际ImageIO解码并核原标注尺寸。
+只读这三个精确ZIP成员，不扫媒体库、全包解压/哈希或下载；总上界3图16MiB、200caption行/1MiB Parquet。
+输出images下三份原JPEG副本、同一records.parquet/config.json及source.json中逐图身份/许可/decode记录；临时PNG即时删除。
+任一图缺失/身份或关联不符、解码或后续写出失败，整次新输出回收；已有输出路径不覆盖。
+图片定位仍为准备时快照，Rust只核Parquet，查询时不复核JPEG；完成可删除本次GURADB_MULTI_DIR，原ZIP只读保留。
+
+caption按COCO annotations CC BY4归属；三图源metadata均license_id4/CC BY2，逐图FlickrURL及摄影者UNKNOWN单独写source.json，
+不把描述许可推导为图像授权/公开发布认证。仍非视觉识别、语义/向量检索、规模或性能交付，不推进#138。
+
 配置只有source、sha256及timeout_ms三个字段；source相对配置文件目录，默认期限5000ms。
 首跑已自动生成实际配置；若换自己的数据，sha256必须是自己原文件的真实摘要，不能使用占位值。
 
