@@ -1,5 +1,6 @@
 mod compile;
 pub mod describe;
+pub mod fixed;
 pub mod sql;
 
 use arrow::{
@@ -17,7 +18,7 @@ use datafusion::{
 };
 use futures::TryStreamExt;
 use guradb_common::{
-    protocol::{Column, QueryStats},
+    protocol::{Column, QueryStats, RecordLineage},
     Error, Limits, Result,
 };
 use serde_json::Value;
@@ -29,6 +30,7 @@ pub struct Output {
     pub rows: Vec<Vec<Value>>,
     pub truncated: bool,
     pub stats: QueryStats,
+    pub lineage: Option<Vec<RecordLineage>>,
 }
 fn engine_error(error: datafusion::error::DataFusionError) -> Error {
     let code = if matches!(
@@ -79,6 +81,9 @@ pub async fn execute(
     if batches.is_empty() {
         batches.push(arrow::record_batch::RecordBatch::new_empty(schema.clone()));
     }
+    if plan.fixed_identity {
+        fixed::validate_records(&batches, limits.pool_bytes, cancel).await?;
+    }
     let runtime = RuntimeEnvBuilder::new()
         .with_memory_pool(Arc::new(GreedyMemoryPool::new(limits.pool_bytes)))
         .with_disk_manager_builder(
@@ -100,13 +105,18 @@ pub async fn execute(
     if !plan.order.is_empty() {
         frame = frame.sort(plan.order).map_err(engine_error)?;
     }
-    frame = frame.select(plan.projection).map_err(engine_error)?;
+    let mut projection = plan.projection;
+    if plan.fixed_identity {
+        projection.push(datafusion::logical_expr::col("record_id").alias("__gura_record_id"));
+    }
+    frame = frame.select(projection).map_err(engine_error)?;
     let fetch = plan.sql_limit.unwrap_or(max_rows + 1).min(max_rows + 1);
     frame = frame.limit(0, Some(fetch)).map_err(engine_error)?;
     let columns: Vec<_> = frame
         .schema()
         .fields()
         .iter()
+        .take(plan.columns.len())
         .map(|field| Column {
             name: field.name().clone(),
             r#type: match field.data_type() {
@@ -127,6 +137,7 @@ pub async fn execute(
     let mut stream = frame.execute_stream().await.map_err(engine_error)?;
     let mut rows = Vec::new();
     let mut truncated = false;
+    let mut lineage = plan.fixed_identity.then(Vec::new);
     while let Some(batch) = tokio::select! {
         _ = cancel.cancelled() => return Err(Error::new("cancelled", "query cancelled")),
         batch = stream.try_next() => batch.map_err(engine_error)?,
@@ -139,6 +150,7 @@ pub async fn execute(
             let values: Vec<_> = batch
                 .columns()
                 .iter()
+                .take(columns.len())
                 .map(|array| {
                     if array.is_null(row) {
                         return Value::Null;
@@ -170,6 +182,23 @@ pub async fn execute(
                     }
                 })
                 .collect();
+            if let Some(lineage) = &mut lineage {
+                let ids = batch
+                    .column(columns.len())
+                    .as_any()
+                    .downcast_ref::<StringArray>()
+                    .expect("validated fixed identity");
+                let identity = RecordLineage {
+                    entity_kind: "record".into(),
+                    record_id: ids.value(row).into(),
+                    record_version: dataset.context.data_revision_id.clone(),
+                };
+                size += serde_json::to_vec(&identity)
+                    .map_err(|_| Error::new("execution_failed", "lineage encoding failed"))?
+                    .len()
+                    + 1;
+                lineage.push(identity);
+            }
             size += serde_json::to_vec(&values)
                 .map_err(|_| Error::new("execution_failed", "result encoding failed"))?
                 .len()
@@ -189,6 +218,7 @@ pub async fn execute(
         rows,
         truncated,
         stats,
+        lineage,
     })
 }
 

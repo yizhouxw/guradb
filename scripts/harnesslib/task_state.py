@@ -29,6 +29,9 @@ def read_task(root: Path) -> dict | None:
     if (not re.fullmatch(r"[0-9a-f]{32}", value["id"])
             or not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", value["base_commit"])):
         raise HarnessError("invalid task ID/base commit")
+    stage, flow = value.get("stage", "hardening"), value.get("core_flow")
+    if stage not in {"core", "hardening"} or (flow != "fixed-read" if stage == "core" else flow is not None):
+        raise HarnessError("invalid task validation stage/core flow")
     return value
 
 

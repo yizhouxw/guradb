@@ -6,7 +6,7 @@ use axum::{
     Json,
 };
 use guradb_common::{
-    protocol::{QueryRequest, ResultPage},
+    protocol::{FixedQueryRequest, QueryRequest, ResultPage},
     Error,
 };
 use serde::Deserialize;
@@ -50,6 +50,27 @@ pub async fn submit(
         return Err(Error::new("resource_limit", "request exceeds server limits").into());
     }
     let plan = guradb_query::sql::prepare(&request, &state.catalog, &principal.datasets)?;
+    let handle = state.submit(plan, principal, timeout, rows).await?;
+    Ok((StatusCode::ACCEPTED, Json(handle)).into_response())
+}
+pub async fn submit_fixed(
+    ExtractState(state): ExtractState<Arc<State>>,
+    headers: HeaderMap,
+    body: std::result::Result<Json<FixedQueryRequest>, JsonRejection>,
+) -> Result<Response, ApiError> {
+    let principal = auth::authenticate(&state.auth_file, &headers).await?;
+    let Json(request) =
+        body.map_err(|_| Error::new("invalid_request", "invalid fixed query request"))?;
+    let timeout = request.timeout_ms.unwrap_or(state.limits.timeout_ms);
+    let rows = request.max_rows.unwrap_or(state.limits.max_rows);
+    if timeout == 0
+        || timeout > state.limits.timeout_ms
+        || rows == 0
+        || rows > state.limits.max_rows
+    {
+        return Err(Error::new("resource_limit", "request exceeds server limits").into());
+    }
+    let plan = guradb_query::fixed::prepare(&request, &state.catalog, &principal.datasets)?;
     let handle = state.submit(plan, principal, timeout, rows).await?;
     Ok((StatusCode::ACCEPTED, Json(handle)).into_response())
 }
@@ -121,6 +142,11 @@ pub async fn results(
     let end = (offset + count).min(output.rows.len());
     Ok(Json(ResultPage {
         query_id: id.clone(),
+        binding: entry.handle.binding.clone(),
+        lineage: output
+            .lineage
+            .as_ref()
+            .map(|rows| rows[offset..end].to_vec()),
         columns: output.columns.clone(),
         rows: output.rows[offset..end].to_vec(),
         next_cursor: (end < output.rows.len()).then(|| {

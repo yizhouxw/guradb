@@ -18,6 +18,7 @@ from harnesslib.validation_registry import load_registry
 from harnesslib.version_control import checkpoint, install_hooks, recover, require_committable_tree, status
 from harnesslib.task_state import read_task
 from harnesslib.workflow import abandon_task, finish_task, start_task
+from harnesslib.stages import STAGES, set_task_stage
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -38,6 +39,9 @@ def main() -> int:
     checker.add_argument("--level", choices=LEVELS, default="auto")
     checker.add_argument("--module", action="append", default=[])
     checker.add_argument("--batch", help="stable integration batch identifier; recorded, never a cache key")
+    for target in (planner, checker):
+        target.add_argument("--stage", choices=STAGES, default="auto")
+        target.add_argument("--core-flow", choices=("fixed-read",))
     performance = commands.add_parser("compare-performance")
     performance.add_argument("--baseline", type=Path, required=True)
     performance.add_argument("--candidate", type=Path, required=True)
@@ -55,6 +59,11 @@ def main() -> int:
     starter = commands.add_parser("task-start", help="record a clean task base and create a recovery checkpoint")
     starter.add_argument("--label", required=True)
     starter.add_argument("--objective", required=True)
+    starter.add_argument("--stage", choices=("core", "hardening"), default="hardening")
+    starter.add_argument("--core-flow", choices=("fixed-read",))
+    stage_setter = commands.add_parser("task-stage", help="bind the active task to a validation stage; keep its original base")
+    stage_setter.add_argument("--stage", choices=("core", "hardening"), required=True)
+    stage_setter.add_argument("--core-flow", choices=("fixed-read",))
     commands.add_parser("task-status", help="read the worktree-local task receipt")
     finish = commands.add_parser("task-finish", help="verify task-wide evidence and archive its logs")
     finish.add_argument("--report", type=Path, required=True)
@@ -64,7 +73,7 @@ def main() -> int:
     arguments = parser.parse_args()
     try:
         # Recovery must still work when the current policy is broken.
-        if arguments.command in {"git-status", "install-git-hooks", "recover", "task-status", "task-abandon"}:
+        if arguments.command in {"git-status", "install-git-hooks", "recover", "task-status", "task-abandon", "task-stage"}:
             if arguments.command == "git-status":
                 result = status(ROOT)
             elif arguments.command == "install-git-hooks":
@@ -73,6 +82,8 @@ def main() -> int:
                 result = read_task(ROOT)
             elif arguments.command == "task-abandon":
                 result = abandon_task(ROOT, arguments.reason)
+            elif arguments.command == "task-stage":
+                result = set_task_stage(ROOT, arguments.stage, arguments.core_flow)
             else:
                 result = recover(ROOT, arguments.checkpoint, arguments.destination)
             print(json.dumps(result, ensure_ascii=False, indent=2))
@@ -86,7 +97,8 @@ def main() -> int:
             print("Runtime invariants are registered obligations, not proven by this lint.")
         elif arguments.command == "plan":
             paths = arguments.path if arguments.path is not None else discover_changes(ROOT, arguments.base)
-            selected = bound_plan(ROOT, paths, policy, architecture, invariants, arguments.level, arguments.module)
+            selected = bound_plan(ROOT, paths, policy, architecture, invariants, arguments.level, arguments.module,
+                                  stage=arguments.stage, core_flow=arguments.core_flow)
             output = {**selected["legacy_impact"], "validation": selected}
             print(json.dumps(output, ensure_ascii=False, indent=2))
         elif arguments.command in {"check", "pre-commit"}:
@@ -94,8 +106,9 @@ def main() -> int:
                 require_committable_tree(ROOT)
                 arguments.scope, arguments.base = "change", "auto"
                 arguments.level, arguments.module, arguments.batch = "auto", [], None
+                arguments.stage, arguments.core_flow = "auto", None
             report, path = check(ROOT, arguments.scope, arguments.base, configuration,
-                                 arguments.level, arguments.module, arguments.batch)
+                                 arguments.level, arguments.module, arguments.batch, arguments.stage, arguments.core_flow)
             if arguments.command == "pre-commit":
                 require_committable_tree(ROOT)
                 if status(ROOT)["head"] != report["git_commit"]:
@@ -116,7 +129,8 @@ def main() -> int:
         elif arguments.command == "checkpoint":
             print(json.dumps(checkpoint(ROOT, arguments.label, policy, arguments.report, configuration), ensure_ascii=False, indent=2))
         elif arguments.command == "task-start":
-            print(json.dumps(start_task(ROOT, arguments.label, arguments.objective, configuration), ensure_ascii=False, indent=2))
+            print(json.dumps(start_task(ROOT, arguments.label, arguments.objective, configuration,
+                                        arguments.stage, arguments.core_flow), ensure_ascii=False, indent=2))
         elif arguments.command == "task-finish":
             print(json.dumps(finish_task(ROOT, arguments.report, arguments.review, configuration), ensure_ascii=False, indent=2))
         return 0

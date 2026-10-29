@@ -143,7 +143,8 @@ def discover_changes(root: Path, base: str | None) -> list[str]:
 
 
 def check(root: Path, scope: str, base: str | None, configuration: tuple,
-          level: str | None = None, modules=(), batch: str | None = None) -> tuple[dict, Path]:
+          level: str | None = None, modules=(), batch: str | None = None,
+          stage="auto", core_flow=None) -> tuple[dict, Path]:
     started = time.monotonic()
     root = root.resolve()
     policy, architecture, invariants, _, _ = configuration
@@ -156,7 +157,8 @@ def check(root: Path, scope: str, base: str | None, configuration: tuple,
     validation = None
     suite_map = policy["suites"]
     if level is not None:
-        validation = bound_plan(root, changes, policy, architecture, invariants, level, modules, scope)
+        validation = bound_plan(root, changes, policy, architecture, invariants, level, modules, scope,
+                                stage, core_flow)
         suite_map = validation["profile"]["suites"]
         suites = list(suite_map)
     if batch is not None:
@@ -225,7 +227,7 @@ def check(root: Path, scope: str, base: str | None, configuration: tuple,
     if validation is not None:
         try:
             after = bound_plan(root, discover_changes(root, selected_base), policy, architecture,
-                               invariants, level, modules, scope)
+                               invariants, level, modules, scope, stage, core_flow)
             unchanged = after == validation
         except (HarnessError, OSError):
             unchanged = False

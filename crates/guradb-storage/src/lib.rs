@@ -87,6 +87,13 @@ impl Source {
                 if !real.starts_with(root) {
                     return Err(invalid());
                 }
+                if !tokio::fs::metadata(&real)
+                    .await
+                    .map_err(|_| unavailable())?
+                    .is_file()
+                {
+                    return Err(invalid());
+                }
                 // Bound before allocation and also during reading, including concurrent growth.
                 let handle = tokio::fs::File::open(real)
                     .await

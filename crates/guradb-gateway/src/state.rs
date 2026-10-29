@@ -1,7 +1,10 @@
 use crate::auth::Principal;
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use guradb_catalog::Catalog;
-use guradb_common::{protocol::QueryHandle, Error, Limits, Result};
+use guradb_common::{
+    protocol::{FixedBinding, QueryHandle},
+    Error, Limits, Result,
+};
 use guradb_query::{sql::Prepared, Output};
 use hmac::{Hmac, Mac};
 use sha2::Sha256;
@@ -98,6 +101,13 @@ impl State {
             read_context: plan.dataset.context.clone(),
             error: None,
             stats: None,
+            binding: plan.fixed_identity.then(|| FixedBinding {
+                tenant_id: principal.tenant_id.clone(),
+                principal_id: principal.principal_id.clone(),
+                dataset_id: plan.dataset.manifest.dataset_id.clone(),
+                data_revision_id: plan.dataset.context.data_revision_id.clone(),
+                read_view_id: plan.dataset.context.read_view_id.clone(),
+            }),
         };
         let cancel = CancellationToken::new();
         registry.entries.insert(
