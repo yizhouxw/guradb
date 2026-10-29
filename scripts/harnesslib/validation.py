@@ -132,7 +132,7 @@ def validation_plan(root, paths, policy, architecture, invariants, level="auto",
     if actual == "core-limited":
         suites = core_suites(root, paths, policy)
         components, closure = {}, source_inventory(root, policy, architecture,
-                                                   ["common", "storage", "query", "gateway"])
+                                                   ["alpha"])
     elif actual in {"module", "pair"}:
         suites, components = _scoped_suites(policy, registry, chosen, pair if actual == "pair" else None)
         closure = source_inventory(root, policy, architecture, chosen)
@@ -150,7 +150,7 @@ def validation_plan(root, paths, policy, architecture, invariants, level="auto",
             suites = {"repository": policy["suites"]["repository"]}
         if actual == "engineering":
             suites["engineering-native"] = {"state": "ready", "timeout_seconds": policy["suites"]["rust"]["timeout_seconds"],
-                "commands": [["{python}", "scripts/cargo.py", "test", "--package", "guradb-query", "--lib", "--locked"]]}
+                "commands": [["{python}", "scripts/cargo.py", "test", "--package", "guradb", "--locked"]]}
         if actual in {"system", "release"}:
             closure = source_inventory(root, policy, architecture, sorted(architecture["modules"]))
     profile = {"level": actual, "modules": chosen, "pairs": [pair] if actual == "pair" else [],
@@ -162,7 +162,7 @@ def validation_plan(root, paths, policy, architecture, invariants, level="auto",
                "required_closure": required}
     if actual == "core-limited":
         profile["denominator"] = {"rule": "source-binding-only; no coverage qualification", "sources": sorted(closure)}
-        profile["limitations"] = ["fixed-read bounded core only", "hardening not assessed", "release not assessed"]
+        profile["limitations"] = ["simple local Rust alpha only", "hardening not assessed", "release not assessed"]
     return {"requested_level": level, "requested_modules": modules, "stage": stage, "core_flow": core_flow,
             "minimum_level": minimum,
             "selection_reasons": reasons, "profile": profile, "profile_sha256": digest(profile),

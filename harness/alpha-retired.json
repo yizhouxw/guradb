@@ -1,0 +1,2083 @@
+{
+  "schema_version": 1,
+  "base_commit": "25c281575368db9f76d2fda267ac6f59bbca5ec1",
+  "unsupported": [
+    "HTTP/PG listeners",
+    "Python online query/index/catalog/worker",
+    "ANN/BM25/graph/training",
+    "object-store or distributed operation",
+    "multi-tenant authorization and generic version/pin/lease/GC platform"
+  ],
+  "files": [
+    {
+      "path": ".coveragerc",
+      "reason": "retired demo backend dependencies or old source-bound coverage configuration",
+      "category": "retired_demo_tools_and_policy"
+    },
+    {
+      "path": "api/capabilities/v1.schema.json",
+      "reason": "retired HTTP/PG/multimodal examples and capability registration",
+      "category": "retired_api_and_examples"
+    },
+    {
+      "path": "api/cf1a/golden.json",
+      "reason": "retired HTTP/PG/multimodal examples and capability registration",
+      "category": "retired_api_and_examples"
+    },
+    {
+      "path": "api/cf1a/rejections.json",
+      "reason": "retired HTTP/PG/multimodal examples and capability registration",
+      "category": "retired_api_and_examples"
+    },
+    {
+      "path": "api/cf1a/schema.json",
+      "reason": "retired HTTP/PG/multimodal examples and capability registration",
+      "category": "retired_api_and_examples"
+    },
+    {
+      "path": "api/http/README.md",
+      "reason": "retired HTTP/PG/multimodal examples and capability registration",
+      "category": "retired_api_and_examples"
+    },
+    {
+      "path": "api/http/m1-openapi.json",
+      "reason": "retired HTTP/PG/multimodal examples and capability registration",
+      "category": "retired_api_and_examples"
+    },
+    {
+      "path": "api/http/openapi.json",
+      "reason": "retired HTTP/PG/multimodal examples and capability registration",
+      "category": "retired_api_and_examples"
+    },
+    {
+      "path": "api/manifest/v1.schema.json",
+      "reason": "retired HTTP/PG/multimodal examples and capability registration",
+      "category": "retired_api_and_examples"
+    },
+    {
+      "path": "clients/cli/AGENTS.md",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "retired_python_clients"
+    },
+    {
+      "path": "clients/cli/README.md",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "retired_python_clients"
+    },
+    {
+      "path": "clients/cli/m1.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "retired_python_clients"
+    },
+    {
+      "path": "clients/common/http.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "retired_python_clients"
+    },
+    {
+      "path": "clients/mcp/AGENTS.md",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "retired_python_clients"
+    },
+    {
+      "path": "clients/mcp/README.md",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "retired_python_clients"
+    },
+    {
+      "path": "clients/mcp/server.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "retired_python_clients"
+    },
+    {
+      "path": "crates/guradb-catalog/Cargo.toml",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-catalog/src/lib.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-catalog/tests/unit/catalog.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-cluster/Cargo.toml",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-cluster/README.md",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-cluster/src/envelope.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-cluster/src/lib.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-cluster/src/state.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-cluster/tests/facade.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-cluster/tests/unit/envelope.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-cluster/tests/unit/state.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/Cargo.toml",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/examples/cf1a_roundtrip.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/src/cf1a/binding.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/src/cf1a/controlled_ports.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/src/cf1a/json.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/src/cf1a/mod.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/src/cf1a/ports.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/src/cf1a/publication.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/src/cf1a/read.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/src/cf1a/read_control.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/src/cf1a/types.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/src/cf1a/wire.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/src/lib.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/src/manifest.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/src/protocol.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/tests/unit/cf1a.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/tests/unit/cf1a_boundaries.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/tests/unit/contracts.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/tests/unit/controlled_ports.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/tests/unit/lib_existing.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-common/tests/unit/read_control.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-connectors/Cargo.toml",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-connectors/README.md",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-connectors/src/fixed_manifest.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-connectors/src/fixed_mapping.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-connectors/src/lib.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-connectors/tests/unit/fixed_manifest.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-connectors/tests/unit/fixed_mapping.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-connectors/tests/unit/parquet.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-gateway/Cargo.toml",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-gateway/src/auth.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-gateway/src/main.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-gateway/src/pg/mod.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-gateway/src/pg/session.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-gateway/src/pg/types.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-gateway/src/pg/wire.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-gateway/src/routes.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-gateway/src/state.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-gateway/tests/unit/gateway.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-gateway/tests/unit/pg_types_existing.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-gateway/tests/unit/pg_wire_existing.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-gateway/tests/unit/session.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-gateway/tests/unit/session_boundaries.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-gateway/tests/unit/startup.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-index/Cargo.toml",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-index/README.md",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-index/src/bm25.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-index/src/exact.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-index/src/lib.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-index/src/score.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-index/tests/fixtures/diagnostic_cases.tsv",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-index/tests/fixtures/reference_gold.tsv",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-index/tests/fixtures/reference_oracle.sha256",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-index/tests/fixtures/source_bindings.tsv",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-index/tests/unit/bm25.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-index/tests/unit/exact.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-index/tests/unit/reference_bits.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-query/Cargo.toml",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-query/src/compile.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-query/src/describe.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-query/src/fixed.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-query/src/lib.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-query/src/sql.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-query/tests/unit/compiler.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-query/tests/unit/describe_existing.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-query/tests/unit/execution.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-query/tests/unit/fixed.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-storage/Cargo.toml",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-storage/README.md",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-storage/src/fixed_request.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-storage/src/lib.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-storage/tests/unit/fixed_request.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-storage/tests/unit/storage.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "crates/guradb-storage/tests/unit/stream.rs",
+      "reason": "retired HTTP/PG/catalog/storage/connectors/index/cluster demo crates; one CLI crate replaces current scope",
+      "category": "retired_rust_demos"
+    },
+    {
+      "path": "docs/design/controlled-fixed-read-plan.md",
+      "reason": "retired executable demo operation/validation instructions",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/design/m0-parquet-http.md",
+      "reason": "retired executable demo operation/validation instructions",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/design/m0-running.md",
+      "reason": "retired executable demo operation/validation instructions",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/design/m0-validation.md",
+      "reason": "retired executable demo operation/validation instructions",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/design/m1-running.md",
+      "reason": "retired executable demo operation/validation instructions",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/design/m1-validation.md",
+      "reason": "retired executable demo operation/validation instructions",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/design/m2-running.md",
+      "reason": "retired executable demo operation/validation instructions",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/design/pg-wire-running.md",
+      "reason": "retired executable demo operation/validation instructions",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/architecture.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/concepts.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/controlled-fixed-read.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/data-model.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/development.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/diagnostics.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/features.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/fixed-catalog.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/fixed-entry.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/fixed-indexes.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/fixed-objects.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/fixed-sources.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/ingestion.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/installation.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/manual-plan.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/operations.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/outline-oracles.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/production.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/reference.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/retrieval.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/security.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/training.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/usage.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "docs/user/validation.md",
+      "reason": "retired old demo operational user manual; replaced by simple-alpha",
+      "category": "retired_operational_docs"
+    },
+    {
+      "path": "examples/http/query.json",
+      "reason": "retired HTTP/PG/multimodal examples and capability registration",
+      "category": "retired_api_and_examples"
+    },
+    {
+      "path": "examples/m1/dataset.json",
+      "reason": "retired HTTP/PG/multimodal examples and capability registration",
+      "category": "retired_api_and_examples"
+    },
+    {
+      "path": "examples/m1/features.json",
+      "reason": "retired HTTP/PG/multimodal examples and capability registration",
+      "category": "retired_api_and_examples"
+    },
+    {
+      "path": "examples/m1/target.json",
+      "reason": "retired HTTP/PG/multimodal examples and capability registration",
+      "category": "retired_api_and_examples"
+    },
+    {
+      "path": "examples/sql/relational-model.sql",
+      "reason": "retired HTTP/PG/multimodal examples and capability registration",
+      "category": "retired_api_and_examples"
+    },
+    {
+      "path": "harness/coverage-exclusions.json",
+      "reason": "retired demo backend dependencies or old source-bound coverage configuration",
+      "category": "retired_demo_tools_and_policy"
+    },
+    {
+      "path": "modules/README.md",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/AGENTS.md",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/README.md",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/cf1a_access.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/cf1a_admin.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/cf1a_auth.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/cf1a_binding.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/cf1a_catalog.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/cf1a_codec.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/cf1a_control.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/cf1a_controlled.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/cf1a_mutation.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/cf1a_pg.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/cf1a_schema.sql",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/cf1a_store.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/control.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/jobs.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/managed.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/managed.sql",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/recovery.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/recovery_sources.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/catalog/schema.sql",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/cluster/AGENTS.md",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/cluster/README.md",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/cluster/local.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/cluster/transport.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/common/cf1a_ports.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/common/cf1a_primitives.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/common/cf1a_publication.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/common/cf1a_read.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/common/cf1a_schema.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/common/cf1a_wire.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/common/contracts.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/common/process.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/AGENTS.md",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/README.md",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/fixed_compact.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/fixed_fd_entry.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/fixed_fd_protocol.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/fixed_fd_worker.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/fixed_parquet_pages.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/fixed_parquet_plan.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/fixed_producer.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/fixed_producer_credits.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/fixed_producer_observation.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/fixed_source_inputs.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/fixed_source_located.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/fixed_source_manifest.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/fixed_source_reader.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/fixed_source_scope.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/iceberg.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/incremental.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/training.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/connectors/writer.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/gateway/AGENTS.md",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/gateway/README.md",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/gateway/m1.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/index/AGENTS.md",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/index/README.md",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/index/ann.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/index/ann_worker.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/index/bm25.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/index/fixed_artifacts.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/index/fixed_bm25.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/index/fixed_candidates.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/index/fixed_layout.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/index/fixed_scope.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/index/fixed_vectors.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/index/graph.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/index/retrieval.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/index/shards.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/query/AGENTS.md",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/query/README.md",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/query/distributed.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/query/incremental.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/query/rebuild.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/query/remote_runner.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/query/remote_worker.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/query/service.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/query/snapshot.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/query/worker.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/storage/AGENTS.md",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/storage/README.md",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/storage/fixed_anchor.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/storage/fixed_cache.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/storage/fixed_http.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/storage/fixed_objects.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/storage/fixed_parent.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/storage/fixed_proofs.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/storage/fixed_scope.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/storage/fixed_signing.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/storage/fixed_transport.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "modules/storage/objects.py",
+      "reason": "retired Python server/client demo and module instructions",
+      "category": "python_online"
+    },
+    {
+      "path": "requirements-m0.lock",
+      "reason": "retired demo backend dependencies or old source-bound coverage configuration",
+      "category": "retired_dependencies"
+    },
+    {
+      "path": "requirements-m1.lock",
+      "reason": "retired demo backend dependencies or old source-bound coverage configuration",
+      "category": "retired_dependencies"
+    },
+    {
+      "path": "scripts/coverage_scope.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/fixed_catalog_acceptance.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/fixed_indexes_acceptance.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/fixed_objects_acceptance.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/fixed_read_core_acceptance.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/fixed_sources_acceptance.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/inspect_state.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/local_acceptance.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m0.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m0lib/__init__.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m0lib/evidence.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m0lib/fixed-chain-client.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m0lib/fixed-chain-fd-cleanup.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m0lib/fixed-chain-fd-client.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m0lib/fixed-chain-fd.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m0lib/fixed-chain-topology.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m0lib/kit.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m0lib/pg_client.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m0lib/pg_raw.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m0lib/pgwire.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m1.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m1_acceptance.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m1lib/fixtures.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m1lib/negative.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m2_acceptance.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m2lib/__init__.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m2lib/fixtures.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/m4.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/p0_acceptance.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/p0lib/__init__.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/p0lib/contract.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/p0lib/oracle.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/p0lib/schedule.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/p0lib/workers.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/p0lib/workload.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/sbom.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/unit_coverage.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "scripts/worker.py",
+      "reason": "retired demo launch, service/backend validation or unused platform tool",
+      "category": "retired_demo_launch_and_validation"
+    },
+    {
+      "path": "tests/catalog_support/__init__.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/catalog_support/fixed_fixture.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/catalog_support/pg_cases.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/catalog_support/pg_control_cases.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/catalog_support/pg_quota_cases.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/catalog_support/pg_quota_truth.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/catalog_support/pg_transport.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/catalog_support/sqlite_unit.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/cf1a_roundtrip.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/test_ann.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/test_bm25.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/test_capabilities.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/test_cf1a_contract.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/test_distributed.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/test_graph.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/test_http_contract.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/test_incremental.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/test_m1_contract.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/test_mcp.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/test_outline_oracles.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/test_p0_contract.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/test_p0_oracle.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/test_p0_schedule.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/test_process_cleanup.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/test_shard_review.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/test_transport.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/test_worker_evidence.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/contracts/test_writer.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/faults/component/m0.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/faults/component/m1.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/faults/component/m2.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/faults/component/pgwire.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/functional/graph.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/functional/incremental.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/functional/incremental_s3.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/functional/inspection.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/functional/interface_scenarios.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/functional/m0.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/functional/m1.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/functional/m2.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/functional/m4.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/functional/mcp.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/functional/pgwire.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/functional/pgwire_protocol.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/functional/rebuild.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/functional/writer.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/harness/test_architecture.py",
+      "reason": "retired demo/old module profile assertions; new alpha scope is separately verified",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/harness/test_ci_workflow.py",
+      "reason": "retired demo/old module profile assertions; new alpha scope is separately verified",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/harness/test_core_stage.py",
+      "reason": "retired demo/old module profile assertions; new alpha scope is separately verified",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/harness/test_coverage_scope.py",
+      "reason": "retired demo/old module profile assertions; new alpha scope is separately verified",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/harness/test_dependencies.py",
+      "reason": "retired demo/old module profile assertions; new alpha scope is separately verified",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/harness/test_fixed_chain_fd_cleanup.py",
+      "reason": "retired demo/old module profile assertions; new alpha scope is separately verified",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/harness/test_fixed_chain_topology.py",
+      "reason": "retired demo/old module profile assertions; new alpha scope is separately verified",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/harness/test_m0_auth_publication.py",
+      "reason": "retired demo/old module profile assertions; new alpha scope is separately verified",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/harness/test_m0_evidence.py",
+      "reason": "retired demo/old module profile assertions; new alpha scope is separately verified",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/harness/test_m0_log_capture.py",
+      "reason": "retired demo/old module profile assertions; new alpha scope is separately verified",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/harness/test_policy.py",
+      "reason": "retired demo/old module profile assertions; new alpha scope is separately verified",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/harness/test_unit_coverage.py",
+      "reason": "retired demo/old module profile assertions; new alpha scope is separately verified",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/harness/test_unit_coverage_phases.py",
+      "reason": "retired demo/old module profile assertions; new alpha scope is separately verified",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/harness/test_validation_levels.py",
+      "reason": "retired demo/old module profile assertions; new alpha scope is separately verified",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/harness/test_validation_reports.py",
+      "reason": "retired demo/old module profile assertions; new alpha scope is separately verified",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/index_support/__init__.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/index_support/fixed_audit.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/index_support/fixed_faults.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/index_support/fixed_fixture.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/index_support/reference_oracle.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/outline_oracles/__init__.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/outline_oracles/__main__.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/outline_oracles/fixture.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/outline_oracles/training.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/outline_oracles/truth.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/performance/component/m0.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/performance/component/m1.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/performance/component/m2.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/performance/component/pgwire.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/rust_fixture.rs",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/source_support/__init__.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/source_support/fixed_acceptance.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/source_support/fixed_backend_cases.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/source_support/fixed_catalog_pair.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/source_support/fixed_catalog_pair_faults.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/source_support/fixed_catalog_pair_measure.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/source_support/fixed_catalog_pair_runner.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/source_support/fixed_evidence.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/source_support/fixed_fault_cases.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/source_support/fixed_fd_fixture.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/source_support/fixed_fixture.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/source_support/fixed_located_acceptance.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/storage_support/__init__.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/storage_support/acceptance.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/storage_support/fault_server.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/storage_support/fixtures.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/storage_support/log_capture.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/storage_support/recording_proxy.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/__init__.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/support.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_boundary_units.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_c3_controlled_read_boundaries.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_catalog.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_cf1a_catalog.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_cf1a_catalog_control.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_cf1a_catalog_controlled.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_cf1a_catalog_evidence.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_cf1a_catalog_transport.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_cf1a_fd_protection.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_cf1a_publication.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_cf1a_read.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_cf1a_wire.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_clients_gateway.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_catalog_pair_control.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_catalog_pair_fixture.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_catalog_pair_runner.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_fd_entry.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_fd_fixture.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_fd_protocol.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_fd_worker.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_indexes.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_indexes_evidence.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_linux_anchor.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_object_fixture_put.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_objects.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_objects_transport.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_parent.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_producer_credits.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_producer_lifecycle.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_producer_observation.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_sources_boundaries.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_sources_codec.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_sources_evidence.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_sources_fixture_identity.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_sources_located.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_sources_multisource.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_fixed_sources_reader.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_pipeline_units.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_recovery_units.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_remote_units.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_service.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_worker_units.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tests/unit/test_writer_units.py",
+      "reason": "tests belong to capabilities retired from current alpha; historical assertions preserved in Git",
+      "category": "retired_tests"
+    },
+    {
+      "path": "tools/m0/fixed-chain.Dockerfile",
+      "reason": "retired demo/container qualification toolchain",
+      "category": "retired_demo_tools_and_policy"
+    },
+    {
+      "path": "tools/m0/pg-client.Dockerfile",
+      "reason": "retired demo/container qualification toolchain",
+      "category": "retired_demo_tools_and_policy"
+    },
+    {
+      "path": "tools/test-coverage/Dockerfile",
+      "reason": "retired demo/container qualification toolchain",
+      "category": "retired_demo_tools_and_policy"
+    }
+  ]
+}

@@ -11,7 +11,7 @@ LOGIC_INPUTS = ("scripts/harness.py", "scripts/harnesslib/policy.py", "scripts/h
                 "scripts/harnesslib/validation_binding.py", "scripts/harnesslib/check_evidence.py",
                 "scripts/harnesslib/stages.py", "scripts/harnesslib/core_rust.py",
                 "scripts/harnesslib/workflow.py", "scripts/harnesslib/version_control.py", "scripts/harnesslib/task_state.py",
-                "scripts/unit_coverage.py", "scripts/coverage_scope.py", "scripts/coverage_policy.py",
+                "scripts/coverage_policy.py",
                 ".githooks/pre-commit", ".github/workflows/check.yml")
 
 

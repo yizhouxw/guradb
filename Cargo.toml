@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/guradb-common", "crates/guradb-storage", "crates/guradb-catalog", "crates/guradb-connectors", "crates/guradb-query", "crates/guradb-gateway", "crates/guradb-cluster", "crates/guradb-index"]
+members = ["crates/guradb"]
 resolver = "2"
 
 [workspace.package]
@@ -9,28 +9,16 @@ rust-version = "1.90"
 publish = false
 
 [workspace.dependencies]
-guradb-common = { path = "crates/guradb-common" }
-guradb-storage = { path = "crates/guradb-storage" }
-guradb-catalog = { path = "crates/guradb-catalog" }
-guradb-connectors = { path = "crates/guradb-connectors" }
-guradb-query = { path = "crates/guradb-query" }
 serde = { version = "=1.0.228", features = ["derive"] }
 serde_json = "=1.0.145"
 sha2 = "=0.10.9"
 hex = "=0.4.3"
 bytes = "=1.10.1"
 tokio = { version = "=1.48.0", features = ["full"] }
-tokio-util = "=0.7.16"
 futures = "=0.3.31"
-object_store = { version = "=0.12.4", features = ["aws"] }
 arrow = { version = "=56.2.0", default-features = false }
 parquet = { version = "=56.2.0", features = ["arrow"] }
 datafusion = { version = "=50.3.0", default-features = false, features = ["parquet"] }
-axum = "=0.8.6"
-uuid = { version = "=1.18.1", features = ["v4", "serde"] }
-hmac = "=0.12.1"
-base64 = "=0.22.1"
-pgwire = { version = "=0.41.1", default-features = false }
 
 [profile.dev]
 debug = 0

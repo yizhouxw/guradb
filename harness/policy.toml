@@ -3,73 +3,65 @@ source_extensions = [".rs", ".py", ".go", ".c", ".cc", ".cpp", ".h", ".hpp", ".t
 non_runtime_prefixes = ["scripts/", "tests/", "examples/", "benchmarks/"]
 ignored_directories = [".git", ".venv", "node_modules", "target", "build", "dist", "__pycache__", ".pytest_cache", "artifacts/", "data/", "tmp/"]
 max_source_lines = 600
-bootstrap_suites = ["repository", "policy", "contracts", "harness-tests"]
-release_suites = ["unit-coverage", "repository", "policy", "contracts", "harness-tests", "python", "rust", "functional", "performance-smoke", "stability-component", "performance", "stability", "soak"]
+bootstrap_suites = ["repository", "policy", "harness-tests"]
+release_suites = ["repository", "policy", "harness-tests", "python", "rust", "functional", "unit-coverage", "performance", "stability", "soak"]
 
 [suites.repository]
 state = "ready"
 timeout_seconds = 60
 commands = [["{python}", "scripts/check_repository.py"]]
-
 [suites.policy]
 state = "ready"
 timeout_seconds = 60
 commands = [["{python}", "scripts/harness.py", "lint"]]
-
-[suites.contracts]
-state = "ready"
-timeout_seconds = 60
-commands = [["{python}", "-m", "unittest", "discover", "-s", "tests/contracts", "-p", "test_*.py"]]
-
 [suites.harness-tests]
 state = "ready"
 timeout_seconds = 120
 commands = [["{python}", "-m", "unittest", "discover", "-s", "tests/harness", "-p", "test_*.py"]]
-
+[suites.python]
+state = "ready"
+timeout_seconds = 60
+commands = [["{python}", "-m", "compileall", "-q", "scripts", "tests/harness"]]
 [suites.rust]
 state = "ready"
 timeout_seconds = 900
 commands = [["{python}", "scripts/cargo.py", "fmt", "--all", "--", "--check"], ["{python}", "scripts/cargo.py", "clippy", "--workspace", "--all-targets", "--locked", "--", "-D", "warnings"], ["{python}", "scripts/cargo.py", "test", "--workspace", "--locked"]]
-
 [suites.functional]
 state = "ready"
+timeout_seconds = 300
+commands = [["{python}", "scripts/alpha_acceptance.py", "--run-dir", "{run_dir}/alpha-real-cli"]]
+[suites.unit-coverage]
+state = "planned"
+reason = "ADR0028 core scope has source binding and real process tests; full applicable Rust100/Python80 coverage qualification remains unverified for hardening/release, no old exclusions transferred."
 timeout_seconds = 900
-commands = [["{python}", "scripts/m0.py", "functional", "--run-dir", "{run_dir}/m0-functional"], ["{python}", "scripts/m1_acceptance.py", "functional", "--run-dir", "{run_dir}/m1-functional"], ["{python}", "scripts/m2_acceptance.py", "functional", "--run-dir", "{run_dir}/m2-functional"], ["{python}", "-m", "unittest", "tests.functional.graph"], ["{python}", "scripts/p0_acceptance.py", "--run-dir", "{run_dir}/p0-local"], ["{python}", "scripts/p0_acceptance.py", "--transport", "http", "--run-dir", "{run_dir}/p0-http"], ["{python}", "scripts/local_acceptance.py", "recovery", "--run-dir", "{run_dir}/m4-recovery"], ["{python}", "scripts/local_acceptance.py", "inspection", "--run-dir", "{run_dir}/state-inspection"], ["{python}", "scripts/local_acceptance.py", "rebuild", "--run-dir", "{run_dir}/index-rebuild"], ["{python}", "scripts/fixed_catalog_acceptance.py", "--mode", "functional", "--run-dir", "{run_dir}/fixed-catalog-functional"], ["{python}", "scripts/fixed_objects_acceptance.py", "--suite", "functional", "--run-dir", "{run_dir}/fixed-objects-functional"], ["{python}", "scripts/fixed_sources_acceptance.py", "--mode", "functional", "--run-dir", "{run_dir}/fixed-sources-functional"], ["{python}", "scripts/fixed_catalog_acceptance.py", "--mode", "control", "--run-dir", "{run_dir}/fixed-catalog-control"], ["{python}", "scripts/fixed_indexes_acceptance.py", "--mode", "functional", "--output", "{run_dir}/fixed-indexes-functional"]]
-
+commands = []
+[suites.performance-smoke]
+state = "planned"
+reason = "Retired legacy demo drivers; new alpha performance qualification not yet implemented."
+timeout_seconds = 300
+commands = []
+[suites.stability-component]
+state = "planned"
+reason = "Old provider/PG/worker faults retired. Current real process cleanup is covered by Rust CLI tests, broader fault qualification remains planned."
+timeout_seconds = 300
+commands = []
+[suites.contracts]
+state = "planned"
+reason = "Old HTTP/PG/multimodal wire contracts retired; current CLI source/hash/result contract is exercised by real functional driver and Rust process tests."
+timeout_seconds = 60
+commands = []
 [suites.performance]
 state = "planned"
-reason = "等待真实 workload driver 与受控 baseline；命令必须包含测量及 compare-performance，不可只返回成功。"
+reason = "Full controlled performance/baseline remains unverified."
 timeout_seconds = 1800
 commands = []
-
-[suites.performance-smoke]
-state = "ready"
-timeout_seconds = 300
-commands = [["{python}", "scripts/m0.py", "performance-smoke", "--run-dir", "{run_dir}/m0-performance"], ["{python}", "scripts/m1_acceptance.py", "performance-smoke", "--run-dir", "{run_dir}/m1-performance"], ["{python}", "scripts/m2_acceptance.py", "performance-smoke", "--run-dir", "{run_dir}/m2-performance"], ["{python}", "scripts/p0_acceptance.py", "--transport", "http", "--duration", "60", "--run-dir", "{run_dir}/p0-duration"], ["{python}", "scripts/fixed_catalog_acceptance.py", "--mode", "performance", "--run-dir", "{run_dir}/fixed-catalog-performance"], ["{python}", "scripts/fixed_objects_acceptance.py", "--suite", "performance", "--run-dir", "{run_dir}/fixed-objects-performance"], ["{python}", "scripts/fixed_sources_acceptance.py", "--mode", "performance", "--run-dir", "{run_dir}/fixed-sources-performance"], ["{python}", "scripts/fixed_indexes_acceptance.py", "--mode", "performance", "--output", "{run_dir}/fixed-indexes-performance"]]
-
-[suites.stability-component]
-state = "ready"
-timeout_seconds = 300
-commands = [["{python}", "scripts/m0.py", "stability-component", "--run-dir", "{run_dir}/m0-stability"], ["{python}", "scripts/m1_acceptance.py", "stability-component", "--run-dir", "{run_dir}/m1-stability"], ["{python}", "scripts/m2_acceptance.py", "stability-component", "--run-dir", "{run_dir}/m2-stability"], ["{python}", "scripts/fixed_catalog_acceptance.py", "--mode", "fault", "--run-dir", "{run_dir}/fixed-catalog-fault"], ["{python}", "scripts/fixed_objects_acceptance.py", "--suite", "faults", "--run-dir", "{run_dir}/fixed-objects-faults"], ["{python}", "scripts/fixed_sources_acceptance.py", "--mode", "fault", "--run-dir", "{run_dir}/fixed-sources-fault"], ["{python}", "scripts/fixed_indexes_acceptance.py", "--mode", "fault", "--output", "{run_dir}/fixed-indexes-fault"]]
-
 [suites.stability]
 state = "planned"
-reason = "等待真实 fault driver；命令必须执行注入/恢复、产生 trace 并 verify-stability。"
+reason = "Complete fault registry remains unverified."
 timeout_seconds = 1800
 commands = []
-
 [suites.soak]
 state = "planned"
-reason = "发布前需真实持续负载、资源趋势、重启/滚动升级及恢复证据；当前没有运行服务。"
+reason = "Full long-running/restart/release qualification remains unverified."
 timeout_seconds = 3600
 commands = []
-
-[suites.python]
-state = "ready"
-timeout_seconds = 60
-commands = [["{python}", "-m", "compileall", "-q", "modules", "clients", "scripts/m1.py", "scripts/m1_acceptance.py", "scripts/m2_acceptance.py", "scripts/p0_acceptance.py", "scripts/local_acceptance.py", "scripts/m4.py", "scripts/worker.py", "scripts/inspect_state.py", "scripts/sbom.py", "scripts/m1lib", "scripts/m2lib", "scripts/p0lib", "scripts/fixed_catalog_acceptance.py", "tests/catalog_support", "scripts/fixed_indexes_acceptance.py", "tests/index_support", "scripts/fixed_objects_acceptance.py", "tests/storage_support", "scripts/fixed_sources_acceptance.py", "tests/source_support"], ["{python}", "-m", "pip", "check"]]
-
-[suites.unit-coverage]
-state = "ready"
-timeout_seconds = 900
-commands = [["{python}", "scripts/unit_coverage.py", "--language", "all", "--run-dir", "{run_dir}/unit-coverage"]]

@@ -258,6 +258,12 @@ def source_inventory(root, policy, architecture, modules):
                         raise HarnessError(f"ignored runtime source cannot be certified: {relative}")
     result = {}
     for relative in sorted(candidates):
+        path = root/relative
+        # A tracked deletion is still an impact input, but has no current
+        # production denominator. A retired owner may therefore disappear.
+        # Existing/untracked sources still require exactly one live owner.
+        if not path.exists() and not path.is_symlink():
+            continue
         module = owner(relative, architecture)
         suffix = Path(relative).suffix
         if module in modules and suffix in policy["source_extensions"] and suffix not in {".py", ".rs"}:
@@ -266,7 +272,6 @@ def source_inventory(root, policy, architecture, modules):
             raise HarnessError(f"unowned production source cannot be certified: {relative}")
         if not _runtime_path(relative) or owner(relative, architecture) not in modules:
             continue
-        path = root/relative
         if path.is_symlink():
             raise HarnessError(f"coverage source cannot be a symlink: {relative}")
         if path.exists():  # tracked deletion is absent, but both rename sides still select risk.
