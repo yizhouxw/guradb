@@ -4,12 +4,29 @@
 没有HTTP/PG监听器、Python在线服务、检索、训练或分布式worker。
 详细支持/拒绝、输入SHA256和退出语义见[用户手册](docs/user/simple-alpha.md)。
 
+以下命令在仓库根目录执行，需要Docker。已有.venv且已安装锁定依赖时，可从构建命令开始。
+示例为4行合成数据，无需自行准备文件或填写SHA256。
+`GURADB_FIRST_RUN_DIR`必须是仓库artifacts下尚不存在的相对目录；已有目录会明确拒绝，换一个新名字即可，不会覆盖。
+
 ```sh
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements-dev.lock
 .venv/bin/python scripts/cargo.py build --package guradb --locked
-docker run --rm --network none -v "$PWD:/workspace:ro" -w /workspace guradb-rust:1.90.0 /workspace/target/debug/guradb query --config /workspace/alpha.json --sql 'SELECT * FROM records LIMIT 10'
+GURADB_FIRST_RUN_DIR=artifacts/first-run
+.venv/bin/python scripts/alpha_acceptance.py --run-dir "$GURADB_FIRST_RUN_DIR"
+docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspace:ro" -w /workspace guradb-rust:1.90.0 /workspace/target/debug/guradb query --config "/workspace/$GURADB_FIRST_RUN_DIR/good.json" --sql 'SELECT record_id, title, rank FROM records WHERE active = true ORDER BY rank ASC LIMIT 2'
 ```
+
+既有fixture入口会同时做当前8项黑盒检查，成功打印`passed: true`，并留下`records.parquet`和
+自动填写真实摘要的`good.json`。最后一条Rust命令exit0；JSON的`rows`必须严格为：
+
+```json
+[["r0", null, "0"], ["r1", "first", "1"]]
+```
+
+`columns`依次为record_id/text、title/text、rank/int8，`truncated`为false，
+`source_sha256`等于good.json里的sha256；输入路径相对good.json解析。检查完整JSON和exit0才视为成功。
+
 
 源码位于crates/guradb；固定工具链入口scripts/cargo.py。Python仅负责工程工具和独立fixture/黑盒验证。
 完整Docker复现及自动化入口见[验证说明](tests/README.md)。

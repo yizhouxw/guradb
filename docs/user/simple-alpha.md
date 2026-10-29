@@ -4,15 +4,16 @@
 配置只指定一份本地Parquet文件及其预先计算的SHA-256；表名固定records。
 文件仅支持Int64、Utf8和Boolean列，不读对象存储、外部目录或其它文件。
 
-```sh
-guradb query --config alpha.json --sql 'SELECT record_id, title FROM records WHERE active = true ORDER BY record_id LIMIT 10'
-```
+首跑请在仓库根目录原样执行[README的准备与Rust命令](../../README.md)：
+复用已有`scripts/alpha_acceptance.py --run-dir artifacts/first-run`，它在新目录中生成
+4行合成Parquet与`good.json`，自动计算并填写SHA256，且完成既有黑盒检查；不需要猜文件来源。
+目录必须是仓库artifacts下尚不存在的相对目录，已有目录会拒绝，不覆盖文件。
+随后README命令使用`/workspace/artifacts/first-run/good.json`读取同一份输入，过滤active、
+按rank升序取两行，确切rows为`[["r0", null, "0"], ["r1", "first", "1"]]`。
+JSON源摘要应与自动生成的good.json相同，truncated=false。
 
-配置示例（路径相对配置文件；sha256必须替换为实际原文件摘要）：
-
-```json
-{"source":"records.parquet","sha256":"<64位小写SHA256>","timeout_ms":5000}
-```
+配置只有source、sha256及timeout_ms三个字段；source相对配置文件目录，默认期限5000ms。
+首跑已自动生成实际配置；若换自己的数据，sha256必须是自己原文件的真实摘要，不能使用占位值。
 
 成功输出一个JSON对象，含源SHA256、列、完整结果行和是否截断。int64按十进制
 字符串输出以保留精度。输入/SQL/执行失败只向stderr输出错误JSON且exit非0，stdout为空。

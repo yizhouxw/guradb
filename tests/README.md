@@ -12,7 +12,7 @@
 固定Docker工具链无需安装本机Rust。直接运行CLI：
 
 ```sh
-docker run --rm --network none -v "$PWD:/workspace:ro" -w /workspace guradb-rust:1.90.0 /workspace/target/debug/guradb query --config /workspace/alpha.json --sql 'SELECT * FROM records LIMIT 10'
+docker run --rm --network none -v "$PWD:/workspace:ro" -w /workspace guradb-rust:1.90.0 /workspace/target/debug/guradb query --config /workspace/artifacts/alpha/MY_RUN/good.json --sql 'SELECT * FROM records LIMIT 10'
 ```
 
 Python仅用PyArrow生成已知行，字面expected独立核投影/过滤/排序/LIMIT、源SHA256、
