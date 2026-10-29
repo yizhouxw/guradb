@@ -2,7 +2,7 @@
 
 基点25c281575368db9f76d2fda267ac6f59bbca5ec1；branch codex/simple-rust-alpha-20261029；
 receipt ddc3044356314a43bb19ff34c62e6a36，先行合同docs/user/simple-alpha.md。
-当前实现和有界自测完成，非作者、PR与精确main交付证据待补。无原始媒体删除、数据迁移或对外服务部署。
+当前实现、有界自测、非作者验收、正常PR及精确main检查已完成，证据归本地目标卡；结论仅限当前alpha核心范围。无原始媒体删除、数据迁移或对外服务部署。
 
 一个Rust crate复用既有SQL whitelist与Arrow/DataFusion：单源固定SHA256、
 不可变bytes、有界解码/内存/输出；进程期限/中断终结作用域。
