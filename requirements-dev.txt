@@ -1,6 +1,2 @@
-# Harness tooling only; the database implementation stack is not installed here.
-jsonschema==4.26.0
-openapi-spec-validator==0.9.0
-
-# Executable line coverage for all Python production modules.
-coverage==7.11.0
+# Fixed test/data preparation dependency; no Python server dependencies.
+-r requirements-dev.lock

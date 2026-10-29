@@ -1,30 +1,24 @@
-"""ADR0027 bounded fixed-read profile; no module/system/release certification."""
-from pathlib import PurePosixPath
+"""ADR0028 single-process alpha scope and verified retirement; no release claim."""
 import hashlib
+import json
+from pathlib import PurePosixPath
 
-from .policy import HarnessError
+from .policy import HarnessError, normalize_path
 from .task_state import active_base, read_task, task_lock, write_task
 
 STAGES = ("auto", "core", "hardening")
-CORE_FLOW = "fixed-read"
-CORE_PATHS = {
-    "crates/guradb-common/src/protocol.rs",
-    "crates/guradb-query/src/lib.rs", "crates/guradb-query/src/sql.rs",
-    "crates/guradb-query/src/fixed.rs", "crates/guradb-query/tests/unit/fixed.rs",
-    "crates/guradb-gateway/src/main.rs", "crates/guradb-gateway/src/routes.rs",
-    "crates/guradb-gateway/src/state.rs", "crates/guradb-storage/src/lib.rs",
-    "api/http/openapi.json", "api/capabilities/v1.json", "scripts/fixed_read_core_acceptance.py",
-    "scripts/harness.py", "harness/policy.toml", "harness/validation.toml",
+CORE_FLOW = "simple-alpha"
+ACTIVE_FILES = {
+    "Cargo.toml", "Cargo.lock", "crates/guradb/Cargo.toml", "Makefile", "requirements-dev.lock", "requirements-dev.txt",
+    "scripts/alpha_acceptance.py", "scripts/cargo.py", "scripts/check_repository.py", "scripts/harness.py",
+    "harness/policy.toml", "harness/architecture.toml", "harness/validation.toml", "harness/invariants.toml",
+    "harness/alpha-retired.json", "api/capabilities/v1.json",
 }
-CORE_PACKAGES = ("guradb-common", "guradb-storage", "guradb-query", "guradb-gateway")
-SELFTESTS = ("test_policy.py", "test_architecture.py", "test_runner.py", "test_workflow.py",
-             "test_version_control.py", "test_evidence.py", "test_process_cleanup.py",
-             "test_validation*.py", "test_core_stage.py")
 
 
 def stage_options(stage, core_flow):
     if stage not in STAGES or (stage == "core" and core_flow != CORE_FLOW):
-        raise HarnessError("core stage requires registered --core-flow fixed-read")
+        raise HarnessError("core stage requires registered --core-flow simple-alpha")
     if stage != "core" and core_flow is not None:
         raise HarnessError("--core-flow requires --stage core")
     return stage, core_flow
@@ -36,7 +30,7 @@ def resolve_stage(root, stage="auto", core_flow=None):
         return stage, core_flow
     task = read_task(root)
     if task and task["status"] == "active":
-        active_base(root)  # The original task branch/base must remain valid.
+        active_base(root)
         return stage_options(task.get("stage", "hardening"), task.get("core_flow"))
     return "hardening", None
 
@@ -58,35 +52,41 @@ def documentation_path(path):
     return PurePosixPath(path).suffix in {".md", ".rst"}
 
 
+def retirement(root):
+    manifest = root/"harness/alpha-retired.json"
+    value = json.loads(manifest.read_text())
+    if set(value) != {"schema_version", "base_commit", "unsupported", "files"} or value["schema_version"] != 1:
+        raise HarnessError("invalid alpha retirement manifest")
+    retired = {}
+    for entry in value["files"]:
+        if (set(entry) != {"path", "reason", "category"} or not entry["category"].strip()
+                or normalize_path(entry["path"]) != entry["path"]
+                or not entry["reason"].strip() or entry["path"] in retired):
+            raise HarnessError("invalid/duplicate alpha retirement path")
+        if (root/entry["path"]).exists() or (root/entry["path"]).is_symlink():
+            raise HarnessError("retired path still present: " + entry["path"])
+        retired[entry["path"]] = entry["reason"]
+    return retired
+
+
 def core_suites(root, paths, policy):
-    unknown = [path for path in paths if not (documentation_path(path) or path in CORE_PATHS
-               or path.startswith(("scripts/harnesslib/", "tests/harness/")) and path.endswith(".py"))]
+    retired = retirement(root)
+    unknown = [path for path in paths if not (documentation_path(path) or path in ACTIVE_FILES or path in retired
+        or path.startswith(("crates/guradb/", "scripts/harnesslib/", "tests/harness/")) and path.endswith((".rs", ".py")))]
     if unknown:
-        raise HarnessError("core fixed-read profile has unmapped changes: " + ", ".join(unknown))
-    suites = {name: policy["suites"][name] for name in ("repository", "policy", "contracts")}
-    tests = sorted(set(SELFTESTS) | {PurePosixPath(path).name for path in paths
-                                  if path.startswith("tests/harness/") and path.endswith(".py")})
-    test_inputs = {}
-    for pattern in tests:
-        matched = list((root/"tests/harness").glob(pattern))
-        if not matched:
-            raise HarnessError("core harness selftest input missing: " + pattern)
-        for path in matched:
-            if path.is_symlink() or not path.is_file():
-                raise HarnessError("core harness selftest must be a regular file")
-            test_inputs[path.relative_to(root).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
-    suites["core-harness"] = {"state": "ready", "timeout_seconds": 120,
-        "test_inputs": test_inputs,
-        "commands": [["{python}", "-m", "unittest", "discover", "-s", "tests/harness", "-p", pattern]
-                     for pattern in tests]}
-    rust = sorted(path for path in paths if path.endswith(".rs") and (root/path).is_file())
-    package_args = [item for name in CORE_PACKAGES for item in ("--package", name)]
-    commands = ([["{python}", "scripts/harnesslib/core_rust.py", *rust]] if rust else [])
-    commands += [["{python}", "scripts/cargo.py", "clippy", *package_args,
-                  "--all-targets", "--locked", "--", "-D", "warnings"],
-                 ["{python}", "scripts/cargo.py", "test", *package_args, "--locked"]]
-    suites["core-rust"] = {"state": "ready", "timeout_seconds": policy["suites"]["rust"]["timeout_seconds"],
-                           "commands": commands}
-    suites["core-fixed-read"] = {"state": "ready", "timeout_seconds": 300,
-        "commands": [["{python}", "scripts/fixed_read_core_acceptance.py", "--run-dir", "{run_dir}/fixed-read-core"]]}
+        raise HarnessError("simple-alpha profile has unmapped changes: " + ", ".join(unknown))
+    if any((root/"modules").rglob("*.py")) or any((root/"clients").rglob("*.py")):
+        raise HarnessError("alpha cannot retain Python online demo modules")
+    extras = [p.name for p in (root/"crates").iterdir() if p.is_dir() and p.name != "guradb"
+              and any(p.rglob("*.rs"))]
+    if extras:
+        raise HarnessError("alpha production crates outside current scope: " + ", ".join(extras))
+    suites = {name: dict(policy["suites"][name]) for name in
+              ("repository", "policy", "harness-tests", "python", "rust", "functional")}
+    test_inputs = {p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+                   for p in (root/"tests/harness").glob("test_*.py") if p.is_file() and not p.is_symlink()}
+    if "tests/harness/test_alpha_stage.py" not in test_inputs:
+        raise HarnessError("alpha stage evidence tests missing")
+    suites["harness-tests"]["test_inputs"] = test_inputs
+    suites["repository"]["retirement_manifest_sha256"] = hashlib.sha256((root/"harness/alpha-retired.json").read_bytes()).hexdigest()
     return suites

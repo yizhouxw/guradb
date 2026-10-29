@@ -1,8 +1,8 @@
 # 先跑通核心主链路，再逐步强化
 
-依据用户2026-10-28的阶段取舍与[ADR0027](../docs/decisions/0027-core-flow-first-validation.md)。此页定义目标的验收策略，优先于旧文档把完整测试平台/覆盖率/全系统套件作为每个前期切片前置的安排。项目仍暂停；此决定不授权复工、启用Actions或发布。
+依据用户2026-10-28的阶段取舍与[ADR0027](../docs/decisions/0027-core-flow-first-validation.md)。此页定义目标的验收策略，优先于旧文档把完整测试平台/覆盖率/全系统套件作为每个前期切片前置的安排。本页不单独授权研发；当前授权以目标TASK为准，Actions/部署仍暂停。
 
-**落地范围：文档与固定读取核心链路的有限选择器。** 纯Markdown/RST的auto检查只执行repository。`--stage core --core-flow fixed-read`只接受本包登记写域，生成`core-limited`报告；其它未知核心目标明确拒绝。默认强化与原module/pair/system/release义务保留，新增入口本身不表示产品用例已通过。不能用bootstrap、手填报告或跳hook冒充新阶段。
+**落地范围：文档与单机Rust alpha核心链路的有限选择器。** 纯Markdown/RST的auto检查只执行repository。`--stage core --core-flow simple-alpha`只接受本包登记写域，生成`core-limited`报告；其它未知核心目标明确拒绝。默认强化与原module/pair/system/release义务保留，新增入口本身不表示产品用例已通过。不能用bootstrap、手填报告或跳hook冒充新阶段。
 
 ## 三个阶段，一个明确目标
 
@@ -38,7 +38,7 @@
 
 - 纯职责、Markdown与非执行性Issue说明：目标是链接/格式/一致性和单独文档复核；不应触发数据库原生依赖、合同服务或全系统回归。API/schema、可执行配置、质量机器策略不能借文档名义走此档。
 - 核心功能的PR与主线确认：验证同一精确候选的核心链路和受影响检查；不默认每次合入跑39条全系统命令。强化回归按稳定里程碑集中，完整发布另验。
-- 固定读取核心入口通过`task-start --stage core --core-flow fixed-read`或对已有active receipt执行`task-stage --stage core --core-flow fixed-read`绑定；normal hook和默认plan/check沿用，原始base不变。无receipt的精确main检查显式给同参数和原始`--base`。core profile执行repository/policy/contracts、有限harness自测、变更Rust源fmt、四个受影响package的clippy/test及真实HTTP driver；范围、命令、源码和限制进入报告及checkpoint。源码/工具逻辑变化、缺失driver/日志或失败均不得结项。超出[有限白名单](../scripts/harnesslib/stages.py)拒绝，普通unknown映射仍扩大system。
-- 核心报告只声明`core-limited`，不提升为system/main完整认证，不授予覆盖率、性能或发布资格。显式强化/发布检查使用`--stage hardening`及原层级参数，保留全部原义务与planned/missing。核心自测中的toy进程只证明工具闭环，真实HTTP/Rust证据及非作者复核仍由目标包给出。
+- 单机Rust alpha核心入口通过`task-start --stage core --core-flow simple-alpha`或对已有active receipt执行`task-stage --stage core --core-flow simple-alpha`绑定；normal hook和默认plan/check沿用，原始base不变。无receipt的精确main检查显式给同参数和原始`--base`。core profile执行repository/policy、有限harness自测、当前单crate全源fmt/clippy/test、真实CLI/进程pipe清理测试及独立fixture driver；范围、命令、源码和限制进入报告及checkpoint。源码/工具逻辑变化、缺失driver/日志或失败均不得结项。超出[有限白名单](../scripts/harnesslib/stages.py)拒绝，普通unknown映射仍扩大system。
+- 核心报告只声明`core-limited`，不提升为system/main完整认证，不授予覆盖率、性能或发布资格。显式强化/发布检查使用`--stage hardening`及原层级参数，保留全部原义务与planned/missing。核心自测中的toy进程只证明工具闭环，真实CLI/Rust证据及非作者复核仍由目标包给出。
 - 适配之前保留可审源码/文档和真实阻塞，不改报告、不关闭hook、不绕过现有提交条件。完整测试的命令、超时、输入和历史结果保留；改变的是何时适用，不是把未运行写成成功。
 - Actions/PR远端CI与部署开关仍暂停。验证策略决定和恢复开发/恢复CI是不同决定。

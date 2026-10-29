@@ -1,52 +1,7 @@
 schema_version = 1
-
-# Prefixes are ownership declarations, not a request to create these crates now.
-# Every production source must have one owner. Local Cargo normal/build/dev and
-# target-specific dependencies are checked; common may not depend on upper layers.
-[modules.common]
-paths = ["modules/common/", "crates/guradb-common/"]
+# ADR0028: current production closure is one local Rust CLI crate.
+[modules.alpha]
+paths = ["crates/guradb/"]
 allowed = []
-
-[modules.storage]
-paths = ["modules/storage/", "crates/guradb-storage/"]
-allowed = ["common"]
-
-[modules.catalog]
-paths = ["modules/catalog/", "crates/guradb-catalog/"]
-allowed = ["common", "storage"]
-
-[modules.connectors]
-paths = ["modules/connectors/", "crates/guradb-connectors/"]
-# ADR0024: private fixed FD worker consumes the authoritative controlled catalog.
-allowed = ["common", "storage", "catalog"]
-
-[modules.index]
-paths = ["modules/index/", "crates/guradb-index/"]
-allowed = ["common", "storage"]
-
-[modules.cluster]
-paths = ["modules/cluster/", "crates/guradb-cluster/"]
-allowed = ["common", "storage"]
-
-[modules.query]
-paths = ["modules/query/", "crates/guradb-query/"]
-allowed = ["common", "catalog", "storage", "connectors", "index", "cluster"]
-
-[modules.gateway]
-paths = ["modules/gateway/", "crates/guradb-gateway/"]
-allowed = ["common", "query", "catalog", "cluster"]
-
-[modules.client-api]
-paths = ["clients/common/", "crates/guradb-client/"]
-allowed = ["common"]
-
-[modules.cli]
-paths = ["clients/cli/"]
-allowed = ["common", "client-api"]
-
-[modules.mcp]
-paths = ["clients/mcp/"]
-allowed = ["common", "client-api"]
-
 [python]
-external = ["pyarrow", "fastavro", "psycopg", "tantivy", "lance", "pyiceberg", "botocore"]
+external = []

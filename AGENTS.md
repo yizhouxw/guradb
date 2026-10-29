@@ -1,5 +1,10 @@
 # GuraDB Agent 工作约定
 
+2026-10-29 当前产品范围以[单机Rust alpha](docs/user/simple-alpha.md)及
+[ADR0028](docs/decisions/0028-simple-rust-alpha.md)为准：可信单用户、单本地固定Parquet、
+单Rust CLI。旧Python在线、HTTP/PG、检索/worker操作已实际退役；历史能力与长期产品
+义务不作当前用例前置。技术入口为[当前harness](harness/README.md)，协作职责规则不变。
+
 ## 开始与恢复
 
 先阅读 [README](README.md)、受影响目录的 AGENTS、对应 ADR 和 [harness 入口](harness/README.md)。长任务/上下文恢复时检查 Git 状态、当前变更计划、未解决风险与最新报告；旧摘要里的“通过”不能替代当前代码证据。
@@ -33,7 +38,10 @@
 
 ## 阶段优先级
 
-用户2026-10-28明确要求前期先跑通核心用例，重点保证资源模型和数据流。按[分阶段验收策略](harness/validation-strategy.md)与[ADR0027](docs/decisions/0027-core-flow-first-validation.md)执行：核心链路先验真实路径/结果、资源生命周期和关键失败；全面覆盖、兼容/故障矩阵、性能和长稳在强化/发布阶段落实。纯治理文档只应做文档检查。本页后述原覆盖及全面门禁不是首次核心用例跑通前置；机器适配尚未完成，禁止绕hook或假写通过，产品与CI仍暂停。
+按[分阶段验收策略](harness/validation-strategy.md)、ADR0027及ADR0028执行。当前合法核心入口为
+`--stage core --core-flow simple-alpha`，自动沿用active receipt原始base并验证实际退役、
+新Rust源、真实CLI与进程清理；报告只声明core-limited。强化/发布覆盖、兼容/故障矩阵、
+性能和长稳义务保留，缺证据不得称通过；普通hook/PR不绕过，Actions/部署保持暂停。
 
 ## 每次变更的闭环
 
@@ -46,11 +54,16 @@
 
 开始前写用户可观察验收、范围与支持/拒绝白名单；完成标准、依赖/迁移纪律、两次无新证据失败后的根因定位及交接遵循开发流程。当前暂停[GitHub Actions CI/CD及PR CI准入](harness/ci-cd.md)，以本机自测、独立复核与精确main证据保障合入；模块、真实配对、系统和release分别验收。原功能/性能/故障/长稳及预算不变，恢复CI/CD另行讨论授权。
 
-Python 3.11+ 开发依赖安装与 make 替代入口见 [harness/README.md](harness/README.md)。当前 M0/M1 有界读取及部分 M2/本地三 worker 切片已落地，范围见 docs/design/m2-running.md；rust/functional/performance-smoke/stability-component 为 ready，完整 performance/stability/soak 仍 planned。组件通过不等于完整发布通过。
+Python仅保留工程和独立fixture用途，安装与make替代入口见[harness/README](harness/README.md)。
+当前唯一生产源为crates/guradb；历史M0/M1/M2及在线Python demo已退出支持，见
+[实际退役清单](harness/alpha-retired.json)。当前核心Rust/CLI检查与未来完整发布分别验收。
 
 ## 全局质量不变量
 
 [机器清单](harness/invariants.toml) 是验证义务，不是覆盖证明。尤其不能破坏：
+
+以下目录/索引/授权/远端/pin义务保留给未来相应功能，不冒称当前单机CLI已实现这些平台；
+当前alpha实际验证固定源bytes、输入拒绝、内存/I/O/输出边界及进程终态。
 
 - 稳定逻辑 ID/记录版本不依赖物理 rowid；扫描、ANN、全文、图路径与分页读同一固定视图。
 - 索引缺口要补偿/等待/报错；旧构建不能倒退发布，源提交 fencing 与目录发布 fencing 分别验证。
