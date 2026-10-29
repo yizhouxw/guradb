@@ -28,10 +28,13 @@ docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspac
 `source_sha256`等于good.json里的sha256；输入路径相对good.json解析。检查完整JSON和exit0才视为成功。
 
 
-源码位于crates/guradb；固定工具链入口scripts/cargo.py。Python仅负责工程工具和独立fixture/黑盒验证。
+已持有COCO2017标注ZIP时，[真实32条元数据→Parquet→Rust结果](docs/user/simple-alpha.md#真实coco元数据入口)提供离线准备与确切5行断言；不下载或读取图像。
+
+源码位于crates/guradb；固定工具链入口scripts/cargo.py。Python仅负责工程工具、离线数据准备和独立黑盒验证。
 完整Docker复现及自动化入口见[验证说明](tests/README.md)。
 
 本轮一次退出旧demo，退役路径逐项登记[harness/alpha-retired.json](harness/alpha-retired.json)，历史源码可从Git恢复。
 历史设计资料仍保留在docs，描述未来方向或当时合同，不能用作当前可用功能清单。
-未来Rust检索数值缺陷#125、三模态规模#138均未在本轮解决。
+实验索引实现已随旧demo退役，#125按not_planned关闭；原数值缺陷未修复，未来Rust检索不能继承正确性结论。
+三模态规模#138仍是未来未验义务，本alpha不交付规模结果。
 架构取舍见[ADR0028](docs/decisions/0028-simple-rust-alpha.md)，普通hook/PR、非作者验收与精确main证据继续；Actions/部署保持暂停。
