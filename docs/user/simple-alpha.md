@@ -20,7 +20,8 @@ JSON源摘要应与自动生成的good.json相同，truncated=false。
 输出开始后遇管道关闭、超时或中断可能只写出部分JSON；消费者必须检查完整JSON及exit0。
 SQL只支持单表列投影/别名、比较/AND/OR/NOT/NULL、列排序和LIMIT；
 JOIN、函数、聚合、子查询、写入、参数、外部路径、HTTP/PG端口均暂不支持。
-输入摘要不符、缺文件、损坏/不支持Parquet、执行期源变化明确失败。
+初读或发布前复核时摘要不符、缺文件及损坏/不支持Parquet均失败。
+查询只消费初读已验bytes；不承诺检测两次摘要校验之间修改后又恢复的文件事件。
 
 资源作用域：每次调用一个进程，读取有界不可变bytes，Arrow批次及DataFusion
 内存池只归本次调用；无后台worker、网络listener、持久目录、pin/lease或授权缓存。
