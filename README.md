@@ -1,7 +1,7 @@
 # GuraDB 单机 Rust alpha
 
 当前alpha只支持可信单用户的一份本地固定Parquet源，通过一个Rust CLI进程执行有界只读SQL。
-没有HTTP/PG监听器、Python在线服务、检索、训练或分布式worker。
+支持受限的caption字面关键词过滤；没有HTTP/PG监听器、Python在线服务、语义/向量检索、训练或分布式worker。
 详细支持/拒绝、输入SHA256和退出语义见[用户手册](docs/user/simple-alpha.md)。
 
 以下命令在仓库根目录执行，需要Docker。已有.venv且已安装锁定依赖时，可从构建命令开始。
@@ -29,6 +29,8 @@ docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspac
 
 
 已持有COCO2017标注ZIP时，[真实32条元数据→Parquet→Rust结果](docs/user/simple-alpha.md#真实coco元数据入口)提供离线准备与确切5行断言；不下载或读取图像。
+
+已有对应图片ZIP时，[图片描述关键词检索](docs/user/simple-alpha.md#图片描述关键词检索)可把原caption与真实本地JPEG关联；仅一图五条描述，不是视觉识别。
 
 源码位于crates/guradb；固定工具链入口scripts/cargo.py。Python仅负责工程工具、离线数据准备和独立黑盒验证。
 完整Docker复现及自动化入口见[验证说明](tests/README.md)。

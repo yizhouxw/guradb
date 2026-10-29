@@ -7,6 +7,7 @@
   "sql": [
     "column projection and alias",
     "typed comparisons/boolean/NULL",
+    "bounded case-sensitive text column LIKE '%literal%' (1-128 UTF8 bytes; no inner wildcards/escape)",
     "column order",
     "LIMIT"
   ],

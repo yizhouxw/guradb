@@ -58,13 +58,55 @@ truncated=false，source_sha256等于config.json的sha256与实际Parquet摘要�
 列为[CC BY4.0](https://creativecommons.org/licenses/by/4.0/)，图像版权/使用条件另列；本例只作元数据抽样、字段投影和Bool派生。
 不证明图像存在性/像素解码、caption查询、媒体完整性、检索、规模、性能或完整产品发布，不推进#138。
 
+## 图片描述关键词检索
+
+状态：固定源/同一真实图片解码与Rust运行时关键词链路已通过非作者验收。
+
+本节固定一个真实COCO image_id=397133及其5条caption。离线准备读取现有标注ZIP的固定member及
+现有val2017.zip中的`val2017/000000397133.jpg`，只取这一张200576B图片，不扫描或解压全图包。
+需要macOS自带`/usr/bin/sips`（ImageIO）实际解码；无该工具即拒绝，不安装新依赖。
+
+```sh
+COCO_SOURCE_ROOT=/Users/chad/dev/guradb-data/public-multimodal-20261025
+GURADB_CAPTION_DIR=artifacts/coco-caption
+.venv/bin/python scripts/prepare_coco_caption.py --annotations-zip "$COCO_SOURCE_ROOT/archives/annotations_trainval2017.zip" --images-zip "$COCO_SOURCE_ROOT/archives/val2017.zip" --output-dir "$GURADB_CAPTION_DIR"
+docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspace:ro" -w /workspace guradb-rust:1.90.0 /workspace/target/debug/guradb query --config "/workspace/$GURADB_CAPTION_DIR/config.json" --sql "SELECT image_id, caption_id, caption, image_path FROM records WHERE caption LIKE '%kitchen%' ORDER BY caption_id ASC LIMIT 10"
+```
+
+结果粒度为一条caption而非去重图片：image_id都为397133，caption_id依次370509/372252/372765；
+caption原文依次为`A man is in a kitchen making pizzas.`、`A baker is working in the kitchen rolling dough.`、
+`A person standing by a stove in a kitchen.`。image_path均为`images/000000397133.jpg`，相对config目录定位真实JPEG。
+完整JSON/exit0、源SHA与config/实际Parquet一致、truncated=false才算成功。改关键词为oven只命中370584，
+zzqnonexistent返回空rows。匹配在Rust执行时完成，准备不接收关键词、不生成命中Bool。
+
+SQL新增仅允许text列`LIKE '%关键词%'`，精确区分大小写、按Unicode字面子串匹配；关键词1–128个UTF8 bytes。
+关键词内部的%、_、反斜线拒绝；仅外围两个%作为子串边界，不提供其它通配/转义。
+直接NOT LIKE/ILIKE/ANY/ESCAPE、非text列、非字符串或列模式、空/超长模式均unsupported；函数等旧拒绝继续。
+旧布尔组合NOT(caption LIKE ...)仍支持，区别于被拒的直接NOT LIKE语法。
+单引号按SQL双单引号书写。NULL caption不会命中。原SQL16KiB、输出/内存/期限硬界不变。
+
+准备只接受前节固定annotations成员SHA及JPEG SHA
+`09e1d25c75f7879bdaa69c327fece5cabacd53939c8c2ef9e87f1c97a2e478c4`，
+按caption_id排序从原标注取该图5条，保留image_id/caption_id/caption/file_name/image_path/width/height。
+缺标注/图片、错误成员身份/关联、坏图片或解码尺寸不符均拒绝并清本次输出；已有输出路径不覆盖。
+JPEG被实际解码为临时PNG并核640x427，临时PNG随后删除；输出仅小Parquet/config/source.json和原JPEG副本。
+本例上界1图/5行/1MiB Parquet，图像读取1张<16MiB；原ZIP只读，完成可删本次GURADB_CAPTION_DIR，原媒体不删。
+Rust只查询caption及图片定位，不读取像素、不做视觉识别、ANN、语义检索或外部文件访问。
+图片路径和source.json记录准备时已校验的JPEG；CLI不在查询时复核该外部文件，移动/删除/改写后须重新准备或自行核图片SHA。
+可在macOS执行`open "$GURADB_CAPTION_DIR/images/000000397133.jpg"`查看本次图片。
+
+caption/标注归属COCO Consortium，按[COCO annotations CC BY4.0条款](https://github.com/cocodataset/cocodataset.github.io/blob/master/dataset/termsofuse.htm)。
+图片归属与标注分开：原images条目license_id=4，链接[CC BY2.0](https://creativecommons.org/licenses/by/2.0/)，
+原Flickr来源为http://farm7.staticflickr.com/6116/6255196340_da26cf2c9e_z.jpg；该条目未提供摄影者姓名，保留来源及未知项。
+本例本机读取/解码不构成对其它图片授权或公开分发的认证，不把COCO的标注许可套到图像；无新图片下载或发布。
+
 配置只有source、sha256及timeout_ms三个字段；source相对配置文件目录，默认期限5000ms。
 首跑已自动生成实际配置；若换自己的数据，sha256必须是自己原文件的真实摘要，不能使用占位值。
 
 成功输出一个JSON对象，含源SHA256、列、完整结果行和是否截断。int64按十进制
 字符串输出以保留精度。输入/SQL/执行失败只向stderr输出错误JSON且exit非0，stdout为空。
 输出开始后遇管道关闭、超时或中断可能只写出部分JSON；消费者必须检查完整JSON及exit0。
-SQL只支持单表列投影/别名、比较/AND/OR/NOT/NULL、列排序和LIMIT；
+SQL只支持单表列投影/别名、比较/AND/OR/NOT/NULL、本节受限LIKE、列排序和LIMIT；
 JOIN、函数、聚合、子查询、写入、参数、外部路径、HTTP/PG端口均暂不支持。
 初读或发布前复核时摘要不符、缺文件及损坏/不支持Parquet均失败。
 查询只消费初读已验bytes；不承诺检测两次摘要校验之间修改后又恢复的文件事件。

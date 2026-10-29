@@ -99,6 +99,36 @@ impl Compiler<'_> {
                 }
                 Err(unsupported())
             }
+            Ast::Like {
+                negated: false,
+                any: false,
+                expr,
+                pattern,
+                escape_char: None,
+            } => {
+                let Ast::Identifier(id) = expr.as_ref() else {
+                    return Err(unsupported());
+                };
+                let name = ident(id)?;
+                let Ast::Value(value) = pattern.as_ref() else {
+                    return Err(unsupported());
+                };
+                let Value::SingleQuotedString(pattern) = &value.value else {
+                    return Err(unsupported());
+                };
+                let keyword = pattern
+                    .strip_prefix('%')
+                    .and_then(|p| p.strip_suffix('%'))
+                    .ok_or_else(unsupported)?;
+                if self.column(&name)? != "text"
+                    || keyword.is_empty()
+                    || keyword.len() > 128
+                    || keyword.contains(['%', '_', '\\'])
+                {
+                    return Err(unsupported());
+                }
+                Ok((col(name).like(lit(pattern.clone())), "bool".into()))
+            }
             Ast::BinaryOp { left, op, right } => {
                 let (left, lk) = self.expression(left, depth + 1)?;
                 let (right, rk) = self.expression(right, depth + 1)?;
