@@ -82,6 +82,7 @@ async fn serve(args: Vec<String>) -> Result<()> {
     let app = Router::new()
         .route("/healthz", get(|| async { "ok" }))
         .route("/v1/queries", post(routes::submit))
+        .route("/v1/fixed-queries", post(routes::submit_fixed))
         .route(
             "/v1/queries/{id}",
             get(routes::status).delete(routes::cancel),

@@ -7,6 +7,7 @@ from pathlib import PurePosixPath
 
 from .policy import HarnessError, normalize_path, owner, plan as legacy_plan
 from .validation_registry import digest, load_registry, required_closure, source_inventory
+from .stages import core_suites, documentation_path, stage_options
 
 LEVELS = ("auto", "module", "pair", "system", "release")
 
@@ -73,7 +74,9 @@ def _scoped_suites(policy, registry, modules, pair):
     return suites, {component_name: component}
 
 
-def validation_plan(root, paths, policy, architecture, invariants, level="auto", modules=(), scope="change"):
+def validation_plan(root, paths, policy, architecture, invariants, level="auto", modules=(), scope="change",
+                    stage="hardening", core_flow=None):
+    stage_options(stage, core_flow)
     if level not in LEVELS or scope not in {"change", "release", "bootstrap"}:
         raise HarnessError("invalid validation level/scope")
     paths = sorted({normalize_path(path) for path in paths})
@@ -91,7 +94,13 @@ def validation_plan(root, paths, policy, architecture, invariants, level="auto",
     if len(modules) != len(set(modules)) or set(modules) - set(registry["modules"]):
         raise HarnessError("unknown/duplicate requested module")
     modules = sorted(modules)
-    if scope == "bootstrap":
+    if stage == "core":
+        if scope != "change" or level != "auto" or modules:
+            raise HarnessError("core stage requires change scope and auto level without --module")
+        actual, chosen = ("documentation" if all(documentation_path(path) for path in paths)
+                          else "core-limited"), []
+        reasons = [*reasons, "ADR0027: bounded fixed-read only; hardening/release remain unverified"]
+    elif scope == "bootstrap":
         if level != "auto" or modules:
             raise HarnessError("bootstrap cannot claim a validation level")
         actual, chosen = "bootstrap", []
@@ -120,7 +129,11 @@ def validation_plan(root, paths, policy, architecture, invariants, level="auto",
         if modules:
             raise HarnessError("--module requires an explicit module or pair level")
         actual, chosen = minimum, affected if minimum in {"module", "pair"} else []
-    if actual in {"module", "pair"}:
+    if actual == "core-limited":
+        suites = core_suites(root, paths, policy)
+        components, closure = {}, source_inventory(root, policy, architecture,
+                                                   ["common", "storage", "query", "gateway"])
+    elif actual in {"module", "pair"}:
         suites, components = _scoped_suites(policy, registry, chosen, pair if actual == "pair" else None)
         closure = source_inventory(root, policy, architecture, chosen)
     else:
@@ -131,6 +144,10 @@ def validation_plan(root, paths, policy, architecture, invariants, level="auto",
             legacy_required = legacy_plan(root, paths, policy, architecture, invariants)["required_suites"]
             names = [name for name in names if policy["suites"][name]["state"] == "ready" or name in legacy_required]
         suites = {name: policy["suites"][name] for name in names}
+        if actual == "documentation":
+            # No contracts/native tests for prose. Executable/config changes
+            # retain engineering/system classification and cannot enter here.
+            suites = {"repository": policy["suites"]["repository"]}
         if actual == "engineering":
             suites["engineering-native"] = {"state": "ready", "timeout_seconds": policy["suites"]["rust"]["timeout_seconds"],
                 "commands": [["{python}", "scripts/cargo.py", "test", "--package", "guradb-query", "--lib", "--locked"]]}
@@ -143,6 +160,10 @@ def validation_plan(root, paths, policy, architecture, invariants, level="auto",
                                "sources": sorted(closure)} if closure else {"rule": "not-production-coverage"},
                "components": components, "suites": suites, "reuse": "none; every command fresh",
                "required_closure": required}
-    return {"requested_level": level, "requested_modules": modules, "minimum_level": minimum,
+    if actual == "core-limited":
+        profile["denominator"] = {"rule": "source-binding-only; no coverage qualification", "sources": sorted(closure)}
+        profile["limitations"] = ["fixed-read bounded core only", "hardening not assessed", "release not assessed"]
+    return {"requested_level": level, "requested_modules": modules, "stage": stage, "core_flow": core_flow,
+            "minimum_level": minimum,
             "selection_reasons": reasons, "profile": profile, "profile_sha256": digest(profile),
             "legacy_impact": legacy_plan(root, paths, policy, architecture, invariants)}

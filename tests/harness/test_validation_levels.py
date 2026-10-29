@@ -19,7 +19,7 @@ def candidate_fixture():
                 "da6a094b292dc382cfc48b305045753e67ed4bccf580dcafab81393db5d3d462"}
     methods = []
     for name, producer, consumers, path in (
-            ("Read-Control", "common", ["catalog", "query", "gateway"], "crates/guradb-common/src/cf1a/read_control.rs"),
+            ("Read-Control", "common", ["catalog", "query", "gateway"], "crates/guradb-common/src/cf1a/missing_candidate_read_control.rs"),
             ("RC-B", "catalog", ["query"], "crates/guradb-catalog/src/read_control.rs"),
             ("Compiler", "query", ["gateway"], "crates/guradb-query/src/compile.rs")):
         methods.append({"id": name, "owner": producer, "consumers": consumers, "trigger_paths": [path],
@@ -86,7 +86,7 @@ class ValidationLevelsTests(unittest.TestCase):
         self.assertIn("engineering-native", engineering["suites"])
         self.assertEqual(engineering["denominator"], {"rule": "not-production-coverage"})
         self.assertEqual(docs["level"], "documentation")
-        self.assertEqual(set(docs["suites"]), set(self.configuration[0]["bootstrap_suites"]))
+        self.assertEqual(set(docs["suites"]), {"repository"})
         mixed = self.select(["scripts/harnesslib/runner.py", "crates/guradb-query/src/lib.rs"])
         self.assertEqual(mixed["profile"]["level"], "system")
 

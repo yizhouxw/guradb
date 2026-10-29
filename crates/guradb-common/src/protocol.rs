@@ -26,6 +26,21 @@ fn published() -> String {
     "published".into()
 }
 
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct FixedQueryRequest {
+    pub dataset_id: String,
+    pub data_revision_id: String,
+    pub read_view_id: String,
+    pub sql: String,
+    #[serde(default)]
+    pub parameters: Vec<Value>,
+    #[serde(default, deserialize_with = "crate::non_null")]
+    pub timeout_ms: Option<u64>,
+    #[serde(default, deserialize_with = "crate::non_null")]
+    pub max_rows: Option<usize>,
+}
+
 #[derive(Clone, Debug, Serialize)]
 pub struct SourceVersion {
     pub source_id: String,
@@ -62,6 +77,8 @@ pub struct QueryHandle {
     pub error: Option<Error>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stats: Option<QueryStats>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub binding: Option<FixedBinding>,
 }
 #[derive(Clone, Debug, Serialize)]
 pub struct ResultPage {
@@ -72,4 +89,24 @@ pub struct ResultPage {
     pub truncated: bool,
     pub result_kind: String,
     pub read_context: ReadContext,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub binding: Option<FixedBinding>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub lineage: Option<Vec<RecordLineage>>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct FixedBinding {
+    pub tenant_id: String,
+    pub principal_id: String,
+    pub dataset_id: String,
+    pub data_revision_id: String,
+    pub read_view_id: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct RecordLineage {
+    pub entity_kind: String,
+    pub record_id: String,
+    pub record_version: String,
 }

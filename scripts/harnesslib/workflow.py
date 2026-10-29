@@ -10,9 +10,14 @@ from .policy import HarnessError, git
 from .task_state import active_base, read_task, task_lock, write_task
 from .version_control import checkpoint, status
 from .validation_binding import claim
+from .stages import resolve_stage, stage_options
 
 
-def start_task(root: Path, label: str, objective: str, configuration: tuple) -> dict:
+def start_task(root: Path, label: str, objective: str, configuration: tuple,
+               stage="hardening", core_flow=None) -> dict:
+    stage_options(stage, core_flow)
+    if stage == "auto":
+        raise HarnessError("task-start requires an explicit stage")
     if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,47}", label):
         raise HarnessError("task label must be 1..48 lowercase letters, digits or hyphens")
     if not objective.strip():
@@ -28,6 +33,7 @@ def start_task(root: Path, label: str, objective: str, configuration: tuple) -> 
         value = {"schema_version": 1, "id": uuid4().hex, "label": label, "objective": objective,
                  "status": "active", "worktree": str(root.resolve()), "branch": current["branch"],
                  "base_commit": current["head"], "checkpoint": point["checkpoint"],
+                 "stage": stage, "core_flow": core_flow,
                  "started_at": datetime.now(timezone.utc).isoformat()}
         write_task(root, value)
         return value
@@ -43,6 +49,10 @@ def finish_task(root: Path, report_path: Path, review: str, configuration: tuple
         report = validate_report(root, report_path, configuration)
         if report["scope"] == "bootstrap" or report["selection_base"] != base:
             raise HarnessError("task completion needs change/release evidence covering its original base")
+        if report["schema_version"] == 2:
+            selected = report["validation"]
+            if (selected["stage"], selected["core_flow"]) != resolve_stage(root):
+                raise HarnessError("task completion stage must match the active receipt")
         value = read_task(root)
         point = checkpoint(root, value["label"] + "-done", configuration[0], report_path, configuration)
         value["validation"] = claim(report)

@@ -8,7 +8,7 @@
     "m0-sql": {
       "openapi": "api/http/openapi.json",
       "execution": "rust-arrow-datafusion",
-      "operations": ["submitQuery", "getQuery", "getQueryResults", "cancelQuery", "health"]
+      "operations": ["submitFixedQuery", "submitQuery", "getQuery", "getQueryResults", "cancelQuery", "health"]
     },
     "m1-m2-jobs": {
       "openapi": "api/http/m1-openapi.json",

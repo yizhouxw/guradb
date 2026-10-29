@@ -189,6 +189,47 @@
           }
         }
       }
+    },
+    "/v1/fixed-queries": {
+      "post": {
+        "operationId": "submitFixedQuery",
+        "summary": "Controlled local fixed-version query with record lineage",
+        "description": "Controlled local best-effort manifest query. Supply the exact configured dataset/revision/view. Authenticated identity controls access. Source record_id values must be nonempty and globally unique, even outside the selected rows. Successful pages include per-row identity and revision lineage; no catalog pin is created. Acceptance does not indicate query success.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FixedQueryRequest"
+              },
+              "example": {
+                "dataset_id": "89b349e2-cc73-4c22-871d-c80a159d7789",
+                "data_revision_id": "rev_0000000000000000000000000000000000000000000000000000000000000000",
+                "read_view_id": "view_0000000000000000000000000000000000000000000000000000000000000000",
+                "sql": "SELECT title, value FROM records WHERE active ORDER BY value DESC LIMIT 2",
+                "parameters": [],
+                "timeout_ms": 10000,
+                "max_rows": 10
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted query handle; poll status for final outcome.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryHandle"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/RequestError"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -374,6 +415,9 @@
           },
           "stats": {
             "$ref": "#/components/schemas/QueryStats"
+          },
+          "binding": {
+            "$ref": "#/components/schemas/FixedBinding"
           }
         },
         "allOf": [
@@ -522,6 +566,15 @@
               "metadata"
             ],
             "description": "Assigned by the server planner, never by the caller. data includes any query reading dataset contents, even aggregates or constant projections; metadata is restricted to constants and catalog-only queries without dataset reads."
+          },
+          "binding": {
+            "$ref": "#/components/schemas/FixedBinding"
+          },
+          "lineage": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordLineage"
+            }
           }
         },
         "allOf": [
@@ -732,6 +785,144 @@
           }
         },
         "description": "Successful execution only. source_reads counts logical full-object reads, not SDK retries/HTTP wire requests. No source cache in M0; elapsed_ms excludes queue time."
+      },
+      "FixedQueryRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "dataset_id",
+          "data_revision_id",
+          "read_view_id",
+          "sql"
+        ],
+        "properties": {
+          "sql": {
+            "type": "string",
+            "minLength": 1,
+            "description": "One supported read-only SQL statement; planning/execution must reject side effects. Parameters are bound separately, never interpolated.",
+            "maxLength": 16384
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "properties": {
+                    "type": {
+                      "const": "int8"
+                    },
+                    "value": {
+                      "type": "string",
+                      "pattern": "^(0|-?[1-9][0-9]*)$",
+                      "description": "Must fit signed 64-bit range."
+                    }
+                  }
+                }
+              ]
+            },
+            "default": [],
+            "description": "Positional $1..$n. int8 safe JSON integer or typed canonical decimal string; text string; bool; null. Unknown and ambiguous types are rejected.",
+            "maxItems": 64
+          },
+          "timeout_ms": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "M0 default/hard cap; operator may reduce, request cannot exceed server cap.",
+            "maximum": 10000,
+            "default": 10000
+          },
+          "max_rows": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "M0 default/hard cap; operator may reduce, request cannot exceed server cap.",
+            "maximum": 1000,
+            "default": 1000
+          },
+          "dataset_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "data_revision_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "read_view_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "FixedBinding": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tenant_id",
+          "principal_id",
+          "dataset_id",
+          "data_revision_id",
+          "read_view_id"
+        ],
+        "properties": {
+          "tenant_id": {
+            "type": "string"
+          },
+          "principal_id": {
+            "type": "string"
+          },
+          "dataset_id": {
+            "type": "string"
+          },
+          "data_revision_id": {
+            "type": "string"
+          },
+          "read_view_id": {
+            "type": "string"
+          }
+        }
+      },
+      "RecordLineage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "entity_kind",
+          "record_id",
+          "record_version"
+        ],
+        "properties": {
+          "entity_kind": {
+            "type": "string",
+            "enum": [
+              "record"
+            ]
+          },
+          "record_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "record_version": {
+            "type": "string"
+          }
+        }
       }
     }
   }

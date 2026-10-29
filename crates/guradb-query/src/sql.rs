@@ -17,6 +17,7 @@ pub struct Prepared {
     pub filter: Option<Expr>,
     pub order: Vec<SortExpr>,
     pub sql_limit: Option<usize>,
+    pub fixed_identity: bool,
 }
 
 pub fn prepare(request: &QueryRequest, catalog: &Catalog, allowed: &[String]) -> Result<Prepared> {
@@ -228,6 +229,7 @@ pub fn prepare(request: &QueryRequest, catalog: &Catalog, allowed: &[String]) ->
         filter,
         order,
         sql_limit,
+        fixed_identity: false,
     })
 }
 

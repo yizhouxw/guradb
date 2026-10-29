@@ -53,7 +53,7 @@ def validate_report(root: Path, path: Path, configuration: tuple) -> dict:
         if not isinstance(modules, list) or not all(isinstance(name, str) for name in modules):
             raise HarnessError("v2 report requires explicit requested modules")
         actual = bound_plan(root, discover_changes(root, base), policy, architecture, invariants,
-                            requested, modules, report["scope"])
+                            requested, modules, report["scope"], validation.get("stage"), validation.get("core_flow"))
         if report.get("product_quality") != "only_" + actual["profile"]["level"] + "_profile":
             raise HarnessError("v2 quality claim cannot promote its validation level")
         if validation != actual:

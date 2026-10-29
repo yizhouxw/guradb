@@ -1,6 +1,6 @@
 # 开发流程：从任务到可验证交付
 
-**2026-10-28现行阶段策略：** 先按[核心链路优先验收](validation-strategy.md)验证用户用例、资源模型与数据流；全面覆盖/回归/性能长稳分阶段推进。本页旧全面前置条款仅描述现有执行器或后续强化/发布义务，不再定义前期产品优先级。机器选择器尚未适配，不能把文档决定冒称工具已生效或绕过hook。产品/Actions继续暂停。
+**现行阶段策略：** 先按[核心链路优先验收](validation-strategy.md)验证用户用例、资源模型与数据流；全面覆盖/回归/性能长稳分阶段推进。本页旧全面前置条款描述强化/发布义务。当前有限适配只支持纯文档与`core/fixed-read`，不绕hook、不改变历史失败。Actions继续暂停，研发授权以当前TASK为准。
 
 状态：本地任务与证据工具已接入；运行时范围见 [README](../README.md)，远端 CI 证据及待建立的 CD 合同见 [CI/CD 方案](ci-cd.md)。
 
@@ -20,6 +20,12 @@
 ```
 
 启动要求干净的已提交分支，记录 objective、原始 base、分支、checkpoint 和 worktree；已有 active 任务不能覆盖。状态位于各 worktree 自己的 Git 管理目录，历史 receipt 保留；不同 worktree 不共用 active 状态。plan/check/pre-commit 在无显式 base、无 CI 事件时自动使用 active task 的原始基点，因此多次提交后不会丢掉前面切片。切换分支或使原始基点不再为祖先时拒绝自动继续，先核对状态，不自动重写 base。
+
+`task-start`可增加`--stage core --core-flow fixed-read`；已有active任务用
+`task-stage --stage core --core-flow fixed-read`绑定且不改原始base。
+normal hook/默认plan/check沿用阶段，核心报告/完成checkpoint保留`core-limited`；
+task-finish拒绝与active receipt阶段不符的证据。无receipt的main检查显式给阶段与原始base。
+`--stage hardening`保留原强化/发布义务；纯Markdown/RST auto只运行repository。
 
 ## 2. 实现与依赖纪律
 

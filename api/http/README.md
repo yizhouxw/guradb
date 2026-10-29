@@ -16,6 +16,7 @@
 
 | 方法与路径 | 当前行为 |
 | --- | --- |
+| `POST /v1/fixed-queries` | 受控本地固定dataset/revision/view查询；稳定record_id与revision行版本，见[受控固定读取](../../docs/user/controlled-fixed-read.md)，验收状态以该页为准 |
 | `POST /v1/queries` | 提交一条参数化只读 SQL，返回202和句柄；接受不代表执行成功 |
 | `GET /v1/queries/{query_id}` | 查询状态与执行错误 |
 | `GET /v1/queries/{query_id}/results` | 成功后用 cursor/page_size 读取固定结果分页 |

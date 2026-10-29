@@ -1,6 +1,6 @@
 # GuraDB Agent Harness
 
-**2026-10-28现行阶段策略：** 先按[核心链路优先验收](validation-strategy.md)验证用户用例、资源模型与数据流；全面覆盖/回归/性能长稳分阶段推进。本页旧全面前置条款仅描述现有执行器或后续强化/发布义务，不再定义前期产品优先级。机器选择器尚未适配，不能把文档决定冒称工具已生效或绕过hook。产品/Actions继续暂停。
+**现行阶段策略：** 先按[核心链路优先验收](validation-strategy.md)验证用户用例、资源模型与数据流；全面覆盖/回归/性能长稳分阶段推进。本页旧全面前置条款描述强化/发布义务。当前有限适配只支持纯文档与`core/fixed-read`，不代表所有核心目标已有选择器或产品已通过。Actions继续暂停，研发授权以当前TASK为准。
 
 这是仓库内的工程质量控制入口，面向 agent 与人共同维护的长期代码库。它把工作流程、架构边界、质量门禁和执行证据连接起来；不是数据库实现，也不是自动证明正确性的系统。
 
@@ -17,6 +17,14 @@ python3 -m venv .venv
 ```
 
 `check` 默认按实际变更运行。本地 active task 使用其原始 base；没有任务时与 HEAD 比较，包含 staged、unstaged、untracked、删除和重命名两端。`--base <ref>` 按 merge-base 计算，`--base all` 检查整树；CI 自动读取 PR base 或 push before，手动运行默认全树。无法解析基线时失败，不把变更当空集。
+
+纯Markdown/RST auto只运行repository。固定读取核心任务先用
+`task-start --label ... --objective ... --stage core --core-flow fixed-read`；
+已有active任务可用`task-stage --stage core --core-flow fixed-read`绑定，保留原始base。
+normal hook和默认plan/check自动沿用，报告/receipt/checkpoint明确`core-limited`。
+无active receipt的主线检查用`check --base <原始基点> --stage core --core-flow fixed-read`。
+有限白名单外改动拒绝；该profile仍执行实际contracts、受影响Rust静态/测试与真实HTTP driver。
+强化/发布使用`--stage hardening`和原层级/范围参数，原覆盖和planned义务保留。
 
 可用 make 时 `make setup`、`make plan`、`make check` 提供同样入口；本机 make 受 Xcode 许可限制时直接使用上述 Python 命令。
 
