@@ -391,3 +391,75 @@ PYVECTOR
 two空间vector/hybrid均a、b、c（vector为1/0/-1，hybrid前两项同RRF分后按ID）；
 three空间vector/hybrid均b、a、c。更换用户features/query内容及完整space，Rust实际重新算分；这两个样本是几何数值而非模型语义结果。
 CLI从不把origin/model声明变成已认证权重来源；真实模型有效性仍NOT_VERIFIED。
+
+
+## 固定真实CLIP图文模型的离线复现
+
+本片只在Mac arm64/独立CPython3.12离线环境，用固定LAION CLIP ViT-B/32 LAION2B官方revision1a25a446712ba5ee05982a381eed697ef9b435cf和OpenCLIP3.3.0，接受现有通用媒体Corpus与先冻≤8英文query。同一asset只编码一次，图片512D向量复用到该asset对应各caption DocID，故输出仍是文档排名；按asset去重观察由离线报告明确，不能冒新Rust图片聚合功能。Rust只消费已有v1外部feature/query格式，不含模型/网络/新服务路径。
+
+候选离线入口scripts/prepare_clip_features.py接受--config、--model-dir、--queries、--output-dir，读取SHA固定Corpus/Parquet绑定媒体bytes，以确定224/RGB/bicubic/center crop、官方mean/std、bundled CLIP BPE/context77/tokenizer版本执行CPU fp32 eval/inference_mode图像及文本encoder。权重只接受官方open_clip_model.safetensors SHAac4f8c4b88af6d963118cbf40ad93176d092abbedfcb752601ae1866352656e6，绝不加载pickle/远程自定义代码；数据/权重/代码/tokenizer/预处理身份都写manifest与space，query和feature必须同完整space及source。坏身份/缺源/已有输出拒绝、失败删除本次新输出；原query/score/labels不在offline准备时预设命中。命令及实际证据如下，当前只认证此固定域离线复现。
+
+仅原3JPEG/15caption，原源只读，无新媒体下载或账户/云/费用。免费官方模型payload≤750MiB、官方预编译wheel≤2GiB、增量磁盘≤6GiB；CPU算子线程≤4、单次导出≤10分钟、实测RSS≤4GiB，越界终止清理。用明确命名的唯一cache/环境，不改工程venv/不复制模型备份；锁定Macarm64轮文件/hash，新环境先兼容预检，其他平台未认证。原Rustsource/decoded/output/time/no-spill界不变。
+
+模型card的MIT标签、研究/English/域内测试边界随manifest保留，不认证训练数据权利、生产部署/中文或业务优势。captionCCBY4、photo元数据CCBY2及photographer/Flickr UNKNOWN仍分别记录。小样本人工query/标签在推理前由非作者冻结；逐query如实报告vector/BM25/hybrid、错误/失败/未知，至少一条真实text→image特征→Rust→准确media字节才算这片成功；没有泛化/完整M1/P0/规模/发布认证。原数学oracle不重写为模型真值。
+
+### 公开离线操作
+
+前提是已有工程venv、Docker/Rust缓存、uv及可用的本地CPython3.12；只测试MacOS27.0.1/arm64、CPython3.12.12。已有本片唯一命名cache/env可直接复用export，download遇已有cache会拒绝覆盖；新机器先执行以下一次准备，不自动下载Python/其它模型。依赖lock只含32个适配wheel的精确hash，约212,931,187B；模型3文件共605,151,384B（官方safetensors/config/card）。网络传输层额外开销未计入应用payload数，不能把它称已测网络总量。
+
+```sh
+uv venv --python 3.12 --no-python-downloads artifacts/clip-offline-env
+uv pip install --python artifacts/clip-offline-env/bin/python --only-binary :all: --require-hashes --no-cache -r requirements-clip-macos-arm64.lock
+.venv/bin/python scripts/prepare_clip_features.py download --model-dir artifacts/clip-model-1a25a446
+```
+
+可直接给`prepare_text_corpus.py`准备的自持JPEG语料；复现本固定域原三图/15caption可运行以下有界桥接，既有公开COCO准备入口只取固定标注成员/三图，不做重复ImageIO解码，保留source.json中的标注/图片许可与UNKNOWN。所有输出目录必须全新，原输入只读。
+
+```sh
+COCO_SOURCE_ROOT=/Users/chad/dev/guradb-data/public-multimodal-20261025
+.venv/bin/python scripts/prepare_coco_caption.py --annotations-zip "$COCO_SOURCE_ROOT/archives/annotations_trainval2017.zip" --images-zip "$COCO_SOURCE_ROOT/archives/val2017.zip" --output-dir artifacts/clip-original --sample three --media-evidence
+.venv/bin/python - <<'PYCLIPCORPUS'
+import json, subprocess, sys
+from pathlib import Path
+import pyarrow.parquet as pq
+base=Path('artifacts/clip-original')
+source=base/'documents.jsonl'
+rows=pq.read_table(base/'records.parquet').to_pylist()
+source.write_text(''.join(json.dumps({'doc_id':f"c-{row['caption_id']}", 'text':row['caption'], 'image_id':row['image_id'], 'image_file':row['image_path']})+'\n' for row in rows))
+subprocess.run([sys.executable,'scripts/prepare_text_corpus.py','--input',str(source),'--output-dir','artifacts/clip-corpus'],check=True)
+PYCLIPCORPUS
+artifacts/clip-offline-env/bin/python scripts/prepare_clip_features.py export --config artifacts/clip-corpus/config.json --model-dir artifacts/clip-model-1a25a446 --queries docs/user/clip-queries.json --output-dir artifacts/clip-features
+```
+
+导出不会读取人工标签；8条versioned query与原来推理前冻结的query逐字一致。export父进程250ms采样RSS并限600秒，子进程返回OS历史峰值再拒绝超界，采样并非操作系统硬内存限额；SIGINT/SIGTERM/失败等待杀子进程后清本次新输出，已有cache不删除。source/config/query/媒体/模型结束前再次核摘要，读取中修改再恢复的侦测不作保证。manifest记录完整版本/空间/helper与库代码/BPE/recipe/hash、每Doc→asset、原始f32→f64、实测资源；不把source.json许可声明认证为权利充分。
+
+下面客户端从manifest自动取feature pin/query/source及命中asset，调用现有Rust CLI并核原媒体字节；无需手填SHA/改内部产物。示例只演示第一条query，导出中其余7条仍全部可查。首次cargo合法构建后缓存可复用。
+
+```sh
+.venv/bin/python - <<'PYCLIPQUERY'
+import hashlib, json, subprocess, sys
+from pathlib import Path
+base=Path('artifacts/clip-features')
+cfg='artifacts/clip-corpus/config.json'
+m=json.loads((base/'manifest.json').read_text())
+q=m['queries'][0]
+def call(args):
+    r=subprocess.run([sys.executable,'scripts/cargo.py','run','--locked','--offline','--']+args,capture_output=True,check=True)
+    return json.loads(r.stdout.splitlines()[-1])
+for mode in ('vector','hybrid'):
+    args=[mode,'--config',cfg,'--features',str(base/m['features_file']),'--features-sha256',m['features_sha256'],'--query',str(base/q['file']),'--top-k','15']
+    if mode=='hybrid': args+=['--text-query',q['text']]
+    result=call(args)
+    hit=result['hits'][0]
+    print(json.dumps({'mode':mode,'doc_id':hit['doc_id'],'asset_id':hit['media']['asset_id'],'score':hit['score']}))
+    if mode=='vector': first=hit
+media=call(['media','--config',cfg,'--asset-id',first['media']['asset_id'],'--source-sha256',m['source_sha256']])
+raw=bytes.fromhex(media.pop('bytes_hex'))
+assert len(raw)==first['media']['media_bytes'] and hashlib.sha256(raw).hexdigest()==first['media']['media_sha256']
+print(json.dumps({'asset_id':media['asset_id'],'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()}))
+PYCLIPQUERY
+```
+
+本固定域作者及非作者实际验证：q01 `a person preparing food in a kitchen` 的vector/hybrid首asset397133，准确200,576B/SHA09e1d25c…JPEG。6条caption支持标签的正query在本三图固定集里vector/BM25/hybrid首asset均匹配6/6；不表明模型胜过BM25，也不推定泛化。q07 snowy mountain无caption支持，vector/hybrid仍返回403385、BM25返回397133；没有校准拒绝阈值，不能把它算成功。q08主观pleasant place为UNKNOWN，不计成功。全部24次实际排名由非作者独立原truth及公式核过，记录保留任务证据；重复caption复用图向量所以不是15个独立图像样本，asset首现顺序也不是Rust去重API。
+
+本片独立来源/特征/固定域观察已经验收，Rust通用输出model_effectiveness仍为NOT_VERIFIED caller-only；引擎不对任意caller特征认证模型，本片证据由固定离线manifest及独验提供。模型cache/env供已排队同源样本消费复用，均单份具名保留，不属于Rust在线依赖。
