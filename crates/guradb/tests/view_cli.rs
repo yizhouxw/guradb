@@ -85,6 +85,26 @@ impl Fixture {
         .unwrap();
         (path.to_str().unwrap().into(), sha)
     }
+    fn features(&self, source: &str, tag: &str) -> (String, String, String) {
+        let space = json!({"id":"two-d","dimensions":2,"dtype":"f64","metric":"cosine","normalization":"l2-scaled-f64-v1","origin":"numerical-fixture","model_id":"not-used","model_revision":"fixture-v1","preprocessing_id":"explicit-coordinates-v1","license":"test fixture"});
+        let file = self.root.join(format!("features-{tag}.jsonl"));
+        let header = json!({"format_version":1,"source_sha256":source,"documents":1,"space":space});
+        let row = json!({"doc_id":"same-doc","vector":[3,4]});
+        fs::write(&file, format!("{header}\n{row}\n")).unwrap();
+        let pin = hex::encode(Sha256::digest(fs::read(&file).unwrap()));
+        let query = self.root.join(format!("query-{tag}.json"));
+        fs::write(
+            &query,
+            json!({"format_version":1,"source_sha256":source,"space":space,"vector":[3,4]})
+                .to_string(),
+        )
+        .unwrap();
+        (
+            file.to_str().unwrap().into(),
+            pin,
+            query.to_str().unwrap().into(),
+        )
+    }
     fn run(&self, args: &[&str]) -> Output {
         Command::new(env!("CARGO_BIN_EXE_guradb"))
             .arg("view")
@@ -272,4 +292,108 @@ fn public_recover_handles_known_empty_bootstrap_but_never_guesses_away_data() {
     fs::create_dir_all(f.root.join("store/objects/surviving-data")).unwrap();
     f.error(&["recover"], "invalid_view_store");
     assert!(f.root.join("store/objects/surviving-data").exists());
+}
+
+#[test]
+fn full_view_pins_source_feature_space_and_refuses_mutation() {
+    let f = Fixture::new();
+    let (config, source) = f.input(1);
+    let (features, pin, query) = f.features(&source, "a");
+    let prepared = f.ok(&[
+        "prepare",
+        "--config",
+        &config,
+        "--request-id",
+        "full",
+        "--features",
+        &features,
+        "--features-sha256",
+        &pin,
+    ]);
+    let id = prepared["view_id"].as_str().unwrap();
+    assert_ne!(id, source);
+    assert_eq!(prepared["source_sha256"], source);
+    let expected = hex::encode(Sha256::digest(
+        format!("guradb-view-features-v2\n{source}\n{pin}\n").as_bytes(),
+    ));
+    assert_eq!(id, expected);
+    f.ok(&["publish", "--request-id", "full"]);
+    assert_eq!(f.ok(&["status"])["format_version"], 2);
+    let result = f.ok(&["vector", "--view", id, "--query", &query, "--top-k", "1"]);
+    assert_eq!(result["source_sha256"], source);
+    assert_eq!(result["result"]["features_sha256"], pin);
+    assert_eq!(result["result"]["hits"][0]["doc_id"], "same-doc");
+    assert!((result["result"]["hits"][0]["score"].as_f64().unwrap() - 1.0).abs() < 1e-14);
+    let mut q: Value = serde_json::from_slice(&fs::read(&query).unwrap()).unwrap();
+    q["source_sha256"] = json!(id);
+    fs::write(&query, q.to_string()).unwrap();
+    f.error(
+        &["vector", "--view", id, "--query", &query, "--top-k", "1"],
+        "source_mismatch",
+    );
+    q["source_sha256"] = json!(source);
+    q["space"]["model_revision"] = json!("different");
+    fs::write(&query, q.to_string()).unwrap();
+    f.error(
+        &[
+            "hybrid",
+            "--view",
+            id,
+            "--query",
+            &query,
+            "--top-k",
+            "1",
+            "--text-query",
+            "original",
+        ],
+        "space_mismatch",
+    );
+    let own = f.root.join("store/objects").join(id).join("features.jsonl");
+    let mut b = fs::read(&own).unwrap();
+    let n = b.len();
+    b[n - 3] ^= 1;
+    fs::write(own, b).unwrap();
+    f.error(
+        &[
+            "query",
+            "--view",
+            id,
+            "--sql",
+            "SELECT doc_id FROM records LIMIT 1",
+        ],
+        "feature_changed",
+    );
+}
+#[test]
+fn legacy_store_cannot_acquire_mutable_feature_dependencies() {
+    let f = Fixture::new();
+    let (config, source) = f.input(1);
+    f.prepare(&config, "plain");
+    f.ok(&["publish", "--request-id", "plain"]);
+    let (features, pin, query) = f.features(&source, "a");
+    f.error(
+        &[
+            "prepare",
+            "--config",
+            &config,
+            "--request-id",
+            "full",
+            "--features",
+            &features,
+            "--features-sha256",
+            &pin,
+        ],
+        "unsupported_view_version",
+    );
+    f.error(
+        &[
+            "vector", "--view", &source, "--query", &query, "--top-k", "1",
+        ],
+        "view_features_required",
+    );
+    f.error(
+        &["sample", "--view", &source, "--selection", &query],
+        "view_features_required",
+    );
+    assert_eq!(f.query("current")["source_sha256"], source);
 }

@@ -3,11 +3,11 @@ use crate::{features, media, search, source, Config, Error, Result, RESULT_LIMIT
 use serde_json::json;
 use std::{collections::BTreeSet, path::PathBuf};
 pub(crate) struct Request {
-    features: PathBuf,
-    pin: String,
-    query: PathBuf,
-    k: usize,
-    text: Option<String>,
+    pub(crate) features: PathBuf,
+    pub(crate) pin: String,
+    pub(crate) query: PathBuf,
+    pub(crate) k: usize,
+    pub(crate) text: Option<String>,
 }
 pub(crate) fn parse(args: &[String]) -> Result<Option<Request>> {
     let hybrid = args.get(1).is_some_and(|s| s == "hybrid");

@@ -119,9 +119,9 @@
       "media"
     ],
     "unsupported": [
-      "view vector",
-      "view hybrid",
-      "view sample",
+      "v1 vector/hybrid/sample",
+      "in-place v1 to v2 with existing views",
+      "late feature mutation under same ID",
       "automatic GC/delete",
       "unknown formats",
       "distributed catalog",
@@ -131,8 +131,16 @@
       "views_including_prepared_pending": 2,
       "owned_data_bytes": 134217728,
       "description_bytes": 1048576,
-      "operation_ms": 10000
+      "operation_ms": 10000,
+      "features_bytes": 8388608
     },
-    "ownership": "owned captured Parquet/JPEG retained until operator removes whole store; fixed old IDs never follow current; external source lifecycle not controlled"
+    "ownership": "owned captured Parquet/JPEG retained until operator removes whole store; fixed old IDs never follow current; external source lifecycle not controlled",
+    "formats": {
+      "1": "source-only query/search/media; legacy behavior unchanged",
+      "2": "full-feature ready query/search/media/vector/hybrid/sample, new empty store only"
+    },
+    "full_feature_identity": "SHA256 ASCII guradb-view-features-v2 LF sourceSHA LF featureSHA LF; complete immutable feature bytes/docset/space/model/preprocess",
+    "full_feature_preparation": "--features <JSONL> --features-sha256 <pin> during prepare; complete captured readiness before publish, no late dependency attachment",
+    "consumer": "sample returns exact view_id; actual Torch reader fixes it once and every media call uses it across current refresh"
   }
 }
