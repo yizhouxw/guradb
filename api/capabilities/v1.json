@@ -9,6 +9,7 @@
     "DISTINCT over supported projected column tuples; projected-output order then LIMIT; no DISTINCT ON",
     "typed comparisons/boolean/NULL",
     "bounded case-sensitive text column LIKE '%literal%' (1-128 UTF8 bytes; no inner wildcards/escape)",
+    "COUNT(*) / COUNT(single column); MIN/MAX single Int64 or Utf8 column; optional one raw GROUP BY column; WHERE before aggregate and output ORDER/LIMIT after; complete bounded input",
     "column order",
     "LIMIT"
   ],
@@ -30,7 +31,7 @@
     "PG wire",
     "Python server",
     "object store",
-    "JOIN/aggregate/functions",
+    "JOIN, arbitrary scalar/aggregate functions, HAVING/window, multi-column or expression grouping, aggregate DISTINCT/ALL/FILTER/OVER/WITHIN GROUP, SUM/AVG",
     "ANN/graph",
     "training",
     "multi-tenant authorization",
@@ -240,5 +241,23 @@
       "background scheduler",
       "MCP mutations"
     ]
+  },
+  "aggregate": {
+    "functions": [
+      "COUNT(*)",
+      "COUNT(Int64/Utf8/Boolean column)",
+      "MIN/MAX(Int64/Utf8 column)"
+    ],
+    "group_by": "zero or one raw source column; NULL one group; aliases/ordinals/expressions rejected",
+    "limits": {
+      "input_rows": 200,
+      "groups": 200,
+      "pool_bytes": 33554432,
+      "spill": false
+    },
+    "null_empty": "COUNT excludes NULL argument; global empty yields zero counts and NULL extrema; grouped empty has no rows",
+    "order": "projected output identifiers only; group key ASC NULLS LAST default and deterministic tie; LIMIT after aggregation",
+    "output": "COUNT int8 decimal string nonNULL; MIN/MAX same scalar type nullable; unchanged columns/rows JSON",
+    "unsupported": "COUNT DISTINCT/ALL, function modifiers, expression args, MIN/MAX Boolean, multiple group columns, SELECT DISTINCT with aggregation/group, non-group scalar projections, HAVING/window/ROLLUP/CUBE/GROUPING SETS/SUM/AVG"
   }
 }

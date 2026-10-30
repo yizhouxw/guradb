@@ -11,3 +11,5 @@
 [M1单机出口教程与同源对照](m1-preview.md)已有本机受限候选验收，明确CLI/MCP白名单、既有输入及同源比较边界；完整产品未发布。
 
 [单机托管完整批导入](managed-dataset.md)为单root/单dataset/两版本的本机受限候选，完整平台未交付。
+
+[有界分组与基础聚合](group-aggregates.md)已通过本机受限语义验证，单group/完整输入最多200行；完整SQL/M2未支持。

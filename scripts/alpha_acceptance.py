@@ -82,7 +82,8 @@ def main():
         broken.write_bytes(b'not parquet')
         invoke('broken-parquet', config('broken', broken, hashlib.sha256(broken.read_bytes()).hexdigest()), expected='source_invalid')
         invoke('missing-input', config('missing', run/'absent.parquet'), expected='source_invalid')
-        invoke('unsupported-sql', good, 'SELECT count(*) FROM records', expected='unsupported')
+        # COUNT is supported by Q09; retain the unsupported-function rejection with SUM.
+        invoke('unsupported-sql', good, 'SELECT SUM(rank) FROM records', expected='unsupported')
         # Deliberate change to the configured source, preserving the old digest.
         original = source.read_bytes()
         source.write_bytes(original+b'changed')

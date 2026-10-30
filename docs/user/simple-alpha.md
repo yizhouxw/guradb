@@ -170,7 +170,7 @@ DISTINCT ON、函数/任意表达式投影、重复输出列名、其它原不�
 字符串输出以保留精度。输入/SQL/执行失败只向stderr输出错误JSON且exit非0，stdout为空。
 输出开始后遇管道关闭、超时或中断可能只写出部分JSON；消费者必须检查完整JSON及exit0。
 SQL只支持单表列投影/别名、比较/AND/OR/NOT/NULL、本节受限LIKE、列排序和LIMIT；
-JOIN、函数、聚合、子查询、写入、参数、外部路径、HTTP/PG端口均暂不支持。
+JOIN、任意函数/聚合、子查询、写入、参数、外部路径、HTTP/PG端口均暂不支持；基础COUNT/MIN/MAX与单列GROUP BY见[有界聚合](group-aggregates.md)，该增量仅单列group/完整输入200行的本机受限首片。
 初读或发布前复核时摘要不符、缺文件及损坏/不支持Parquet均失败。
 查询只消费初读已验bytes；不承诺检测两次摘要校验之间修改后又恢复的文件事件。
 
