@@ -87,6 +87,10 @@ async fn main() {
         let status = mcp::entry(&args);
         std::process::exit(status);
     }
+    if args.get(1).is_some_and(|s| s == "dataset") {
+        view::managed::entry(args).await;
+        return;
+    }
     if args.get(1).is_some_and(|s| s == "view") {
         view::entry(args).await;
         return;

@@ -53,12 +53,14 @@ pub fn identity(source: &str, features: &str) -> String {
         format!("guradb-view-features-v2\n{source}\n{features}\n").as_bytes(),
     ))
 }
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Catalog {
     pub format_version: u32,
     pub current: Option<String>,
     pub views: Vec<Record>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub managed: Option<super::managed::Managed>,
 }
 pub struct Store {
     pub root: PathBuf,
@@ -194,18 +196,23 @@ impl Store {
             format_version: 1,
             current: None,
             views: vec![],
+            managed: None,
         })
     }
     pub async fn catalog(&self) -> Result<Catalog> {
         regular(&self.root.join("catalog.json"))?;
         let b = source::read_bounded(&self.root.join("catalog.json"), 16384).await?;
         let c: Catalog = serde_json::from_slice(&b).map_err(|_| invalid())?;
-        if ![1, 2].contains(&c.format_version) || c.views.len() > 2 {
+        if ![1, 2, 3].contains(&c.format_version)
+            || c.views.len() > 2
+            || (c.format_version == 3) != c.managed.is_some()
+            || c.managed.as_ref().is_some_and(|d| !d.valid(&c))
+        {
             return Err(invalid());
         }
         for (i, v) in c.views.iter().enumerate() {
             if !v.valid()
-                || v.version() != c.format_version
+                || v.version() != c.managed.as_ref().map_or(c.format_version, |d| d.mode)
                 || c.views[..i]
                     .iter()
                     .any(|x| x.id == v.id || x.request_id == v.request_id)
@@ -220,7 +227,18 @@ impl Store {
         {
             return Err(invalid());
         }
-        self.layout(&c, self.pending().await?.as_ref())?;
+        let pending = self.pending().await?;
+        if let (Some(d), Some(p)) = (&c.managed, &pending) {
+            if !d.operations.iter().any(|o| {
+                o.id == p.request_id
+                    && o.record.id == p.id
+                    && o.record.source() == p.source()
+                    && matches!(o.phase.as_str(), "capturing" | "ready" | "committed")
+            }) {
+                return Err(invalid());
+            }
+        }
+        self.layout(&c, pending.as_ref())?;
         Ok(c)
     }
     fn layout(&self, c: &Catalog, pending: Option<&Record>) -> Result<()> {
