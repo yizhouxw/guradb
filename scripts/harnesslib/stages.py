@@ -9,6 +9,7 @@ from .task_state import active_base, read_task, task_lock, write_task
 STAGES = ("auto", "core", "hardening")
 CORE_FLOW = "simple-alpha"
 ACTIVE_FILES = {
+    "scripts/prepare_clip_features.py", "requirements-clip-macos-arm64.lock", "docs/user/clip-queries.json",
     "Cargo.toml", "Cargo.lock", "crates/guradb/Cargo.toml", "Makefile", "requirements-dev.lock", "requirements-dev.txt",
     "scripts/prepare_text_corpus.py", "scripts/alpha_acceptance.py", "scripts/prepare_coco_metadata.py", "scripts/prepare_coco_caption.py", "scripts/cargo.py", "scripts/check_repository.py", "scripts/harness.py",
     "harness/policy.toml", "harness/architecture.toml", "harness/validation.toml", "harness/invariants.toml",

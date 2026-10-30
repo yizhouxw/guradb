@@ -1,0 +1,37 @@
+{
+  "format_version": 1,
+  "queries": [
+    {
+      "id": "q01-kitchen-food",
+      "text": "a person preparing food in a kitchen"
+    },
+    {
+      "id": "q02-baker-dough",
+      "text": "a baker rolling dough"
+    },
+    {
+      "id": "q03-city-street",
+      "text": "people walking on a city street"
+    },
+    {
+      "id": "q04-shopping-cart",
+      "text": "a shopping cart beside people on a street"
+    },
+    {
+      "id": "q05-bathroom-fixtures",
+      "text": "a bathroom with a toilet and sink"
+    },
+    {
+      "id": "q06-damaged-shower",
+      "text": "a shabby shower with missing wall tiles"
+    },
+    {
+      "id": "q07-snowy-mountain",
+      "text": "a snowy mountain landscape"
+    },
+    {
+      "id": "q08-subjective-place",
+      "text": "the most pleasant place to relax"
+    }
+  ]
+}

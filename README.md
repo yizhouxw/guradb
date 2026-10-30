@@ -48,3 +48,5 @@ docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspac
 [可换本地语料BM25排名](docs/user/simple-alpha.md#可换本地语料的bm25排名)：公开JSONL/本地素材输入，Rust固定英文分析器与可解释分数，同源原文与媒体身份。
 
 [外部固定特征精确向量与RRF数值首包](docs/user/simple-alpha.md#外部固定特征的精确向量与rrf数值首包)已通过数值组件验收；模型/语义有效性仍未认证。
+
+[固定真实CLIP离线证据](docs/user/simple-alpha.md#固定真实clip图文模型的离线复现)已通过本固定三图/八query证据验收；泛化/业务优势仍未认证。

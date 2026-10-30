@@ -109,6 +109,16 @@ class AlphaStageTests(unittest.TestCase):
             bound_plan(ROOT, ['scripts/unknown_prepare.py'], *load(ROOT)[:3],
                        stage='core', core_flow='simple-alpha')
 
+    def test_fixed_offline_clip_recipe_keeps_all_core_obligations(self):
+        for path in ('scripts/prepare_clip_features.py', 'requirements-clip-macos-arm64.lock', 'docs/user/clip-queries.json'):
+            profile = bound_plan(ROOT, [path], *load(ROOT)[:3], stage='core', core_flow='simple-alpha')['profile']
+            self.assertEqual(list(profile['suites']), ['repository', 'policy', 'harness-tests', 'python', 'rust', 'functional'])
+            self.assertEqual(len(profile['suites']['rust']['commands']), 3)
+            self.assertIn('scripts/alpha_acceptance.py', profile['command_inputs'])
+        for path in ('scripts/prepare_other_model.py', 'requirements-other-model.lock', 'docs/user/unregistered-model.json'):
+            with self.assertRaisesRegex(HarnessError, 'unmapped changes'):
+                bound_plan(ROOT, [path], *load(ROOT)[:3], stage='core', core_flow='simple-alpha')
+
     def test_retired_runtime_reappearance_unknown_change_and_wrong_flow_reject(self):
         self.write('modules/index/server.py', 'pass\n')
         with self.assertRaisesRegex(HarnessError, 'retired path still present|Python online'):
