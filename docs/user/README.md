@@ -5,3 +5,5 @@
 未来计划包括对象存储、Rust检索/图/训练与规模验证；这些目前不支持。
 
 - [本机预览安装物](local-preview.md)（本机有限验证）
+
+[本地stdio MCP预览](local-mcp.md)已通过本机受限SDK验收，仅三只读view工具。

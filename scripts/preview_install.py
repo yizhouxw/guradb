@@ -99,6 +99,9 @@ def discard_output():
 
 def main():
     def stop(sig, _frame):
+        # Interrupt a saturated output descriptor before Python unwinds I/O.
+        # SystemExit still executes owned-stage and main cleanup finally blocks.
+        discard_output()
         raise SystemExit(128+sig)
     signal.signal(signal.SIGINT, stop)
     signal.signal(signal.SIGTERM, stop)

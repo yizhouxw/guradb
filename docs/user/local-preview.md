@@ -19,3 +19,6 @@ prefix必须尚不存在（包括空目录/符号链接），父目录已存在�
 只读capabilities校验安装文件摘要与host，显示来源/命令/格式/支持拒绝/预算，并明确runtime_checked=false；doctor另核实际系统Python、本地Docker daemon和image OS-arch；不扫描原ZIP/模型/全部用户输入、不执行query或发布store。安装物/manifest版本和ELF架构/摘要有界校验，坏/truncated/错架构/版本/existing sentinel拒绝；不写全局PATH/系统。升级装新prefix并存，回退显式调用旧prefix/bin/guradb，原安装与用户store不变。
 
 单archive≤1GiB、本包新增owned≤2GiB。build≤120s/512MiB RSS、install≤60s+10s清理/streaming不拷全target；launcher≤20s工作+10s只清自身container，Rust仍原10s/源32MiB/decode64MiB/output2MiB/feature8MiB/2view128MiB描述1MiB，容器512MiB4CPU；不冒冷编译/发行性能。INT/TERM/timeout清自身未发布stage和自己container；安装完整目录原子提交后结果输出未知可用doctor公开对账，existing重试不覆盖，换新prefix并存。SIGKILL/断电完整矩阵未认证；不通过手改安装内部文件救成功。安装script在外部可信checksum核对后执行，内部重复校验避免误用；恶意替换整套manifest不是签名认证范围。
+
+
+已有runtime消失时，doctor必须拒绝，安装包不pull/篡改固定ID，也不假设tag或镜像永久可用。2026-10-30本机旧181依赖实际缺失，原797b包保留不改；同clean源码M054685ca及原6ecc engine的fresh恢复包`guradb-preview-runtime09bc-m054685ca.pyz` SHA `5a5cf25f5d9f3ee22487db6e3ea6c90f4525fbea23b595d0582c8bc50783c56d`固定实际09bc runtime。按可信SHA核验，安装新prefix再doctor/原样查询，成功后显式改调用入口；不覆盖旧prefix或用户store。09bc完整ID为`sha256:09bc0a87408c56bd4fe912df3ba3d499ea2279ea32cdeddf051a7a3dd3ddb52f`，本地保护alias仅引用，不替代ID/根因或永久可用承诺；旧image消失原因UNKNOWN，恢复包已独立验证现有CLI小套，不计MCP通过。

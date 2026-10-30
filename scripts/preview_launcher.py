@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import platform
 import shutil
+import select
 import signal
 import subprocess
 import sys
@@ -71,6 +72,48 @@ def environment(m, cfg):
     return prefix, {'docker_cli': docker, 'endpoint': endpoint, 'daemon': daemon, 'runtime': image}
 
 
+def mcp_wait(child):
+    """Forward bytes only; enforce public stdout framing/write bounds on host."""
+    fd = child.stdout.fileno()
+    os.set_blocking(fd, False)
+    os.set_blocking(1, False)
+    pending = bytearray()
+    deadline = None
+    eof = False
+    while True:
+        now = time.monotonic()
+        if deadline is not None and now >= deadline:
+            raise TimeoutError('MCP host stdout frame write exceeds 5 seconds')
+        if eof and not pending:
+            if deadline is not None:
+                raise ValueError('incomplete MCP response frame')
+            return child.wait(timeout=2)
+        readable, writable, _ = select.select([fd] if not pending and not eof else [],
+                                               [1] if pending else [], [], .01)
+        if fd in readable:
+            try:
+                block = os.read(fd, 65536)
+            except BlockingIOError:
+                block = None
+            if block:
+                pending.extend(block)
+                if deadline is None:
+                    deadline = time.monotonic()+5
+            elif block == b'':
+                eof = True
+        if 1 in writable:
+            try:
+                n = os.write(1, pending)
+            except BlockingIOError:
+                continue
+            if n == 0:
+                raise BrokenPipeError('MCP stdout closed')
+            written = pending[:n]
+            del pending[:n]
+            if b'\n' in written:
+                deadline = None if written[-1:] == b'\n' and not pending else time.monotonic()+5
+
+
 class Interrupted(BaseException):
     def __init__(self, signum):
         self.signum = signum
@@ -99,14 +142,15 @@ def run():
         if not data.is_dir():
             raise ValueError('data-root must be an existing directory')
         name = 'guradb-preview-'+str(os.getpid())+'-'+uuid.uuid4().hex[:8]
-        command = prefix+['run', '--rm', '--pull', 'never', '--name', name, '--label', 'guradb.preview.owner='+str(os.getpid()),
+        interactive = ['-i'] if args[2:3] == ['mcp'] else []
+        command = prefix+['run', *interactive, '--rm', '--pull', 'never', '--name', name, '--label', 'guradb.preview.owner='+str(os.getpid()),
                           '--network', 'none', '--memory', '512m', '--cpus', '4', '--pids-limit', '128',
                           '-v', str(root/'lib/engine')+':/guradb:ro', '-v', str(data)+':/data', '-w', '/data',
                           m['runtime_image'], '/guradb']+args[2:]
         child = None
         try:
-            child = subprocess.Popen(command, start_new_session=True)
-            code = child.wait(timeout=20)
+            child = subprocess.Popen(command, start_new_session=True, stdout=subprocess.PIPE if interactive else None)
+            code = mcp_wait(child) if interactive else child.wait(timeout=20)
             return code if code >= 0 else 128-code
         finally:
             signal.alarm(10)
@@ -122,6 +166,8 @@ def run():
                             os.killpg(child.pid, signal.SIGKILL)
                             child.wait(timeout=2)
             finally:
+                if child is not None and child.stdout is not None:
+                    child.stdout.close()
                 signal.alarm(0)
 
 
@@ -139,7 +185,7 @@ def main():
     def timeout(_sig, _frame):
         raise TimeoutError('preview total operation deadline exceeded')
     signal.signal(signal.SIGALRM, timeout)
-    signal.alarm(10 if sys.argv[1:] in (['doctor'], ['capabilities']) else 20)
+    signal.alarm(10 if sys.argv[1:] in (['doctor'], ['capabilities']) else (75 if sys.argv[1:4:2] == ['--data-root', 'mcp'] else 20))
     try:
         return run()
     except Interrupted as e:

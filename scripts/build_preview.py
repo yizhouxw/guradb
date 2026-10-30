@@ -49,6 +49,8 @@ def build(binary, output, runtime):
     rows['bin/guradb'] = {'bytes': len(SHIM), 'sha256': hashlib.sha256(SHIM).hexdigest()}
     m = {'format_version': 1, 'engine_arch': 'linux-arm64', 'host': 'darwin-arm64',
          'runtime_image': runtime, 'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
+         'engine_source_sha256': {str(p.relative_to(ROOT)): digest(p) for p in sorted((ROOT/'crates/guradb/src').rglob('*.rs'))},
+         'engine_rust_tree_scope': 'committed HEAD tree; source_dirty requires separate working source hashes',
          'engine_rust_tree': subprocess.check_output(['git', 'rev-parse', 'HEAD:crates/guradb'], cwd=ROOT, text=True).strip(),
          'packaging_sources_sha256': {name: digest(ROOT/'scripts'/name) for name in ('build_preview.py', 'preview_install.py', 'preview_launcher.py')},
          'optional_tools': 'source preparation, model encoder and PyTorch reader are not bundled',
