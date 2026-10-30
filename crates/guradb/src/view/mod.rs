@@ -1,5 +1,7 @@
 //! Two captured local views; the atomic catalog is the sole publication fact.
 mod capture;
+pub mod managed;
+mod managed_input;
 mod state;
 use crate::{Error, Result, RESULT_LIMIT};
 use serde_json::{json, Value};
@@ -65,6 +67,12 @@ async fn run(a: Vec<String>) -> Result<String> {
     }
     let s = Store::open(PathBuf::from(&a[4]), op == "prepare", op == "recover")?;
     let mut c = s.catalog().await?;
+    if c.managed.is_some() && matches!(op, "prepare" | "publish" | "recover") {
+        return Err(Error::new(
+            "unsupported_dataset_mutation",
+            "use dataset operations for this managed root",
+        ));
+    }
     if matches!(op, "status" | "recover") {
         for v in &c.views {
             capture::owned(&s, v).await?;

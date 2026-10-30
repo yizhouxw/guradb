@@ -210,5 +210,35 @@
       "global registration",
       "full MCP compatibility"
     ]
+  },
+  "managed_dataset": {
+    "entry": "dataset import/status/reconcile/retry --store ROOT",
+    "catalog_format": 3,
+    "scope": "trusted single user; one local dataset; complete snapshot only",
+    "identity": "stable dataset ID, ordered schema SHA, immutable revision/view and input-bound durable operation",
+    "states": [
+      "capturing",
+      "ready",
+      "committed",
+      "failed"
+    ],
+    "limits": {
+      "revisions": 2,
+      "operations": 8,
+      "schema_columns": 32,
+      "inflight": 1,
+      "owned_bytes_including_staging": 134217728,
+      "catalog_bytes": 16384
+    },
+    "read": "existing view commands with returned exact view ID; old directconfig/v1/v2 unchanged",
+    "recovery": "public status/reconcile/retry; incomplete capture fails and cleans; complete owned ready can commit; old terminal replay never changes current",
+    "unsupported": [
+      "append/CDC",
+      "schema evolution",
+      "shared authorization",
+      "GC/pin",
+      "background scheduler",
+      "MCP mutations"
+    ]
   }
 }
