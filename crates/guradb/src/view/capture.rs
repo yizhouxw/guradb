@@ -2,7 +2,7 @@ use super::state::{self, Store};
 use crate::{media, media_path, search, source, Config, Error, Result};
 use sha2::{Digest, Sha256};
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, BTreeSet},
     fs,
     path::{Path, PathBuf},
 };
@@ -21,10 +21,10 @@ pub async fn config(path: &Path) -> Result<Config> {
 pub async fn validate(
     c: &Config,
     root: &Path,
-) -> Result<(bytes::Bytes, BTreeMap<i64, media::Asset>)> {
+) -> Result<(bytes::Bytes, BTreeMap<i64, media::Asset>, BTreeSet<String>)> {
     let b = source::snapshot(&c.source, &c.sha256).await?;
     let (schema, batches) = source::decode(b.clone())?;
-    let (_, has_media) = search::documents(&schema, &batches, &[])?;
+    let (docs, has_media) = search::documents(&schema, &batches, &[])?;
     if !has_media {
         return Err(Error::new(
             "unsupported_view_input",
@@ -41,10 +41,16 @@ pub async fn validate(
             ));
         }
     }
-    Ok((b, assets))
+    Ok((b, assets, docs.into_iter().map(|d| d.id).collect()))
 }
-pub async fn capture(s: &Store, c: &Config, origin: &Path) -> Result<()> {
-    let (b, assets) = validate(c, origin).await?;
+pub async fn capture(
+    s: &Store,
+    c: &Config,
+    origin: &Path,
+    record: &state::Record,
+    feature_path: Option<&Path>,
+) -> Result<()> {
+    let (b, assets, ids) = validate(c, origin).await?;
     let dir = s.root.join(".staging");
     fs::create_dir(&dir).map_err(|_| state::invalid())?;
     fs::create_dir(dir.join("images")).map_err(|_| state::invalid())?;
@@ -56,6 +62,18 @@ pub async fn capture(s: &Store, c: &Config, origin: &Path) -> Result<()> {
         }
         state::write(&dir.join(a.path), &p)?;
     }
+    if let (Some(bound), Some(path)) = (&record.features, feature_path) {
+        let loaded = crate::features::load(path, &bound.sha256, &c.sha256, &ids).await?;
+        if loaded.space != bound.space {
+            return Err(Error::new(
+                "space_mismatch",
+                "captured feature space changed",
+            ));
+        }
+        let bytes = crate::features::snapshot(path, &bound.sha256).await?;
+        state::write(&dir.join("features.jsonl"), &bytes)?;
+        crate::features::snapshot(path, &bound.sha256).await?;
+    }
     let config =
         serde_json::json!({"source":"records.parquet","sha256":c.sha256,"timeout_ms":10000});
     state::write(
@@ -65,19 +83,32 @@ pub async fn capture(s: &Store, c: &Config, origin: &Path) -> Result<()> {
     source::snapshot(&c.source, &c.sha256).await?;
     state::sync_dir(&dir.join("images"))?;
     state::sync_dir(&dir)?;
-    fs::rename(&dir, s.object(&c.sha256)).map_err(|_| state::invalid())?;
+    fs::rename(&dir, s.object(&record.id)).map_err(|_| state::invalid())?;
     state::sync_dir(&s.root.join("objects"))?;
     state::sync_dir(&s.root)
 }
-pub async fn owned(s: &Store, id: &str) -> Result<(Config, PathBuf)> {
-    let p = s.object(id);
+pub async fn owned(s: &Store, record: &state::Record) -> Result<(Config, PathBuf)> {
+    let p = s.object(&record.id);
     state::directory(&p)?;
     state::regular(&p.join("config.json"))?;
     state::regular(&p.join("records.parquet"))?;
     let c = config(&p.join("config.json")).await?;
-    if c.sha256 != id || c.source != p.join("records.parquet") || c.timeout_ms != 10000 {
+    if c.sha256 != record.source() || c.source != p.join("records.parquet") || c.timeout_ms != 10000
+    {
         return Err(state::invalid());
     }
-    validate(&c, &p).await?;
+    let (_, _, ids) = validate(&c, &p).await?;
+    if let Some(bound) = &record.features {
+        state::regular(&p.join("features.jsonl"))?;
+        let loaded =
+            crate::features::load(&p.join("features.jsonl"), &bound.sha256, &c.sha256, &ids)
+                .await?;
+        if loaded.space != bound.space {
+            return Err(Error::new(
+                "space_mismatch",
+                "owned space differs from view",
+            ));
+        }
+    }
     Ok((c, p))
 }

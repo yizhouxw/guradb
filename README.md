@@ -54,3 +54,5 @@ docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspac
 [固定成员与真实PyTorch消费](docs/user/simple-alpha.md#固定样本与真实pytorch消费)已通过固定成员/组划分和真实两epoch/尾批验收；训练结果复现未授予。
 
 [本地固定视图与完整刷新](docs/user/simple-alpha.md#本地固定视图与完整刷新)已通过首包有限验收：两本地完整版本、准备就绪发布与公开重启对账；未接通view模式明确拒绝。
+
+[完整特征视图与固定reader](docs/user/simple-alpha.md#完整特征视图与固定reader)已通过有限验收：完整绑定依赖并跨current消费旧view；完整M1.5仍未交付。

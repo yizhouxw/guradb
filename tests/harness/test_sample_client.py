@@ -1,9 +1,11 @@
 """External client ownership/argument tests, not framework or Rust truth."""
+import json
 import importlib.util
 from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
+from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location('sample_client', ROOT/'scripts/sample_torch_client.py')
@@ -46,6 +48,7 @@ class SampleClientTests(unittest.TestCase):
         cli = object.__new__(client.RustCLI)
         cli.config, cli.selection, cli.image = self.root/'config.json', self.root/'selection.json', 'sha256:fixture'
         cli.binary = self.root/'guradb'
+        cli.view_store, cli.view_id, cli.source_sha256 = None, None, None
         cli.calls, cli.counter, cli.current = [], 0, None
         with patch.object(client.subprocess, 'run') as run:
             run.side_effect = [OSError('injected Rust transport'), object()]
@@ -56,6 +59,28 @@ class SampleClientTests(unittest.TestCase):
         self.assertIn('guradb.sample.owner=', ' '.join(first))
         self.assertEqual(cleanup[:3], ['docker', 'rm', '-f'])
         self.assertEqual(cleanup[3], first[first.index('--name')+1])
+        self.assertIsNone(cli.current)
+
+    def test_view_transport_freezes_first_rust_id_and_rejects_changed_response(self):
+        store=self.root/'store'; store.mkdir()
+        (self.root/'target/debug').mkdir(parents=True)
+        (self.root/'target/debug/guradb').write_bytes(b'never executed')
+        selection=self.root/'selection.json'; selection.write_text('{}')
+        one,two,source='a'*64,'b'*64,'c'*64
+        with patch.object(client,'ROOT',self.root),patch.object(client.subprocess,'check_output',return_value=b'[{"Id":"sha256:fixture"}]'):
+            cli=client.RustCLI(None,selection,store,'current')
+        def reply(value):return SimpleNamespace(returncode=0,stdout=json.dumps(value).encode(),stderr=b'')
+        first={'view_id':one,'source_sha256':source,'result':{'view_id':one,'source_sha256':source}}
+        bad={'view_id':two,'source_sha256':source,'result':{}}
+        with patch.object(client.subprocess,'run',side_effect=[reply(first),object(),reply(bad),object()]) as run:
+            cli.call('sample',['--selection','/selection/selection.json'])
+            with self.assertRaisesRegex(ValueError,'changed the fixed'):
+                cli.call('media',['--asset-id','10'])
+        sample=run.call_args_list[0].args[0]; media=run.call_args_list[2].args[0]
+        self.assertEqual(sample[sample.index('--view')+1],'current')
+        self.assertEqual(media[media.index('--view')+1],one)
+        self.assertNotIn('--config',media)
+        self.assertNotIn('current',media)
         self.assertIsNone(cli.current)
 
     def test_invalid_host_mount_inputs_reject_before_docker_or_directory_creation(self):

@@ -1,5 +1,6 @@
 use crate::{source, Error, Result};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::{
     fs::{self, File, OpenOptions},
     io::Write,
@@ -10,9 +11,47 @@ use std::{
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Record {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub features: Option<BoundFeatures>,
     pub id: String,
     pub request_id: String,
     pub published: bool,
+}
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BoundFeatures {
+    pub sha256: String,
+    pub space: crate::features::Space,
+}
+impl Record {
+    pub fn source(&self) -> &str {
+        self.source_sha256.as_deref().unwrap_or(&self.id)
+    }
+    pub fn version(&self) -> u32 {
+        if self.features.is_some() {
+            2
+        } else {
+            1
+        }
+    }
+    pub fn valid(&self) -> bool {
+        digest(&self.id)
+            && request(&self.request_id)
+            && match (&self.source_sha256, &self.features) {
+                (None, None) => true,
+                (Some(source), Some(f)) => {
+                    digest(source) && digest(&f.sha256) && self.id == identity(source, &f.sha256)
+                }
+                _ => false,
+            }
+    }
+}
+pub fn identity(source: &str, features: &str) -> String {
+    hex::encode(Sha256::digest(
+        format!("guradb-view-features-v2\n{source}\n{features}\n").as_bytes(),
+    ))
 }
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -161,12 +200,12 @@ impl Store {
         regular(&self.root.join("catalog.json"))?;
         let b = source::read_bounded(&self.root.join("catalog.json"), 16384).await?;
         let c: Catalog = serde_json::from_slice(&b).map_err(|_| invalid())?;
-        if c.format_version != 1 || c.views.len() > 2 {
+        if ![1, 2].contains(&c.format_version) || c.views.len() > 2 {
             return Err(invalid());
         }
         for (i, v) in c.views.iter().enumerate() {
-            if !digest(&v.id)
-                || !request(&v.request_id)
+            if !v.valid()
+                || v.version() != c.format_version
                 || c.views[..i]
                     .iter()
                     .any(|x| x.id == v.id || x.request_id == v.request_id)
@@ -215,7 +254,16 @@ impl Store {
                 return Err(invalid());
             }
             count += 1;
-            Self::object_size(&entry.path(), &mut data, &mut description)?;
+            Self::object_size(
+                &entry.path(),
+                &mut data,
+                &mut description,
+                c.views
+                    .iter()
+                    .find(|v| v.id == id)
+                    .or_else(|| pending.filter(|v| v.id == id))
+                    .is_some_and(|v| v.features.is_some()),
+            )?;
         }
         if count > 2 {
             return Err(Error::new("resource_limit", "at most two owned views"));
@@ -225,7 +273,12 @@ impl Store {
             if pending.is_none() {
                 return Err(invalid());
             }
-            Self::object_size(&staging, &mut data, &mut description)?;
+            Self::object_size(
+                &staging,
+                &mut data,
+                &mut description,
+                pending.is_some_and(|v| v.features.is_some()),
+            )?;
             if count >= 2 {
                 return Err(Error::new(
                     "resource_limit",
@@ -241,11 +294,24 @@ impl Store {
         }
         Ok(())
     }
-    fn object_size(root: &Path, data: &mut u64, description: &mut u64) -> Result<()> {
+    fn object_size(
+        root: &Path,
+        data: &mut u64,
+        description: &mut u64,
+        full_features: bool,
+    ) -> Result<()> {
         directory(root)?;
         for e in fs::read_dir(root).map_err(|_| invalid())? {
             let e = e.map_err(|_| invalid())?;
             match e.file_name().to_str() {
+                Some("features.jsonl") if full_features => {
+                    regular(&e.path())?;
+                    let n = e.metadata().map_err(|_| invalid())?.len();
+                    if n > crate::features::FEATURE_LIMIT as u64 {
+                        return Err(Error::new("resource_limit", "owned features exceed budget"));
+                    }
+                    *data += n;
+                }
                 Some("config.json") => {
                     regular(&e.path())?;
                     let n = e.metadata().map_err(|_| invalid())?.len();
@@ -317,7 +383,7 @@ impl Store {
         regular(&p)?;
         let r: Record = serde_json::from_slice(&source::read_bounded(&p, 16384).await?)
             .map_err(|_| invalid())?;
-        if !digest(&r.id) || !request(&r.request_id) || r.published {
+        if !r.valid() || r.published {
             return Err(invalid());
         }
         Ok(Some(r))

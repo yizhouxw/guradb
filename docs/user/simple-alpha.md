@@ -542,3 +542,25 @@ prepare返回view_id/source_sha256/状态prepared，不改变current；未publis
 正式运行使用上述Docker的512MiB容器内存硬限与4CPU上限；Rust内部分别限制source/decoded/pool，不能把它们相加冒称进程RSS硬限。直接执行binary没有新增OS RSS限制，本首包实测口径为该容器配置。store为本地v1单写布局；仅接受受支持图文v1，200Doc/3JPEG512KiB、源32MiB/解码64MiB/输出2MiB不变，view操作统一10秒含stdout（导入config的期限不继承，原directconfig入口仍用其timeout_ms），准备最多双源所有权预算128MiB，实际捕获上界低于该值。RAII flock排他覆盖内部读取/状态工作；并发冲突拒绝。结果stdout可能在释放锁后交付，但返回的view_id固定，不跟随后current。pending journal先于owned写入，完整捕获校验/文件与目录sync之后才prepared catalog；catalog临时文件sync+同目录rename发布。recover可初始化只含.lock/空objects/有界catalog.tmp的已知bootstrap空壳；存在对象而缺catalog则拒绝，不能把丢目录当空库。recover公开对账catalog权威，清仅pending的未引用staging/对象及本命名临时描述，已catalog记录的prepare/publish不重复提交，保留所有published旧view；遇坏catalog/未知布局/身份冲突拒绝，不能手改JSON救绿。每次读取复核owned源与媒体身份，不承诺检测两次校验间修改后恢复。恢复不控制外部GC或完整断电/fsync/跨平台故障；本包仅实际进程中断边界。升级/降级不迁移未知格式，旧binary不识view入口而拒绝；恢复用同v1公开recover/status，备份与保留由caller负责。完整安装、MCP、所有路径就绪/完整M1.5仍未交付。
 
 本首包实际证据：两真实caption版本3/4Doc与3既有JPEG，独立原文/成员/16 BM统计分数/6媒体原bytes身份；准备未publish与publish已提交各在满Linux OSpipe后KILL，公开status/recover/retry闭合；另一次pending/staging真实中途KILL后旧current保持、公开recover清未引用后同request重试成功。累计83条CLI/中断观测含预期拒绝/中断，不是83次exit0。新owned全部数据峰预留上界76,601,054B，小于128MiB；512MiB容器/4CPU。控制器漏wire encoding标签及探测status抢flock导致的两次失败保留为工具错误，后一失败具体stderr未保存故code UNKNOWN，不冒产品故障或验收成功。bootstrap已知布局夹具/静审不冒真实bootstrap微步骤KILL或断电认证；模型/新媒体解码未运行。
+
+
+## 完整特征视图与固定reader
+
+本节已通过有限验收（M1.5后继首片，完整M1.5仍未交付）。新空store在prepare时同时提供`--features FILE --features-sha256 SHA`，采用catalog v2；view ID为SHA256 exact ASCII `guradb-view-features-v2\n{source_sha256}\n{feature_sha256}\n`。feature完整bytes包含原source/Doc全集/space/model/revision/preprocessing/normalization/许可声明，必须都通过现有加载校验并owned捕获，query/search/media/vector/hybrid/sample才一起ready；发布后依赖不得在原ID下补写或更换。旧v1 store保持原query/search/media，不追认新能力；已有v1不能原地添加features，新空store显式prepare v2。未知格式、无特征vector/sample、错源/错space/缺失/替换拒绝；没有自动迁移或GC。
+
+```sh
+# 沿上节Docker函数；features/query/selection文件都在挂载的artifacts下。
+guradb_view prepare --store "$FULL_STORE" --config "$CONFIG_V1" --request-id full-1 --features "$FEATURES_V1" --features-sha256 "$FEATURE_SHA_V1"
+guradb_view publish --store "$FULL_STORE" --request-id full-1
+guradb_view vector --store "$FULL_STORE" --view "$FULL_VIEW_ID_V1" --query "$VECTOR_QUERY_V1" --top-k 5
+guradb_view hybrid --store "$FULL_STORE" --view "$FULL_VIEW_ID_V1" --query "$VECTOR_QUERY_V1" --top-k 5 --text-query kitchen
+guradb_view sample --store "$FULL_STORE" --view "$FULL_VIEW_ID_V1" --selection "$SELECTION_V1"
+# 真实客户端复用既有锁定env，仅将--config替换为--view-store/--view；不猜内部配置路径。
+"$PYCLIP" scripts/sample_torch_client.py --view-store "$HOST_STORE" --view current --selection "$HOST_SELECTION_V1" --output-dir artifacts/view-sample-reader --batch-size 4
+```
+
+sample返回Rust固定view_id/source/成员；reader只在第一次sample解析current，之后全部media传该精确ID，并核每次view/source一致。消费中公开发布第二个view，不能改变已固定旧成员/原文/媒体；不声称跨任务pin或外部GC控制。原directconfig reader兼容。真实两epoch/尾批/原bytes与固定RGB32 uint8 CHW transform沿原合同，reader120秒工作/另30秒清理/4GiBRSS采样和OS峰/4计算线程/媒体payload32MiB不变；仅客户端没有Python选择/发布语义，模型not_used。
+
+最多2个prepared/published/pending对象，所有owned源+JPEG+features合计128MiB，描述1MiB；每源32MiB/decoded64MiB/output2MiB/features8MiB/query及物理feature行64KiB/200Doc/维1..1024/TopK20/view10秒、Docker512MiB4CPU保持。完整space写入有界descriptor，每次读取再次核source/feature pin与全集/space；原cosine/scaled f64/RRF60/full ranks/同分DocID顺序不改。pending/原子catalog/公开recover沿前合同，新布局需真实中断验证；仅已published请求重放不回退，不是异步代际fence。真实模型导出仅离线现同revision同code，当前计划V1复用旧15Doc/512D；V2四Doc改source必要1次同模型export原3图/原8query，≤600秒4GiBRSS4CPU无下载，最多2次授权不自动用满；数学fixture明确标数值，不冒模型或相关性优势。完整M1.5/安装/MCP/平台仍未交付。
+
+本片实际：原15Doc/V2四Doc，numerical2D两query与真实模型q01独立数学，48条Rust/中断动作及format2准备、提交未知、8MiB特征staging真实KILL经公开恢复通过。唯一1次必要同模型V2 export约3.051s/1.60GBRSS；724客户端在首batch后current真实刷新，30旧样本/31固定view调用/原文媒体像素全同，2epoch train10/val5/4-4-2与4-1，取消143/关闭stdout清理及最小旧config兼容均通过。无模型/泛化优势或完整平台认证；worker4GiB另Rustchild512MiB各自口径，不是aggregate OS总限。
