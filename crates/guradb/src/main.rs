@@ -10,6 +10,7 @@ mod sql;
 #[cfg(test)]
 mod tests;
 mod vector;
+mod view;
 
 use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, sync::Arc, time::Duration};
@@ -76,10 +77,15 @@ fn fail(error: Error, status: i32) -> ! {
 
 /// Main owns cancellation/deadline; read work lives in a separate thread.
 /// Exiting on cancellation releases every resource in this one-process CLI;
-/// commands create no files, children, listeners or persistent tasks.
+/// direct read commands create no files, children, listeners or persistent tasks;
+/// view commands own only their explicitly supplied local store.
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
     let args: Vec<_> = std::env::args().collect();
+    if args.get(1).is_some_and(|s| s == "view") {
+        view::entry(args).await;
+        return;
+    }
     let is_query =
         args.len() == 6 && args[1] == "query" && args[2] == "--config" && args[4] == "--sql";
     let is_media = args.len() == 8
@@ -173,13 +179,12 @@ async fn main() {
         .to_path_buf();
     let duration = Duration::from_millis(config.timeout_ms);
     let statement = args[5].clone();
-    let (sender, receiver) = tokio::sync::oneshot::channel();
-    let worker = std::thread::spawn(move || {
+    operation(duration, move || {
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .worker_threads(2)
             .enable_all()
             .build();
-        let result = match runtime {
+        match runtime {
             Ok(runtime) => runtime.block_on(async move {
                 if is_sample {
                     return sample::run(config, PathBuf::from(statement), media_root).await;
@@ -196,8 +201,18 @@ async fn main() {
                 }
             }),
             Err(_) => Err(Error::new("execution_failed", "cannot start query runtime")),
-        };
-        let _ = sender.send(result);
+        }
+    })
+    .await;
+}
+
+async fn operation<F>(duration: Duration, action: F)
+where
+    F: FnOnce() -> Result<String> + Send + 'static,
+{
+    let (sender, receiver) = tokio::sync::oneshot::channel();
+    let worker = std::thread::spawn(move || {
+        let _ = sender.send(action());
     });
     let complete = async move {
         let output = receiver

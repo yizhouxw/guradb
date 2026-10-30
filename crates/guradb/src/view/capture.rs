@@ -1,0 +1,83 @@
+use super::state::{self, Store};
+use crate::{media, media_path, search, source, Config, Error, Result};
+use sha2::{Digest, Sha256};
+use std::{
+    collections::BTreeMap,
+    fs,
+    path::{Path, PathBuf},
+};
+
+pub async fn config(path: &Path) -> Result<Config> {
+    let mut c: Config = serde_json::from_slice(&source::read_bounded(path, 16384).await?)
+        .map_err(|_| Error::new("invalid_config", "invalid view input config"))?;
+    if !state::digest(&c.sha256) || !(1..=10000).contains(&c.timeout_ms) {
+        return Err(Error::new("invalid_config", "invalid input SHA or timeout"));
+    }
+    if c.source.is_relative() {
+        c.source = path.parent().unwrap_or(Path::new(".")).join(&c.source);
+    }
+    Ok(c)
+}
+pub async fn validate(
+    c: &Config,
+    root: &Path,
+) -> Result<(bytes::Bytes, BTreeMap<i64, media::Asset>)> {
+    let b = source::snapshot(&c.source, &c.sha256).await?;
+    let (schema, batches) = source::decode(b.clone())?;
+    let (_, has_media) = search::documents(&schema, &batches, &[])?;
+    if !has_media {
+        return Err(Error::new(
+            "unsupported_view_input",
+            "view requires generic text and media v1",
+        ));
+    }
+    let assets = media::assets(&schema, &batches)?;
+    for (id, a) in &assets {
+        let p = media_path::read(root, &format!("{id:012}.jpg"), a.size)?;
+        if hex::encode(Sha256::digest(&p)) != a.sha256 {
+            return Err(Error::new(
+                "media_changed",
+                "captured media SHA differs from input",
+            ));
+        }
+    }
+    Ok((b, assets))
+}
+pub async fn capture(s: &Store, c: &Config, origin: &Path) -> Result<()> {
+    let (b, assets) = validate(c, origin).await?;
+    let dir = s.root.join(".staging");
+    fs::create_dir(&dir).map_err(|_| state::invalid())?;
+    fs::create_dir(dir.join("images")).map_err(|_| state::invalid())?;
+    state::write(&dir.join("records.parquet"), &b)?;
+    for (id, a) in assets {
+        let p = media_path::read(origin, &format!("{id:012}.jpg"), a.size)?;
+        if hex::encode(Sha256::digest(&p)) != a.sha256 {
+            return Err(Error::new("media_changed", "media changed during capture"));
+        }
+        state::write(&dir.join(a.path), &p)?;
+    }
+    let config =
+        serde_json::json!({"source":"records.parquet","sha256":c.sha256,"timeout_ms":10000});
+    state::write(
+        &dir.join("config.json"),
+        &serde_json::to_vec(&config).map_err(|_| state::invalid())?,
+    )?;
+    source::snapshot(&c.source, &c.sha256).await?;
+    state::sync_dir(&dir.join("images"))?;
+    state::sync_dir(&dir)?;
+    fs::rename(&dir, s.object(&c.sha256)).map_err(|_| state::invalid())?;
+    state::sync_dir(&s.root.join("objects"))?;
+    state::sync_dir(&s.root)
+}
+pub async fn owned(s: &Store, id: &str) -> Result<(Config, PathBuf)> {
+    let p = s.object(id);
+    state::directory(&p)?;
+    state::regular(&p.join("config.json"))?;
+    state::regular(&p.join("records.parquet"))?;
+    let c = config(&p.join("config.json")).await?;
+    if c.sha256 != id || c.source != p.join("records.parquet") || c.timeout_ms != 10000 {
+        return Err(state::invalid());
+    }
+    validate(&c, &p).await?;
+    Ok((c, p))
+}

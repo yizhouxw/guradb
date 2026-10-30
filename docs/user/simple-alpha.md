@@ -506,3 +506,39 @@ Rust返回format1/model not_used/source_sha256/selection_sha256/seed/algorithm/o
 单独sample示例显式只读挂载config父目录/selection目录及实际binary，容器关闭网络/512MiB/128PIDs；host绝对路径通过/data与/selection映射。reader自己的RustCLI同样显式/data挂载，Torch工作进程仍按4GiB/120秒+30秒清理合同。通用cargo wrapper保持原行为，不隐式重写caller路径。
 
 非作者当前806d脚本公开reader的30成员原文/media身份/CHW像素与独立原源/stride oracle全同，23Rust选择矩阵/11生命周期及真实Rust pipe124/130/1恢复通过。只限数据与reader消费可复现；model not_used、无encoder/训练优化，未授训练结果/完整M1/P0或发行资格。
+
+
+## 本地固定视图与完整刷新
+
+本节已通过有限验收（M1.5首包，完整M1.5仍未交付）。可信单用户以现有`prepare_text_corpus.py`准备generic v1图文Parquet/config；Rust完整捕获源与绑定的至多3张JPEG到尚不存在的store目录（父目录已存在），先prepare完成校验，再publish改变current。view ID为Parquet SHA256；固定ID不跟current。最多2个完整视图、owned数据总128MiB、轻描述1MiB，无自动GC/删除/共享pin；原源准备/归属权由caller负责，store捕获后自有bytes成为该view读取依据，原输入删除不改变已捕获view，store源/媒体缺失替换则拒绝。
+
+```sh
+# 先按上方JSONL合同提供两个不同输入；它们各自相邻的本地JPEG必须已存在。
+.venv/bin/python scripts/prepare_text_corpus.py --input "$INPUT_V1_JSONL" --output-dir artifacts/view-source-v1
+.venv/bin/python scripts/prepare_text_corpus.py --input "$INPUT_V2_JSONL" --output-dir artifacts/view-source-v2
+# artifacts内owned store可写；原输入/图片不自动删除。函数只转发给同一个Rust CLI。
+guradb_view() {
+  docker run --rm --network none --memory 512m --cpus 4 -v "$PWD/target/debug/guradb:/guradb:ro" -v "$PWD/artifacts:/data" guradb-rust:1.90.0 /guradb view "$@"
+}
+STORE=/data/local-view-demo
+CONFIG_V1=/data/view-source-v1/config.json
+CONFIG_V2=/data/view-source-v2/config.json
+# 将首次prepare返回的view_id记为VIEW_ID_V1；它是Parquet SHA256，不填占位SHA。
+# ASSET_ID_FROM_HIT取对应search命中的media.asset_id；输入和关键词由caller提供。
+guradb_view prepare --store "$STORE" --config "$CONFIG_V1" --request-id refresh-1
+guradb_view publish --store "$STORE" --request-id refresh-1
+guradb_view status --store "$STORE"
+guradb_view query --store "$STORE" --view "$VIEW_ID_V1" --sql 'SELECT doc_id,text FROM records ORDER BY doc_id LIMIT 20'
+guradb_view prepare --store "$STORE" --config "$CONFIG_V2" --request-id refresh-2
+guradb_view publish --store "$STORE" --request-id refresh-2
+guradb_view query --store "$STORE" --view current --sql 'SELECT doc_id,text FROM records ORDER BY doc_id LIMIT 20'
+guradb_view search --store "$STORE" --view "$VIEW_ID_V1" --query kitchen
+guradb_view media --store "$STORE" --view "$VIEW_ID_V1" --asset-id "$ASSET_ID_FROM_HIT"
+guradb_view recover --store "$STORE"
+```
+
+prepare返回view_id/source_sha256/状态prepared，不改变current；未published的ID不可读。publish一次原子替换catalog成为published/current，同request与source重试返回同view，不新增提交且旧request重试不把current回退。相同request换source或同source换request明确拒绝；第三个新view拒绝。query/search/media复用现有真实Rust语义（view search固定top_k=10），返回精确view_id与嵌套result；current仅在该操作开始时固定。命中后media传该次结果的view_id，避免下一操作重新解析current。view vector/hybrid/sample及未知命令/版本明确拒绝，不借旧特征或directconfig混用；原directconfig入口保持原语义。
+
+正式运行使用上述Docker的512MiB容器内存硬限与4CPU上限；Rust内部分别限制source/decoded/pool，不能把它们相加冒称进程RSS硬限。直接执行binary没有新增OS RSS限制，本首包实测口径为该容器配置。store为本地v1单写布局；仅接受受支持图文v1，200Doc/3JPEG512KiB、源32MiB/解码64MiB/输出2MiB不变，view操作统一10秒含stdout（导入config的期限不继承，原directconfig入口仍用其timeout_ms），准备最多双源所有权预算128MiB，实际捕获上界低于该值。RAII flock排他覆盖内部读取/状态工作；并发冲突拒绝。结果stdout可能在释放锁后交付，但返回的view_id固定，不跟随后current。pending journal先于owned写入，完整捕获校验/文件与目录sync之后才prepared catalog；catalog临时文件sync+同目录rename发布。recover可初始化只含.lock/空objects/有界catalog.tmp的已知bootstrap空壳；存在对象而缺catalog则拒绝，不能把丢目录当空库。recover公开对账catalog权威，清仅pending的未引用staging/对象及本命名临时描述，已catalog记录的prepare/publish不重复提交，保留所有published旧view；遇坏catalog/未知布局/身份冲突拒绝，不能手改JSON救绿。每次读取复核owned源与媒体身份，不承诺检测两次校验间修改后恢复。恢复不控制外部GC或完整断电/fsync/跨平台故障；本包仅实际进程中断边界。升级/降级不迁移未知格式，旧binary不识view入口而拒绝；恢复用同v1公开recover/status，备份与保留由caller负责。完整安装、MCP、所有路径就绪/完整M1.5仍未交付。
+
+本首包实际证据：两真实caption版本3/4Doc与3既有JPEG，独立原文/成员/16 BM统计分数/6媒体原bytes身份；准备未publish与publish已提交各在满Linux OSpipe后KILL，公开status/recover/retry闭合；另一次pending/staging真实中途KILL后旧current保持、公开recover清未引用后同request重试成功。累计83条CLI/中断观测含预期拒绝/中断，不是83次exit0。新owned全部数据峰预留上界76,601,054B，小于128MiB；512MiB容器/4CPU。控制器漏wire encoding标签及探测status抢flock导致的两次失败保留为工具错误，后一失败具体stderr未保存故code UNKNOWN，不冒产品故障或验收成功。bootstrap已知布局夹具/静审不冒真实bootstrap微步骤KILL或断电认证；模型/新媒体解码未运行。
