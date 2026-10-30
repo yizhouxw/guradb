@@ -132,6 +132,37 @@ kitchen仍是image_id397133的370509/372252/372765，路径images/000000397133.j
 caption按COCO annotations CC BY4归属；三图源metadata均license_id4/CC BY2，逐图FlickrURL及摄影者UNKNOWN单独写source.json，
 不把描述许可推导为图像授权/公开发布认证。仍非视觉识别、语义/向量检索、规模或性能交付，不推进#138。
 
+## 按图片返回唯一结果
+
+状态：真实原caption投影集合及重复/NULL/类型/排序LIMIT边界已通过非作者验收。
+
+复用上节三图/15caption准备命令与同一config。对投影列整行使用`SELECT DISTINCT`，
+在Rust执行过滤→列投影→整行去重→输出列排序→LIMIT；不选最佳caption、不做图片视觉去重或相关性排名。
+
+```sh
+docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspace:ro" -w /workspace guradb-rust:1.90.0 /workspace/target/debug/guradb query --config "/workspace/$GURADB_MULTI_DIR/config.json" --sql "SELECT DISTINCT image_id, image_path FROM records WHERE caption LIKE '%kitchen%' ORDER BY image_id ASC"
+```
+
+kitchen严格一行`["397133","images/000000397133.jpg"]`；将WHERE改为
+`caption LIKE '%kitchen%' OR caption LIKE '%street%' OR caption LIKE '%bathroom%'`，
+ORDER BY image_id ASC得到252219/397133/403385三行及各自images/12位文件名路径；
+在该排序查询末尾加LIMIT 2，必须只返回252219/397133两行，LIMIT在去重后生效。
+无命中仍为空，完整JSON/exit0、source_sha256=实际Parquet/config及truncated=false才算本例成功。
+原不加DISTINCT的caption明细仍保留重复image_id与原行语义。
+
+支持现有Int64/Utf8/Boolean列（含NULL）的列投影/别名或默认*；按全部投影值组合去重，
+NULL在去重比较中视为相同，NULL与空字符串不同，文本区分大小写。不提供仅按image_id选任意caption的隐式规则。
+DISTINCT的ORDER BY仅可引用已投影输出列名/别名；隐藏输入列/别名原名、表达式或位置序号排序拒绝。
+没有ORDER BY时行序未指定，不能依赖当前顺序分页。非DISTINCT排序规则保持原行为。
+DISTINCT ON、函数/任意表达式投影、重复输出列名、其它原不支持修饰符明确unsupported，不解析后忽略。
+原源/解码/池/SQL/输出/行数/期限边界保持，去重仍受32MiB DataFusion池限制、禁止spill，
+预算不足明确失败；不得通过先LIMIT再去重或放宽预算伪造完整结果。
+1000行预算计去重后的结果：未显式指定SQL LIMIT且唯一结果超1000行时输出1000行、truncated=true。
+显式LIMIT≤1000按该限制返回，不因SQL LIMIT本身标预算截断；LIMIT>1000仍受1000行预算，超预算时truncated=true。
+
+媒体仍用前节固定三图与原许可/准备快照语义；本例新增的是Rust图片级投影集合，不新增媒体/模型/SQL服务，
+原图解码与关联证据沿用，不把此结果宣称性能或完整发布通过。
+
 配置只有source、sha256及timeout_ms三个字段；source相对配置文件目录，默认期限5000ms。
 首跑已自动生成实际配置；若换自己的数据，sha256必须是自己原文件的真实摘要，不能使用占位值。
 

@@ -6,6 +6,7 @@
   "source": "one local immutable Parquet SHA256",
   "sql": [
     "column projection and alias",
+    "DISTINCT over supported projected column tuples; projected-output order then LIMIT; no DISTINCT ON",
     "typed comparisons/boolean/NULL",
     "bounded case-sensitive text column LIKE '%literal%' (1-128 UTF8 bytes; no inner wildcards/escape)",
     "column order",

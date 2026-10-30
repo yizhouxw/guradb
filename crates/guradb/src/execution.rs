@@ -55,10 +55,19 @@ pub async fn execute(
     if let Some(filter) = plan.filter {
         frame = frame.filter(filter).map_err(engine)?;
     }
-    if !plan.order.is_empty() {
-        frame = frame.sort(plan.order).map_err(engine)?;
+    if plan.distinct {
+        frame = frame.select(plan.projection).map_err(engine)?;
+        frame = frame.distinct().map_err(engine)?;
+        if !plan.order.is_empty() {
+            frame = frame.sort(plan.order).map_err(engine)?;
+        }
+    } else {
+        // Preserve the original caption-row ordering and projection semantics.
+        if !plan.order.is_empty() {
+            frame = frame.sort(plan.order).map_err(engine)?;
+        }
+        frame = frame.select(plan.projection).map_err(engine)?;
     }
-    frame = frame.select(plan.projection).map_err(engine)?;
     frame = frame
         .limit(
             0,
