@@ -35,5 +35,19 @@
     "training",
     "multi-tenant authorization",
     "distributed workers"
-  ]
+  ],
+  "media": {
+    "entrypoint": "guradb media --config <file> --asset-id <id> --source-sha256 <hit SHA>",
+    "contract_version": 1,
+    "binding": "image_id/image_path/media_version/media_bytes/media_sha256 in same config SHA-bound Parquet",
+    "layout": "images/positive twelve-digit ID.jpg; no directory/file symlinks",
+    "response": "identity plus exact JPEG bytes as hex JSON on stdout; no file writes",
+    "limits": {
+      "media_bytes": 524288,
+      "assets": 3,
+      "description_rows": 200,
+      "output_bytes": 2097152
+    },
+    "failure": "source mismatch, missing/changed media, unsupported version, invalid/conflicting binding, nonregular/linked files, byte/time/output limits; complete JSON and exit0 required"
+  }
 }

@@ -2,7 +2,7 @@
 
 本次一次切换为可信操作者在单机运行的单进程CLI，不启动网络服务。
 配置只指定一份本地Parquet文件及其预先计算的SHA-256；表名固定records。
-文件仅支持Int64、Utf8和Boolean列，不读对象存储、外部目录或其它文件。
+query文件仅支持Int64、Utf8和Boolean列；媒体证据入口仅允许下节显式绑定的本地JPEG，不读对象存储。
 
 首跑请在仓库根目录原样执行[README的准备与Rust命令](../../README.md)：
 复用已有`scripts/alpha_acceptance.py --run-dir artifacts/first-run`，它在新目录中生成
@@ -190,3 +190,64 @@ SHA256绑定的是原始Parquet文件bytes，不建立新的记录版本或目�
 缺输入、损坏Parquet、函数SQL均拒绝，恢复原输入可重跑。真实进程测试验证输出
 管道关闭、输出阻塞时超时/SIGINT及PID退出；16MiB源在打开期间改变时明确失败，
 恢复原bytes再次成功。完整性能、长稳、覆盖率及发布未验证。
+
+
+## 从命中读取准确媒体字节
+
+状态：固定三图真实字节、绑定/路径拒绝及真实取消/超时/管道关闭已通过非作者验收。
+可信单用户、同一Parquet/config；媒体字节读取不提供图像识别或远程读取。
+
+现prepare新增显式`--media-evidence`，与`--sample three`组合仍仅三图15条caption。
+默认不加该flag时原单图/三图输入bytes及操作保持；新模式在Parquet中增加media_version/int8=1、
+media_bytes/int8及media_sha256/text。每条caption的image_id/image_path与这三个字段一起由config.sha256绑定；
+同一image_id的描述必须一致。最多3个asset、200行，ID为正的至多12位整数，定位严格为images/12位ID.jpg。
+source.json只记离线来源，不是Rust另取latest的权威。新模式按已固定JPEG SHA校验bytes，沿用前包解码结论，
+本次不重新解码；其它默认模式原实际解码保持。旧无v1列的Parquet可继续query，media明确unsupported_media_contract。
+
+```sh
+COCO_SOURCE_ROOT=/Users/chad/dev/guradb-data/public-multimodal-20261025
+GURADB_EVIDENCE_DIR=artifacts/coco-evidence
+.venv/bin/python scripts/prepare_coco_caption.py --annotations-zip "$COCO_SOURCE_ROOT/archives/annotations_trainval2017.zip" --images-zip "$COCO_SOURCE_ROOT/archives/val2017.zip" --output-dir "$GURADB_EVIDENCE_DIR" --sample three --media-evidence
+docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspace:ro" -w /workspace guradb-rust:1.90.0 /workspace/target/debug/guradb query --config "/workspace/$GURADB_EVIDENCE_DIR/config.json" --sql "SELECT DISTINCT image_id,image_path FROM records WHERE caption LIKE '%kitchen%' ORDER BY image_id"
+```
+
+该查询仍唯一397133及images/000000397133.jpg。下面仅用Python作客户端：先收完整Rust查询结果，
+把该命中的source_sha256与ID原样交给media，检查两个进程exit0及完整JSON，只打印身份/字节数，避免终端展开整段hex。
+
+```sh
+.venv/bin/python - "$GURADB_EVIDENCE_DIR" <<'PYCLIENT'
+import hashlib, json, pathlib, subprocess, sys
+root = pathlib.Path.cwd()
+config = "/workspace/" + sys.argv[1] + "/config.json"
+cli = ["docker", "run", "--rm", "--network", "none", "--memory", "512m", "--pids-limit", "128",
+       "-v", str(root) + ":/workspace:ro", "-w", "/workspace", "guradb-rust:1.90.0", "/workspace/target/debug/guradb"]
+def call(*args):
+    completed = subprocess.run(cli + list(args), check=True, capture_output=True)
+    return json.loads(completed.stdout)
+hit = call("query", "--config", config, "--sql", "SELECT DISTINCT image_id,image_path FROM records WHERE caption LIKE '%kitchen%' ORDER BY image_id")
+assert hit["rows"] == [["397133", "images/000000397133.jpg"]] and not hit["truncated"]
+evidence = call("media", "--config", config, "--asset-id", hit["rows"][0][0], "--source-sha256", hit["source_sha256"])
+raw = bytes.fromhex(evidence.pop("bytes_hex"))
+assert evidence["source_sha256"] == hit["source_sha256"] and evidence["asset_id"] == "397133"
+assert evidence["image_path"] == hit["rows"][0][1] and evidence["encoding"] == "hex" and evidence["media_version"] == 1
+assert evidence["media_bytes"] == len(raw) == 200576
+assert hashlib.sha256(raw).hexdigest() == evidence["media_sha256"] == "09e1d25c75f7879bdaa69c327fece5cabacd53939c8c2ef9e87f1c97a2e478c4"
+print(json.dumps(evidence, ensure_ascii=False))
+PYCLIENT
+```
+
+media要求asset ID和命中source SHA；source SHA与config/实际Parquet不符、错ID、NULL/冲突绑定、
+未知media_version、非法/越根定位、目录或媒体symlink、缺文件、替换/大小或摘要变化、超限均失败。
+安全目录FD下仅打开images/该ID.jpg，不跟随images或JPEG链接；原媒体只读。
+成功JSON含media_version=1、asset_id十进制字符串、source_sha256、image_path、media_sha256、media_bytes、encoding=hex、bytes_hex。
+397133必须200576B、媒体SHA09e1d25c75f7879bdaa69c327fece5cabacd53939c8c2ef9e87f1c97a2e478c4；
+hex解码得到与原ZIP精确成员逐字节相同JPEG。252219/403385同三图原身份不变。
+读取的是初次已验证媒体bytes；发布前再核Parquet SHA，不承诺监视两次校验间修改又恢复的文件事件。
+不在线解码像素或认证版权；原caption CC BY4与逐图CC BY2来源/摄影者UNKNOWN仍分开保留。
+
+媒体单次读取上界512KiB，每次一个asset；原配置16KiB、Parquet32MiB/解码64MiB、JSON输出2MiB及默认5s/硬10s保持。
+JSON hex增加大小但不增加输出预算。身份校验完成前不发布成功输出；完整JSON+exit0才成功。
+CLI只写stdout/stderr，不创建或覆盖用户文件、临时文件或后台任务；`--output`及其它未知参数拒绝，已有文件不变。
+输出阻塞/关闭、超时或SIGINT可能留下部分stdout，消费者须丢弃；退出124/130或其它非0后内存/FD/线程回收、可重跑。
+shell重定向自行写文件不在CLI的文件写入合同内，保留原文件时不要使用覆盖重定向。
+完成可删本次派生目录，原ZIP/媒体保持只读；无目录管理、权限/pin/lease、网络/模型或规模能力。

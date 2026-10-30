@@ -1,6 +1,6 @@
 # GuraDB 单机 Rust alpha
 
-当前alpha只支持可信单用户的一份本地固定Parquet源，通过一个Rust CLI进程执行有界只读SQL。
+当前alpha只支持可信单用户的一份本地固定Parquet源，通过一个Rust CLI进程执行有界只读SQL，并取得同一输入显式绑定的本地JPEG证据字节。
 支持受限的caption字面关键词过滤；没有HTTP/PG监听器、Python在线服务、语义/向量检索、训练或分布式worker。
 详细支持/拒绝、输入SHA256和退出语义见[用户手册](docs/user/simple-alpha.md)。
 
@@ -42,3 +42,5 @@ docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspac
 实验索引实现已随旧demo退役，#125按not_planned关闭；原数值缺陷未修复，未来Rust检索不能继承正确性结论。
 三模态规模#138仍是未来未验义务，本alpha不交付规模结果。
 架构取舍见[ADR0028](docs/decisions/0028-simple-rust-alpha.md)，普通hook/PR、非作者验收与精确main证据继续；Actions/部署保持暂停。
+
+[准确媒体证据](docs/user/simple-alpha.md#从命中读取准确媒体字节)：同一Parquet绑定ID/媒体摘要，经Rust核验后取有界JPEG bytes。

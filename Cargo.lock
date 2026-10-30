@@ -1356,6 +1356,7 @@ dependencies = [
  "datafusion",
  "futures",
  "hex",
+ "libc",
  "parquet",
  "serde",
  "serde_json",

@@ -36,7 +36,7 @@ def read_member(path, name, limit):
     return data
 
 
-def prepare(annotations_zip, images_zip, output_dir, sample='single'):
+def prepare(annotations_zip, images_zip, output_dir, sample='single', media_evidence=False):
     if sample not in SAMPLES:
         raise ValueError('unsupported fixed sample')
     if output_dir.is_absolute():
@@ -46,7 +46,7 @@ def prepare(annotations_zip, images_zip, output_dir, sample='single'):
         raise ValueError('output directory must be inside repository artifacts')
     if output.exists() or (ROOT / output_dir).is_symlink():
         raise ValueError('output path already exists; nothing overwritten')
-    if not Path('/usr/bin/sips').is_file():
+    if not media_evidence and not Path('/usr/bin/sips').is_file():
         raise ValueError('macOS /usr/bin/sips is required for actual image decoding')
     annotations = annotations_zip.resolve(strict=True)
     images = images_zip.resolve(strict=True)
@@ -80,20 +80,33 @@ def prepare(annotations_zip, images_zip, output_dir, sample='single'):
             'image_license_from_source_metadata': next(row for row in document['licenses'] if row['id'] == image['license']),
             'image_flickr_source': image['flickr_url'],
             'photographer_name': 'UNKNOWN; not provided by COCO metadata',
-            'image_changes': 'JPEG bytes unchanged; temporary offline PNG decode only',
+            'image_changes': ('JPEG bytes unchanged; no decode in evidence-v1 mode; prior fixed-data decode reused'
+                              if media_evidence else 'JPEG bytes unchanged; temporary offline PNG decode only'),
         })
+    if media_evidence:
+        by_id = {s['image_id']: s for s in sources}
+        for row in rows:
+            source = by_id[row['image_id']]
+            if source['image_bytes'] > 512 * 1024:
+                raise ValueError('media evidence exceeds 512 KiB per asset')
+            row.update(media_version=1, media_bytes=source['image_bytes'], media_sha256=source['image_sha256'])
     rows.sort(key=lambda row: row['caption_id'])
     if len(rows) > 200 or len({row['caption_id'] for row in rows}) != len(rows):
         raise ValueError('caption count or identity exceeds the fixed sample contract')
     schema = pa.schema([('image_id', pa.int64()), ('caption_id', pa.int64()), ('caption', pa.string()),
                         ('file_name', pa.string()), ('image_path', pa.string()),
                         ('width', pa.int64()), ('height', pa.int64())])
+    if media_evidence:
+        schema = pa.schema(list(schema) + [pa.field('media_version', pa.int64()), pa.field('media_bytes', pa.int64()), pa.field('media_sha256', pa.string())])
     output.mkdir(parents=True, exist_ok=False)
     try:
         (output / 'images').mkdir()
         for (image, file_name, jpeg), source in zip(payloads, sources):
             local_image = output / 'images' / file_name
             local_image.write_bytes(jpeg)
+            if media_evidence:
+                source['decoded'] = {'status': 'not performed in evidence-v1 mode; fixed JPEG byte identity only'}
+                continue
             decoded = output / 'decoded.png'
             result = subprocess.run(['/usr/bin/sips', '-s', 'format', 'png', str(local_image), '--out', str(decoded)],
                                     capture_output=True, timeout=20)
@@ -123,6 +136,8 @@ def prepare(annotations_zip, images_zip, output_dir, sample='single'):
             'caption_license_url': 'https://creativecommons.org/licenses/by/4.0/',
             'scope': 'fixed bounded images and original captions; no visual recognition, keyword precomputation, full archive or current photo rights certification',
         }
+        if media_evidence:
+            provenance['media_contract'] = {'version': 1, 'authority': 'Parquet columns bound by config SHA256', 'maximum_asset_bytes': 524288}
         if sample == 'single':
             provenance.update(sources[0])  # Preserve the existing single-image provenance fields.
         (output / 'source.json').write_text(json.dumps(provenance, indent=2) + '\n')
@@ -141,9 +156,10 @@ def main():
     parser.add_argument('--images-zip', type=Path, required=True)
     parser.add_argument('--output-dir', type=Path, required=True)
     parser.add_argument('--sample', choices=SAMPLES, default='single')
+    parser.add_argument('--media-evidence', action='store_true', help='bind version-1 asset bytes/SHA in Parquet; no repeat image decode')
     args = parser.parse_args()
     try:
-        print(json.dumps(prepare(args.annotations_zip, args.images_zip, args.output_dir, args.sample)))
+        print(json.dumps(prepare(args.annotations_zip, args.images_zip, args.output_dir, args.sample, args.media_evidence)))
     except Exception as error:
         parser.exit(1, f'error: {error}\n')
 
