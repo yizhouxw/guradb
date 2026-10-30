@@ -97,5 +97,15 @@
     "fusion": "RRF k60; all BM25-positive ranks and full vector ranks before final TopK; absent BM25 contributes zero; raw scores kept separate",
     "model_effectiveness": "NOT_VERIFIED; numerical-fixture or caller external-declared space metadata, no inference/weights/semantic certification",
     "compatibility": "original query/search/media unchanged; no extra Parquet columns/types or dependencies"
+  },
+  "fixed_samples": {
+    "entrypoint": "guradb sample --config <file> --selection <JSON>",
+    "version": 1,
+    "selection": "explicit unique DocID set/source SHA/seed u32; 64KiB/1..200 IDs; media-v1 corpus",
+    "split": "SHA256 ASCII guradb-sample-group-v1 LF seed-decimal LF asset-decimal LF; digest byte order then numeric asset ID; lowest group validation, rest train; at least two groups",
+    "order": "ASCII doc_id within each split; no automatic same-asset expansion",
+    "model": "not_used",
+    "validation": "source/request SHA recheck; selected asset bytes/SHA checked; no pin/lease/GC; caller retains source/media",
+    "external_consumer": "actual PyTorch Dataset/DataLoader, two epochs, num_workers0/shufflefalse/drop_lastfalse; reader reproduction only, no training-result claim"
   }
 }
