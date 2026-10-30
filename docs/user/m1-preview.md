@@ -67,7 +67,7 @@ caption许可为CC BY4.0，图片许可/摄影者归属分别沿原COCO/Flickr�
 
 本机一次观察（无统计/冷存储保证）：对照58个Rust CLI请求输出逻辑1973945B；Reference A/B各物化一次，应用实际读取25347250/3885696B（含摘要复核与reader），不等于物理磁盘I/O。q01/q02各一次Reference cold-process为0.141/0.123s；MCP同会话两次同词查询为0.066/0.067s，互不当成同种性能样本。Rust reader消费4252630B、8.470s、RSS223969280B；Reference直接字节reader同量约0.095s、RSS242679808B，调用与校验边界不同，未显示Rust latency优势。比较算法阶段Reference进程RSS70172672B；Rust512MiB是配置上限，未测实际peak，不能拿二者比节省。
 
-该次owned约165236298B，单prefix160054794B、输入2316209B、owned store1066751B；预存runtime image逻辑Size526667700B另列，不当host新增物理占用。教程13个顶层process包含SDK/reader封装，不能冒全部Rust请求：SDK另外5个tool调用/3个CLI，reader31个Rust调用。历史接入工时、物理I/O、OS缓存仍UNKNOWN；payload重用没有新engine构建成本，正常门禁耗时不作为产品benchmark。
+该次owned约165236298B，单prefix160054794B、data子树2316209B（已含owned store1066751B）；预存runtime image逻辑Size526667700B另列，不当host新增物理占用。教程13个顶层process包含SDK/reader封装，不能冒全部Rust请求：SDK另外5个tool调用/3个CLI，reader31个Rust调用。历史接入工时、物理I/O、OS缓存仍UNKNOWN；payload重用没有新engine构建成本，正常门禁耗时不作为产品benchmark。
 
 ## 与完整目标的关系
 
