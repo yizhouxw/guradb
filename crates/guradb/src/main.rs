@@ -1,5 +1,6 @@
 mod compile;
 mod execution;
+mod features;
 mod media;
 mod media_path;
 mod search;
@@ -7,6 +8,7 @@ mod source;
 mod sql;
 #[cfg(test)]
 mod tests;
+mod vector;
 
 use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, sync::Arc, time::Duration};
@@ -88,8 +90,12 @@ async fn main() {
         && args[1] == "search"
         && args[2] == "--config"
         && args[4] == "--query";
-    if !is_query && !is_media && !is_search {
-        fail(Error::new("invalid_config", "usage: guradb query --config <file> --sql <SELECT> OR media --config <file> --asset-id <id> --source-sha256 <hit SHA> OR search --config <file> --query <text> [--top-k <1..20>]"), 1);
+    let vector_request = match vector::parse(&args) {
+        Ok(r) => r,
+        Err(e) => fail(e, 1),
+    };
+    if !is_query && !is_media && !is_search && vector_request.is_none() {
+        fail(Error::new("invalid_config", "usage: guradb query --config <file> --sql <SELECT> OR media --config <file> --asset-id <id> --source-sha256 <hit SHA> OR search --config <file> --query <text> [--top-k <1..20>] OR vector|hybrid with pinned features/query/top-k"), 1);
     }
     let path = PathBuf::from(&args[3]);
     let bytes = match source::read_bounded(&path, 16384).await {
@@ -172,6 +178,9 @@ async fn main() {
             .build();
         let result = match runtime {
             Ok(runtime) => runtime.block_on(async move {
+                if let Some(request) = vector_request {
+                    return vector::run(config, request).await;
+                }
                 match media_id {
                     Some(id) => media::read(config, media_root, id).await,
                     None => match search_top_k {

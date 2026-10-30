@@ -309,3 +309,85 @@ docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspac
 额外工作集由200文档/256KiB原文/65536词及TopK20硬界约束，无持久索引/无spill，不把DataFusion池冒称整个进程RSS。
 source初读与发布前SHA核验一致，完整JSON+exit0；真实取消/期限/管道失败清进程，无用户文件写入或后台任务。
 完整性能/覆盖/长稳/发行与业务相关性、跨引擎逐位分数兼容未认证，Actions/部署暂停。
+
+
+## 外部固定特征的精确向量与RRF数值首包
+
+状态：数值组件、公开外部特征接口、严格拒绝/真实退出恢复及同源媒体关联已通过非作者验收；
+真实模型/语义相关性或完整M1.3仍未认证。
+复用上节text-v1/可选media-v1语料，DocID全集唯一且固定SHA。外部特征是调用者提供的JSONL，
+首行header：format_version=1、source_sha256、documents（须等于语料N）及space；后每非空行只含doc_id/vector。
+必须恰好覆盖全部DocID一次，缺失/重复/未知Doc拒绝，不静默漏候选。特征内容不要求来源于COCO/preset。
+CLI必须给整个feature文件预先固定SHA256，不另取latest；执行初读及发布前复核同SHA。
+
+space精确字段：id（1..64 ASCII字母数字._-）、dimensions（1..1024）、dtype="f64"、metric="cosine"、
+normalization="l2-scaled-f64-v1"、origin（numerical-fixture或external-declared）、model_id/model_revision/
+preprocessing_id/license（各非空≤256 UTF8 bytes、无控制字符）。这些是调用者空间/来源声明，不是模型认证。
+query JSON精确为format_version=1、source_sha256、同一完整space对象、vector；全部空间字段结构值须相同。
+未知字段/版本/错source/错模型空间/类型/维数/非有限数、全部零（含负零）向量拒绝；JSON数字以f64读取，不接受字符串/Bool。
+
+归一先除自身max(abs(component))，再除sqrt(sum(scaled_i²))，顺序均按维索引；可稳定处理有限极大/极小非零值。
+向量score为归一后逐项乘积f64顺序求和、clamp[-1,1]的cosine，零相似度规范为+0，更大更近（负相似度仍保留）。
+对全N文档算分，按实际f64 score降序/完全相等DocID ASCII升序，最终TopK显式1..20，truncated表示还有文档。
+数学truth接受误差仍1e-12+1e-12*abs(expected)，不以容差合并排序，不声明跨CPU逐位或模型相关性兼容。
+
+```sh
+# cfg来自上节公开准备的任意text-v1语料；下面是数值操作语法，两个文件由用户提供
+# FEATURE_SHA必须是自己features.jsonl的固定真实摘要，不填占位
+# paths相对CLI工作目录，或显式本地绝对路径
+guradb vector --config cfg.json --features features.jsonl --features-sha256 "$FEATURE_SHA" --query query.json --top-k 10
+guradb hybrid --config cfg.json --features features.jsonl --features-sha256 "$FEATURE_SHA" --query query.json --top-k 10 --text-query 'fox'
+```
+
+hybrid仍只使用固定ASCII BM25合同。融合固定RRF k=60，按每源已经稳定排好序的1起ordinal位置，
+score=（BM25存在时1/(60+bm25_rank)，否则0）+1/(60+vector_rank)，不直接加原始BM25/cosine。
+BM25全部正分文档及向量全部N文档参与，任何源不提前TopK；候选union=全N，最后才取TopK。
+同源同分也先按DocID给唯一ordinal位置；融合实际f64完全同分再DocID。文本无命中时BM25空、贡献0；
+向量源必须完整非空，坏特征不降级忽略。空/非法text-query沿原search拒绝，不把空字符串当另一运算。
+输出源SHA、feature SHA、query捕获SHA、space/模型声明未认证、文档数/维数/算法与原文/DocID/同source媒体身份。
+融合hit另含每源raw score/rank/RRF贡献和最终score，便于核对；media请求仍用同source SHA+asset ID取得准确bytes。
+
+特征文件≤8MiB、header≤16KiB、单row≤64KiB且总row=N≤200；query文件≤64KiB。
+流式逐行解码后立即核维数/身份再保留≤200×1024个f64，额外原特征bytes最多8MiB与≤约2MiB数值数组，
+不双份同时解码Parq；原源32MiB/解码64MiB/输出2MiB/默认5s硬10s/no spill与原3JPEG512KiB界不变。
+特征初读与终核至多16MiB、query至多64KiB附加读取；读的是已验捕获参数，query捕获SHA用于追溯，不监视其后文件事件。
+CLI只写stdout/stderr，完整JSON+exit0；超时/SIGINT/管道关闭可能部分stdout须丢弃，退出后无文件/后台资源，可重跑。
+
+公开完整数值示例使用调用者自行提供的两个特征空间/文件，origin明确numerical-fixture，无模型输出或语义声称。
+本首包未提供同source绑定的真实外部模型特征，记录NOT_PROVIDED及具体来源/资源方案；未下载权重或新媒体，不把手工向量当模型有效性。
+几何/融合truth、人工标签与真实模型有效性分别留证。原query/search/media入口兼容，本首包不交付ANN/推理/持久索引/目录权限平台。
+
+
+完整可执行数值示例（在仓库根先按README构建当前binary；目录须全新）：
+
+```sh
+GURADB_VECTOR_DIR=artifacts/my-vector-example
+.venv/bin/python - "$GURADB_VECTOR_DIR" <<'PYVECTOR'
+import hashlib, json, pathlib, subprocess, sys
+root=pathlib.Path.cwd(); base=pathlib.Path(sys.argv[1])
+assert not base.is_absolute() and (root/base).resolve().is_relative_to(root/'artifacts')
+base.mkdir(parents=True,exist_ok=False)
+docs=[{'doc_id':'a','text':'red fox'},{'doc_id':'b','text':'fox fox fox'},{'doc_id':'c','text':'blue whale'}]
+(base/'documents.jsonl').write_text(''.join(json.dumps(d)+'\n' for d in docs))
+subprocess.run([sys.executable,'scripts/prepare_text_corpus.py','--input',str(base/'documents.jsonl'),'--output-dir',(base/'ready').as_posix()],check=True)
+source_sha=json.loads((base/'ready/config.json').read_text())['sha256']
+cli=['docker','run','--rm','--network','none','--memory','512m','--pids-limit','128','-v',str(root)+':/workspace:ro','-w','/workspace','guradb-rust:1.90.0','/workspace/target/debug/guradb']
+for name,dim,values,query in [('two',2,[[1,0],[0,1],[-1,0]],[1,0]),('three',3,[[1,0,0],[1,1,0],[0,0,1]],[1,1,0])]:
+    space={'id':'math-'+name,'dimensions':dim,'dtype':'f64','metric':'cosine','normalization':'l2-scaled-f64-v1','origin':'numerical-fixture','model_id':'none','model_revision':'none','preprocessing_id':'self-authored coordinates','license':'self-authored'}
+    header={'format_version':1,'source_sha256':source_sha,'documents':len(docs),'space':space}
+    features=base/(name+'.jsonl'); features.write_text(''.join(json.dumps(x)+'\n' for x in [header]+[{'doc_id':d['doc_id'],'vector':v} for d,v in zip(docs,values)]))
+    request=base/(name+'-query.json'); request.write_text(json.dumps({'format_version':1,'source_sha256':source_sha,'space':space,'vector':query}))
+    pin=hashlib.sha256(features.read_bytes()).hexdigest()
+    args=['--config','/workspace/'+(base/'ready/config.json').as_posix(),'--features','/workspace/'+features.as_posix(),'--features-sha256',pin,'--query','/workspace/'+request.as_posix(),'--top-k','3']
+    for mode,extra in [('vector',[]),('hybrid',['--text-query','fox'])]:
+        completed=subprocess.run(cli+[mode]+args+extra,check=True,capture_output=True)
+        result=json.loads(completed.stdout)
+        assert result['source_sha256']==source_sha and result['features_sha256']==pin
+        assert result['model_effectiveness'].startswith('NOT_VERIFIED')
+        print(json.dumps({'space':name,'mode':mode,'ids':[h['doc_id'] for h in result['hits']],'scores':[h['score'] for h in result['hits']],'model':'numerical-fixture only'}))
+PYVECTOR
+```
+
+two空间vector/hybrid均a、b、c（vector为1/0/-1，hybrid前两项同RRF分后按ID）；
+three空间vector/hybrid均b、a、c。更换用户features/query内容及完整space，Rust实际重新算分；这两个样本是几何数值而非模型语义结果。
+CLI从不把origin/model声明变成已认证权重来源；真实模型有效性仍NOT_VERIFIED。

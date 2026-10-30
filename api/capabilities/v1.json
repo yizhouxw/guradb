@@ -77,5 +77,25 @@
     "preparation": "prepare_text_corpus.py caller JSONL/local JPEG, no COCO/ZIP/preset dependency",
     "response": "original text, stable doc_id, score/TF/DF/dl/avgdl explanation and same-source media evidence identity",
     "unsupported": "unknown versions/layouts, duplicate doc IDs, NULL, nonASCII or unsupported controls (tab/CR/LF allowed), arbitrary analyzer/parameters, persistent index, relevance certification"
+  },
+  "exact_vector": {
+    "entrypoints": [
+      "guradb vector --config <file> --features <JSONL> --features-sha256 <pin> --query <JSON> --top-k <1..20>",
+      "guradb hybrid --config <file> --features <JSONL> --features-sha256 <pin> --query <JSON> --top-k <1..20> --text-query <ASCII text>"
+    ],
+    "version": 1,
+    "binding": "pinned whole feature SHA; same corpus SHA/exact docset/complete space; query same source and space",
+    "metric": "f64 maxAbs scaled L2 normalization, cosine dot clamp [-1,1], canonical +0; zero/nonfinite reject",
+    "limits": {
+      "dimensions_max": 1024,
+      "documents": 200,
+      "feature_bytes": 8388608,
+      "header_bytes": 16384,
+      "row_query_bytes": 65536,
+      "top_k_max": 20
+    },
+    "fusion": "RRF k60; all BM25-positive ranks and full vector ranks before final TopK; absent BM25 contributes zero; raw scores kept separate",
+    "model_effectiveness": "NOT_VERIFIED; numerical-fixture or caller external-declared space metadata, no inference/weights/semantic certification",
+    "compatibility": "original query/search/media unchanged; no extra Parquet columns/types or dependencies"
   }
 }
