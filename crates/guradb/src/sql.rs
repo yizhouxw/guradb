@@ -13,6 +13,7 @@ pub struct Prepared {
     pub filter: Option<Expr>,
     pub order: Vec<SortExpr>,
     pub sql_limit: Option<usize>,
+    pub distinct: bool,
 }
 
 pub fn prepare(sql: &str, dataset: Arc<Dataset>) -> Result<Prepared> {
@@ -40,8 +41,12 @@ pub fn prepare(sql: &str, dataset: Arc<Dataset>) -> Result<Prepared> {
         return Err(unsupported());
     };
     let empty_group = matches!(&select.group_by, GroupByExpr::Expressions(items, modifiers) if items.is_empty() && modifiers.is_empty());
-    if select.distinct.is_some()
-        || select.top.is_some()
+    let distinct = match &select.distinct {
+        None => false,
+        Some(Distinct::Distinct) => true,
+        Some(_) => return Err(unsupported()),
+    };
+    if select.top.is_some()
         || select.exclude.is_some()
         || select.into.is_some()
         || select.from.len() != 1
@@ -165,7 +170,13 @@ pub fn prepare(sql: &str, dataset: Arc<Dataset>) -> Result<Prepared> {
                 return Err(unsupported());
             };
             let name = ident(column)?;
-            compiler.column(&name)?;
+            if distinct {
+                if !names.contains(&name) {
+                    return Err(unsupported());
+                }
+            } else {
+                compiler.column(&name)?;
+            }
             if expression.with_fill.is_some() {
                 return Err(unsupported());
             }
@@ -193,5 +204,6 @@ pub fn prepare(sql: &str, dataset: Arc<Dataset>) -> Result<Prepared> {
         filter,
         order,
         sql_limit,
+        distinct,
     })
 }

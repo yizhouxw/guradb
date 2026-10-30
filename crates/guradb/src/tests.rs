@@ -44,7 +44,7 @@ fn unsupported_features_cannot_open_other_sources_or_execute_functions() {
         "SELECT * FROM records WHERE rank = $1",
         "SELECT rank + 1 FROM records",
         "SELECT * FROM records GROUP BY record_id",
-        "SELECT DISTINCT record_id FROM records",
+        "SELECT DISTINCT ON (record_id) record_id FROM records",
         "SELECT * FROM records WHERE active = 'true'",
         "SELECT * FROM records WHERE rank = (SELECT 1)",
     ] {
@@ -148,5 +148,93 @@ async fn substring_execution_is_case_sensitive_unicode_literal_and_null_safe() {
             .unwrap();
         let value: serde_json::Value = serde_json::from_str(&output).unwrap();
         assert_eq!(value["rows"], serde_json::json!(expected));
+    }
+}
+
+#[test]
+fn distinct_orders_only_projected_outputs_and_rejects_modifiers() {
+    for sql in [
+        "SELECT DISTINCT record_id FROM records ORDER BY record_id",
+        "SELECT DISTINCT rank AS n FROM records ORDER BY n DESC LIMIT 2",
+        "SELECT DISTINCT * FROM records ORDER BY active",
+    ] {
+        assert!(sql::prepare(sql, dataset()).unwrap().distinct);
+    }
+    for sql in [
+        "SELECT DISTINCT rank FROM records ORDER BY active",
+        "SELECT DISTINCT rank AS n FROM records ORDER BY rank",
+        "SELECT DISTINCT rank FROM records ORDER BY 1",
+        "SELECT DISTINCT rank + 1 FROM records",
+        "SELECT DISTINCT rank AS n, active AS n FROM records",
+        "SELECT DISTINCT ON (rank) rank FROM records ORDER BY rank",
+    ] {
+        assert!(sql::prepare(sql, dataset()).is_err(), "accepted {sql}");
+    }
+    assert!(
+        !sql::prepare(
+            "SELECT rank FROM records ORDER BY active LIMIT 2",
+            dataset()
+        )
+        .unwrap()
+        .distinct
+    );
+}
+
+#[tokio::test]
+async fn distinct_tuple_null_types_sort_and_limit_are_real_engine_operations() {
+    use arrow::{
+        array::{BooleanArray, Int64Array, StringArray},
+        datatypes::{DataType, Field, Schema},
+        record_batch::RecordBatch,
+    };
+    let schema = Arc::new(Schema::new(vec![
+        Field::new("record_id", DataType::Utf8, true),
+        Field::new("rank", DataType::Int64, true),
+        Field::new("active", DataType::Boolean, true),
+    ]));
+    let batch = RecordBatch::try_new(
+        schema.clone(),
+        vec![
+            Arc::new(StringArray::from(vec![
+                Some("same"),
+                Some("same"),
+                None,
+                None,
+                Some(""),
+                Some("X"),
+                Some("X"),
+            ])),
+            Arc::new(Int64Array::from(vec![
+                Some(1),
+                Some(1),
+                None,
+                None,
+                Some(0),
+                Some(2),
+                Some(2),
+            ])),
+            Arc::new(BooleanArray::from(vec![
+                Some(true),
+                Some(true),
+                None,
+                None,
+                Some(false),
+                Some(false),
+                Some(true),
+            ])),
+        ],
+    )
+    .unwrap();
+    for (sql, expected) in [
+        ("SELECT DISTINCT record_id, rank, active FROM records ORDER BY rank ASC NULLS FIRST, active ASC", serde_json::json!([[null,null,null],["","0",false],["same","1",true],["X","2",false],["X","2",true]])),
+        ("SELECT DISTINCT record_id, rank, active FROM records ORDER BY rank ASC NULLS FIRST, active ASC LIMIT 4", serde_json::json!([[null,null,null],["","0",false],["same","1",true],["X","2",false]])),
+        ("SELECT DISTINCT active FROM records ORDER BY active DESC NULLS LAST", serde_json::json!([[true],[false],[null]])),
+        ("SELECT DISTINCT rank AS n FROM records ORDER BY n DESC NULLS LAST LIMIT 2", serde_json::json!([["2"],["1"]])),
+        ("SELECT DISTINCT record_id FROM records LIMIT 0", serde_json::json!([])),
+    ] {
+        let plan = sql::prepare(sql, dataset()).unwrap();
+        let output = execution::execute(plan, schema.clone(), vec![batch.clone()], "distinct-test").await.unwrap();
+        let value: serde_json::Value = serde_json::from_str(&output).unwrap();
+        assert_eq!(value["rows"], expected, "{sql}");
     }
 }
