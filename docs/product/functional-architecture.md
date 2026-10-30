@@ -1,12 +1,14 @@
 # 产品功能架构 v0.6
 
+**2026-10-30执行说明：** F01–F12完整目标保留；本文旧“当前HTTP/PG/训练/worker已实现”等仅是退役前历史，不能计入现进度。实际实现为[单机Rust alpha](../user/simple-alpha.md)，新范围/顺序见[路线图](../roadmap.md)与[12域/42需求映射](../plans/2026-10-30-delivery-path.md)。
+
 状态：产品目标基线；M0/M1有界alpha与部分M2/本地worker有历史实现证据，完整P0未完成。概要设计细化：2026-10-20，无运行时变更。
 
-[概要设计](../design/outline-design.md)§2–4补充S1–S5场景、竞品依据、对象关系和本页十二能力域到模块的映射；[并行实施计划](../plans/2026-10-20-parallel-delivery.md)是最新任务分解。本文保留能力域的范围/优先级定义，不将工作包或模块完成等同产品完成。
+[概要设计](../design/outline-design.md)§2–4补充S1–S5场景、竞品依据、对象关系和本页十二能力域到模块的映射；[并行实施计划](../plans/2026-10-20-parallel-delivery.md)保留历史任务分解，当前顺序以[新路线](../roadmap.md)为准。本文保留能力域的范围/优先级定义，不将工作包或模块完成等同产品完成。
 
 十二能力域是覆盖地图，不是产品交付单位。[产品合同](product-contract.md)补充对象关系、六条用户旅程和共同交付条件；[用户手册](../user/README.md)按任务组织。下一阶段不再只按模块数量推进，见[并行实施计划](../plans/2026-10-20-parallel-delivery.md)。目标和当前白名单仍分别记录。
 
-当前12个能力域的实现、限制与代码证据见[功能与架构复审](../reviews/2026-10-18-capability-architecture.md)，执行顺序见[并行实施计划](../plans/2026-10-20-parallel-delivery.md)。下文描述目标能力；不能把整个能力域或用户流程直接当作当前支持。
+退役前12个能力域的历史实现、限制与代码证据见[功能与架构复审](../reviews/2026-10-18-capability-architecture.md)，当前执行顺序见[新路线图](../roadmap.md)，旧并行计划仅为历史。下文描述目标能力；不能把整个能力域或用户流程直接当作当前支持。
 
 本版采用用户明确提出的对象存储湖架构，放弃高并发 OLTP，不支持实时延迟敏感事务；其余功能是依据[调研](../research/README.md)收敛的设计建议。技术映射见[总体架构](../architecture.md)。
 
@@ -89,7 +91,7 @@ P0 是多个可验收切片组成的目标集合，覆盖分布式、多种检�
 
 ### 5.1 多模态检索
 
-当前 HTTP 支持 BM25/精确向量/ANN 与 RRF，Graph 为单独的一跳作业；SQL 检索融合、Graph 联合计划与专门的片段坐标模型仍是目标。新 bundle v2 使用全局统计 BM25，旧 v1 保留 Tantivy 路径，见[ADR 0013](../decisions/0013-local-p0-partitions-and-recovery.md)。
+退役前历史HTTP曾提供BM25/精确向量/ANN与RRF，Graph曾为单独一跳作业；这些不是当前支持。SQL 检索融合、Graph 联合计划与专门的片段坐标模型仍是目标。新 bundle v2 使用全局统计 BM25，旧 v1 保留 Tantivy 路径，见[ADR 0013](../decisions/0013-local-p0-partitions-and-recovery.md)。
 
 注册固定源版本与对象引用 → 绑定外部预生成片段/特征与标签的源列或不可变清单 → 构建本里程碑支持的索引 → 发布 read view → SQL/HTTP 执行过滤和已支持的检索/关系算子 → 返回命中证据、实际版本和受控对象访问引用。M1 不依赖托管业务 writer；首个闭环使用 BM25/精确向量，ANN 和受限 Graph 按独立切片加入，内建媒体提取属于后续能力。
 
@@ -97,7 +99,7 @@ P0 是多个可验收切片组成的目标集合，覆盖分布式、多种检�
 
 ### 5.2 训练数据准备
 
-当前实现导出整个固定视图，支持 seed 与 split 比例；尚不支持 SQL/过滤/投影选择样本或关联标签。下面是目标流程，最小样本选择列入下一阶段 A1。
+退役前实现曾导出整个固定视图并支持seed/split；当前没有训练导出。尚不支持 SQL/过滤/投影选择样本或关联标签。下面是目标流程，最小样本选择列入下一阶段 A1。
 
 选择源 revision → 用已支持 SQL 选择样本/关联标签与模态 → 按固定规则生成样本/split → pin 所需版本 → 生成训练 manifest → Parquet 导出 → 返回样本计数、来源、处理版本与保留信息。M2目标包含一种真实框架的有界批次消费；复杂导出、混洗和精确checkpoint恢复不能从manifest能力推定。分组防泄漏、采样重复/尾批及复现等级按[训练合同](training-contract.md)分别验收。
 
@@ -114,8 +116,8 @@ P0 是多个可验收切片组成的目标集合，覆盖分布式、多种检�
 - SQL 以 PostgreSQL 18 的选定语法、类型和结果行为为比较基线；不宣称完整服务器或事务兼容。具体支持清单通过差异测试扩展。
 - HTTP 提供发现、查询句柄、分页、取消及后续作业/发布接口。小结果使用 JSON，大结果和训练数据使用批次/对象产物。
 - CLI 面向交互与自动化，提供结构化输出和稳定退出码；MCP 默认通过授权的发现/查询/状态工具服务 Agent。
-- M1 以 HTTP 闭环和一个薄 CLI/MCP 适配为验收，完整二者在 M3 集成；不将所有客户端设为首个 alpha 的共同前置。
-- PostgreSQL 客户端直连已实现独立有界切片：可选本机 SQL 端口，真实 `psql` 18 与 Psycopg 3.2.10 的只读 autocommit、值参数、prepared statement、取消及错误已通过 PG 本地子 driver。最终提交门禁看 task receipt；连接示例见 [PG 端口指南](../design/pg-wire-running.md)，范围由 [ADR 0014](../decisions/0014-bounded-pg-wire.md) 限定。
+- 旧M1曾以HTTP和一个薄CLI/MCP为出口；新路线先以Rust CLI贯通单机预览，再于共享服务前补统一授权与HTTP/PG等适配，不把所有客户端设为首片前置。
+- PostgreSQL客户端直连在退役前曾实现独立有界切片，当前不支持：可选本机 SQL 端口，真实 `psql` 18 与 Psycopg 3.2.10 的只读 autocommit、值参数、prepared statement、取消及错误已通过 PG 本地子 driver。最终提交门禁看 task receipt；连接示例见 [PG 端口指南](../design/pg-wire-running.md)，范围由 [ADR 0014](../decisions/0014-bounded-pg-wire.md) 限定。
 - SQL 端口与内部 PostgreSQL 控制面分别部署与授权；不把内部 PG 数据库连接当作客户端 GuraDB 连接。首片不承诺所有 SDK、ORM、目录探测、TLS、业务事务或扩展二进制兼容。
 - 拒绝首版不支持的事务、锁、约束与扩展行为，不通过“解析但忽略”制造虚假的 PostgreSQL 兼容。
 
