@@ -17,3 +17,5 @@
 [本地Iceberg固定快照](local-iceberg.md)为1–2live文件/Null Avro/固定schema的本机受限入口，完整湖未支持。
 
 [WHERE值参数](sql-parameters.md)支持现有查询入口的受限三标量/typed NULL绑定，CLI/MCP同Rust语义；完整Q04/PG prepared仍未支持。
+
+[类型化PCM16 WAV证据](audio-evidence.md)：受限组件已验，外部文字命中与同源准确音频bytes、独立帧消费；原JPEG兼容。

@@ -101,7 +101,7 @@ async fn run(mut a: Vec<String>) -> Result<String> {
                 None
             };
             let bound = if let Some(path) = &feature_path {
-                let (_, _, ids) = capture::validate(
+                let (_, assets, ids) = capture::validate(
                     &cfg,
                     input
                         .parent()
@@ -109,6 +109,12 @@ async fn run(mut a: Vec<String>) -> Result<String> {
                         .unwrap_or(std::path::Path::new(".")),
                 )
                 .await?;
+                if assets.values().any(|a| a.version == 2) {
+                    return Err(Error::new(
+                        "unsupported_media_contract",
+                        "media v2 cannot bind feature views",
+                    ));
+                }
                 let loaded = crate::features::load(path, &a[12], &cfg.sha256, &ids).await?;
                 Some(state::BoundFeatures {
                     sha256: a[12].clone(),

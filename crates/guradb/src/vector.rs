@@ -53,6 +53,7 @@ pub(crate) async fn run(config: Config, request: Request) -> Result<String> {
     let (docs, assets) = {
         let bytes = source::snapshot(&config.source, &config.sha256).await?;
         let (schema, batches) = source::decode(bytes)?;
+        media::reject_v2(&schema)?;
         let (docs, has_media) = search::documents(&schema, &batches, &terms)?;
         let assets = if has_media {
             Some(media::assets(&schema, &batches)?)
@@ -119,7 +120,7 @@ pub(crate) async fn run(config: Config, request: Request) -> Result<String> {
     let mut hits = Vec::new();
     for &(i, score) in ranked.iter().take(request.k) {
         let d = &docs[i];
-        let identity = match (&assets, d.image_id) {
+        let identity = match (&assets, d.asset_id) {
             (Some(assets), Some(id)) => {
                 let a = assets.get(&id).ok_or_else(|| {
                     Error::new("invalid_media_binding", "missing asset description")

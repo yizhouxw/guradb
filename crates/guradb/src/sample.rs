@@ -49,6 +49,7 @@ pub(crate) async fn run(config: Config, request: PathBuf, root: PathBuf) -> Resu
     }
     let bytes = source::snapshot(&config.source, &config.sha256).await?;
     let (schema, batches) = source::decode(bytes)?;
+    media::reject_v2(&schema)?;
     let (docs, has_media) = search::documents(&schema, &batches, &[])?;
     if !has_media {
         return Err(invalid("sampling requires the version-1 media corpus"));
@@ -62,7 +63,7 @@ pub(crate) async fn run(config: Config, request: PathBuf, root: PathBuf) -> Resu
         return Err(invalid("selected document is absent from this source"));
     }
     docs.sort_by(|a, b| a.id.cmp(&b.id));
-    let groups: BTreeSet<_> = docs.iter().filter_map(|d| d.image_id).collect();
+    let groups: BTreeSet<_> = docs.iter().filter_map(|d| d.asset_id).collect();
     if groups.len() < 2 {
         return Err(invalid(
             "at least two independent asset groups are required",
@@ -88,7 +89,7 @@ pub(crate) async fn run(config: Config, request: PathBuf, root: PathBuf) -> Resu
     let mut train = Vec::new();
     let mut validation = Vec::new();
     for doc in &docs {
-        let id = doc.image_id.ok_or_else(|| invalid("missing asset ID"))?;
+        let id = doc.asset_id.ok_or_else(|| invalid("missing asset ID"))?;
         let asset = descriptions
             .get(&id)
             .ok_or_else(|| invalid("missing asset binding"))?;

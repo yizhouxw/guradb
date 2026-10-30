@@ -49,7 +49,28 @@
       "description_rows": 200,
       "output_bytes": 2097152
     },
-    "failure": "source mismatch, missing/changed media, unsupported version, invalid/conflicting binding, nonregular/linked files, byte/time/output limits; complete JSON and exit0 required"
+    "failure": "source mismatch, missing/changed media, unsupported version, invalid/conflicting binding, nonregular/linked files, byte/time/output limits; complete JSON and exit0 required",
+    "typed_extension": {
+      "status": "core_limited_component_verified",
+      "version": 2,
+      "columns": [
+        "asset_id",
+        "asset_path",
+        "asset_type",
+        "media_version",
+        "media_bytes",
+        "media_sha256"
+      ],
+      "types": [
+        "image/jpeg",
+        "audio/wav"
+      ],
+      "wav": "RIFF WAVE fmt16 PCM1 44100Hz mono/stereo signed16, unique fmt then nonempty aligned data, no extra chunks",
+      "identity": "same-source type/id/path/SHA; MCP media requires concrete view and refuses current; CLI retains current compatibility but evidence consumers use the returned concrete view ID",
+      "unsupported": "ASR, audio vectors, feature-view, vector/hybrid/sample for media-v2, compressed/float/video/slices",
+      "compatibility": "media-v1 JPEG response retained",
+      "limits_unchanged": true
+    }
   },
   "ranked_text": {
     "entrypoint": "guradb search --config <file> --query <ASCII text> [--top-k <1..20>]",
