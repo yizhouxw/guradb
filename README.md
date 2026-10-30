@@ -62,3 +62,5 @@ docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspac
 [本地stdio MCP三只读工具](docs/user/local-mcp.md)已通过本机官方SDK有限验收；只支持view query/search/media，完整MCP/M1.5仍未宣称。
 
 [有界COUNT/MIN/MAX与单列GROUP BY](docs/user/group-aggregates.md)为共享Rust query的本机受限增量；完整SQL/M2未支持。
+
+[本地Iceberg v2固定快照](docs/user/local-iceberg.md)为单live Parquet/Null OCF的受限只读入口；不代表完整湖或MCP湖接口。
