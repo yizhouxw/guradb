@@ -463,3 +463,46 @@ PYCLIPQUERY
 本固定域作者及非作者实际验证：q01 `a person preparing food in a kitchen` 的vector/hybrid首asset397133，准确200,576B/SHA09e1d25c…JPEG。6条caption支持标签的正query在本三图固定集里vector/BM25/hybrid首asset均匹配6/6；不表明模型胜过BM25，也不推定泛化。q07 snowy mountain无caption支持，vector/hybrid仍返回403385、BM25返回397133；没有校准拒绝阈值，不能把它算成功。q08主观pleasant place为UNKNOWN，不计成功。全部24次实际排名由非作者独立原truth及公式核过，记录保留任务证据；重复caption复用图向量所以不是15个独立图像样本，asset首现顺序也不是Rust去重API。
 
 本片独立来源/特征/固定域观察已经验收，Rust通用输出model_effectiveness仍为NOT_VERIFIED caller-only；引擎不对任意caller特征认证模型，本片证据由固定离线manifest及独验提供。模型cache/env供已排队同源样本消费复用，均单份具名保留，不属于Rust在线依赖。
+
+
+## 固定样本与真实PyTorch消费
+
+新sample --config CFG --selection FILE只接受显式JSON格式version1/source_sha256/seed u32/doc_ids集合，文件≤64KiB/1..200唯一有效DocID，必须同当前generic text/media Corpus且至少2独立asset。空/重复/未知/错源/未知字段版本/超界拒绝。组分数是SHA256 ASCII bytes `guradb-sample-group-v1\n{seed-decimal}\n{asset-decimal}\n`，digest字节升序/确切tie数字assetID；最低一组validation，其余train，两个split非空，同asset全部caption不跨split。每split DocID ASCII升序，显式source/selection摘要/seed/算法/组顺序/原text与media身份，model明确not_used；任意两个seed可能同划分，不承诺每次变化。
+
+现Rust资源source32MiB/decoded64MiB/output2MiB/默认5s硬10s/no-spill，所选media仍3JPEG512KiB界，固定成员时校验实际媒体bytes/SHA且发布前再核源/selection。caller负责保源和media，无pin/lease/GC平台，删除/同长替换/混源成员或读取阶段明确失败；中间修改再恢复不保证检测。原query/search/vector/hybrid/media保持。
+
+sample_torch_client.py仅外部真实Dataset/DataLoader客户端，不实现查询/组划分。复用已锁唯一离线env/PyTorch/Pillow，不下载/复制环境、模型或新媒体，不调用CLIP或训练优化。取Rust给出的train/validation数组，num_workers=0、shuffle=false、drop_last=false、batch4、两epoch；固定Pillow RGB→bilinear resize32×32→uint8 CHW，模型未用/transform版本明确，不暗继承CLIP recipe。全15doc三asset时train10批4/4/2、val5批4/1，逐DocID/text/媒体source+SHA/原字节/解码tensor shape/dtype/稳定顺序和尾批核验；只证明选择与消费可复现，不是训练结果或泛化质量。
+
+客户端membership文件≤1MiB/epochs报告≤2MiB、两epoch media输出应用payload合计≤32MiB（采样初核另≤3×512KiB，不冒总I/O计数）、reader工作≤120秒/失败清理另≤30秒/单进程RSS≤4GiB/计算线程≤4，逐调用Rust原预算，输出只fresh目录且失败/取消清本次所有权、等待清理owned子进程/container。下列公开示例及实际证据已完成本片独验。保现root/artifacts/clip-real-model-demo与唯一modelcache/env活跃，仅新任务数据/树回收，不重跑旧CLIP/LIKE/数值矩阵。
+
+### 公开固定样本入口
+
+复用上片已保留的同源Corpus与唯一离线env；不重新下载/复制模型、环境或数据，不运行encoder。用户可替换受支持Corpus与显式ID集合，成员合法性/分组由Rust决定。下面本fixture的15个明确ID来自原caption源，source摘要从config自动取；若输出已存在先选新路径，所有写入用exclusive创建不覆盖。
+
+```sh
+.venv/bin/python scripts/cargo.py build --locked --offline
+.venv/bin/python - <<'PYSAMPLE'
+import json
+from pathlib import Path
+cfg=Path('/Users/chad/dev/guradb/artifacts/clip-real-model-demo/corpus/config.json')
+ids=['c-510664', 'c-510313', 'c-508369', 'c-507367', 'c-501985', 'c-375891', 'c-372765', 'c-372252', 'c-370584', 'c-370509', 'c-114511', 'c-114199', 'c-111433', 'c-109132', 'c-107395']
+value={'format_version':1,'source_sha256':json.loads(cfg.read_text())['sha256'],'seed':0,'doc_ids':ids}
+path=Path('artifacts/my-sample-selection.json')
+path.parent.mkdir(parents=True,exist_ok=True)
+with path.open('x') as stream: stream.write(json.dumps(value)+'\n')
+PYSAMPLE
+GURADB_SAMPLE_CONFIG=/Users/chad/dev/guradb/artifacts/clip-real-model-demo/corpus/config.json
+docker run --rm --network none --cpus 4 --memory 512m --pids-limit 128 -v "$PWD/target/debug/guradb:/guradb:ro" -v "$(dirname "$GURADB_SAMPLE_CONFIG"):/data:ro" -v "$PWD/artifacts:/selection:ro" guradb-rust:1.90.0 /guradb sample --config /data/config.json --selection /selection/my-sample-selection.json
+GURADB_TORCH_PYTHON=/Users/chad/dev/guradb-data/offline-envs/clip-vit-b32-py312-20261030/bin/python
+"$GURADB_TORCH_PYTHON" scripts/sample_torch_client.py --config "$GURADB_SAMPLE_CONFIG" --selection artifacts/my-sample-selection.json --output-dir artifacts/my-sample-reader
+```
+
+Rust返回format1/model not_used/source_sha256/selection_sha256/seed/algorithm/order/groups/selected_doc_ids/train/validation。该fixture seed0验证asset397133、其余252219/403385训练，seed2验证403385；同图caption不跨组，显式子集合不会扩成同图全caption。每split按DocID升序，不受request输入顺序影响；两个相同字节request输出相同，改变请求成员/seed按规则重算。每次源/媒体失配拒绝，不追随新的latest。
+
+实际DataLoader生成membership.json与epochs.json，model not_used，固定`pillow13-rgb-bilinear32-uint8-chw-v1`；两epoch分别train10批4/4/2、val5批4/1，tensor批维`[N,3,32,32]`/torch.uint8。每样本DocID/text/asset/source+原media SHA/字节数与像素SHA、实际包/解释器/脚本版本、稳定顺序/尾批/资源入报告。manifest_content_sha256按`python-json-sort-keys-default-separators-ascii-v1`计算内容摘要（不是pretty文件bytes SHA）。无model推理/optimizer/随机训练；仅数据与reader复现，不能称训练结果复现。
+
+首作者实际seed42：train10/val5、两epoch批4/4/2与4/1，返回媒体payload4,252,630B，8.829秒/峰223,608,832B/算子4；不是性能baseline。当前已通过独立原源成员/分组、真实两epoch/尾批与必要拒绝/取消清理验收。worker收到TERM由finally清自有container，若stopped/强杀父按worker精确owner label清；工作120秒、额外失败清理30秒、峰4GiB/计算线程4。示例输出目录已存在拒绝，失败清本次新目录，原输入/bundle/cache/env不改。
+
+单独sample示例显式只读挂载config父目录/selection目录及实际binary，容器关闭网络/512MiB/128PIDs；host绝对路径通过/data与/selection映射。reader自己的RustCLI同样显式/data挂载，Torch工作进程仍按4GiB/120秒+30秒清理合同。通用cargo wrapper保持原行为，不隐式重写caller路径。
+
+非作者当前806d脚本公开reader的30成员原文/media身份/CHW像素与独立原源/stride oracle全同，23Rust选择矩阵/11生命周期及真实Rust pipe124/130/1恢复通过。只限数据与reader消费可复现；model not_used、无encoder/训练优化，未授训练结果/完整M1/P0或发行资格。

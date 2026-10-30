@@ -119,6 +119,14 @@ class AlphaStageTests(unittest.TestCase):
             with self.assertRaisesRegex(HarnessError, 'unmapped changes'):
                 bound_plan(ROOT, [path], *load(ROOT)[:3], stage='core', core_flow='simple-alpha')
 
+    def test_torch_consumer_has_exact_mapping_and_full_rust_core(self):
+        profile = bound_plan(ROOT, ['scripts/sample_torch_client.py'], *load(ROOT)[:3],
+                             stage='core', core_flow='simple-alpha')['profile']
+        self.assertEqual(list(profile['suites']), ['repository', 'policy', 'harness-tests', 'python', 'rust', 'functional'])
+        self.assertEqual(len(profile['suites']['rust']['commands']), 3)
+        with self.assertRaisesRegex(HarnessError, 'unmapped changes'):
+            bound_plan(ROOT, ['scripts/unknown_torch_consumer.py'], *load(ROOT)[:3], stage='core', core_flow='simple-alpha')
+
     def test_retired_runtime_reappearance_unknown_change_and_wrong_flow_reject(self):
         self.write('modules/index/server.py', 'pass\n')
         with self.assertRaisesRegex(HarnessError, 'retired path still present|Python online'):

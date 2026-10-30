@@ -3,6 +3,7 @@ mod execution;
 mod features;
 mod media;
 mod media_path;
+mod sample;
 mod search;
 mod source;
 mod sql;
@@ -90,12 +91,14 @@ async fn main() {
         && args[1] == "search"
         && args[2] == "--config"
         && args[4] == "--query";
+    let is_sample =
+        args.len() == 6 && args[1] == "sample" && args[2] == "--config" && args[4] == "--selection";
     let vector_request = match vector::parse(&args) {
         Ok(r) => r,
         Err(e) => fail(e, 1),
     };
-    if !is_query && !is_media && !is_search && vector_request.is_none() {
-        fail(Error::new("invalid_config", "usage: guradb query --config <file> --sql <SELECT> OR media --config <file> --asset-id <id> --source-sha256 <hit SHA> OR search --config <file> --query <text> [--top-k <1..20>] OR vector|hybrid with pinned features/query/top-k"), 1);
+    if !is_query && !is_media && !is_search && !is_sample && vector_request.is_none() {
+        fail(Error::new("invalid_config", "usage: guradb query --config <file> --sql <SELECT> OR media --config <file> --asset-id <id> --source-sha256 <hit SHA> OR search --config <file> --query <text> [--top-k <1..20>] OR vector|hybrid with pinned features/query/top-k OR sample --config <file> --selection <file>"), 1);
     }
     let path = PathBuf::from(&args[3]);
     let bytes = match source::read_bounded(&path, 16384).await {
@@ -178,6 +181,9 @@ async fn main() {
             .build();
         let result = match runtime {
             Ok(runtime) => runtime.block_on(async move {
+                if is_sample {
+                    return sample::run(config, PathBuf::from(statement), media_root).await;
+                }
                 if let Some(request) = vector_request {
                     return vector::run(config, request).await;
                 }
