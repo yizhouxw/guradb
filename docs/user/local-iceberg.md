@@ -26,7 +26,7 @@ format-v2、unpartitioned（单空spec0）、单固定schema（ID与每列fieldI
 
 已有符合上述白名单的真实Iceberg表即可读取，不要求消费者安装PyIceberg；官方writer仅工程准备。已验writer为PyIceberg0.10.0/SQLAlchemy2.0.43/Arrow22/NumPy2.5.4，表属性显式`format-version=2`、`write.avro.compression-codec=null`、`write.parquet.compression-codec=snappy`。PyIceberg默认gzip/deflate不在本片支持范围。完整overwrite可有中间DELETE snapshot；选择其中0live者会按本片1–2live约束明确拒绝，不冒行级删除支持。源生成可参考[官方PyIceberg API](https://py.iceberg.apache.org/api/)，准确的历史snapshot ID和metadata版本由其writer返回；不遍历目录猜最新。
 
-按[预览安装](local-preview.md)安装本片具名`guradb-iceberg-preview-macos-arm64-docker-linux-arm64.pyz`到新PREFIX（实际SHA和源码身份取相邻同basename.json清单，不覆盖旧包）。USER_DATA包含真实`table/`，METADATA设置为writer提供的确切metadata相对路径，METADATA_SHA为可信版本的SHA256，SNAPSHOT为明确选中的正整数ID，READSET_RECEIPT为自己尚不存在的输出文件：
+按[预览安装](local-preview.md)安装本片具名`guradb-iceberg-twofile-preview-macos-arm64-docker-linux-arm64.pyz`到新PREFIX（实际SHA和源码身份取相邻同basename.json清单，不覆盖旧包）。旧`guradb-iceberg-preview-macos-arm64-docker-linux-arm64.pyz`保留原单live能力，不可用它验证双文件；升级使用新prefix并存。USER_DATA包含真实`table/`，METADATA设置为writer提供的确切metadata相对路径，METADATA_SHA为可信版本的SHA256，SNAPSHOT为明确选中的正整数ID，READSET_RECEIPT为自己尚不存在的输出文件：
 
 ```sh
 "$PREFIX/bin/guradb" --data-root "$USER_DATA" iceberg inspect --table-root /data/table --metadata "$METADATA" --metadata-sha256 "$METADATA_SHA" --snapshot "$SNAPSHOT" > "$READSET_RECEIPT"
