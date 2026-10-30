@@ -14,4 +14,4 @@
 
 [有界分组与基础聚合](group-aggregates.md)已通过本机受限语义验证，单group/完整输入最多200行；完整SQL/M2未支持。
 
-[本地Iceberg固定快照](local-iceberg.md)为单live文件/Null Avro/固定schema的本机受限入口，完整湖未支持。
+[本地Iceberg固定快照](local-iceberg.md)为1–2live文件/Null Avro/固定schema的本机受限入口，完整湖未支持。

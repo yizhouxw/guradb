@@ -108,3 +108,50 @@ fn readset_digest_is_root_independent_and_binds_every_relative_file() {
         b"guradb-iceberg-readset-v1\n12345678-1234-1234-1234-123456789abc\n11\n0\na\0aa\nb\0bb\n";
     assert_eq!(set.pin(&meta), hash(bytes));
 }
+
+#[test]
+fn two_data_source_identity_is_ordered_domain_separated_and_single_unchanged() {
+    let files = vec![
+        SourceFile {
+            path: "data/a.parquet".into(),
+            sha256: "a".repeat(64),
+            size_bytes: 5,
+            record_count: 2,
+        },
+        SourceFile {
+            path: "data/b.parquet".into(),
+            sha256: "b".repeat(64),
+            size_bytes: 7,
+            record_count: 3,
+        },
+    ];
+    let preimage = format!(
+        "guradb-iceberg-data-files-v1\ntable-uuid\ndata/a.parquet\0{}\ndata/b.parquet\0{}\n",
+        "a".repeat(64),
+        "b".repeat(64)
+    );
+    assert_eq!(
+        source_identity("table-uuid", &files).unwrap(),
+        hash(preimage.as_bytes())
+    );
+    assert_eq!(
+        source_identity("table-uuid", &files[..1]).unwrap(),
+        "a".repeat(64)
+    );
+    assert!(source_identity("table-uuid", &[]).is_err());
+    let reversed = vec![
+        SourceFile {
+            path: "b".into(),
+            sha256: "b".repeat(64),
+            size_bytes: 1,
+            record_count: 1,
+        },
+        SourceFile {
+            path: "a".into(),
+            sha256: "a".repeat(64),
+            size_bytes: 1,
+            record_count: 1,
+        },
+    ];
+    assert!(source_identity("table-uuid", &reversed).is_err());
+}

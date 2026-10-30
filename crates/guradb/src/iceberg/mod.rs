@@ -108,7 +108,7 @@ struct Readset {
 }
 impl Readset {
     fn read(&mut self, relative: &str, limit: usize, data: bool) -> Result<Vec<u8>> {
-        if self.files.len() == 5 || self.files.contains_key(relative) {
+        if self.files.len() == 6 || self.files.contains_key(relative) {
             return Err(invalid());
         }
         let bytes = self.root.read(relative, limit)?;
@@ -160,6 +160,30 @@ impl Readset {
         Ok(())
     }
 }
+#[derive(serde::Serialize)]
+struct SourceFile {
+    path: String,
+    sha256: String,
+    size_bytes: usize,
+    record_count: usize,
+}
+fn source_identity(uuid: &str, files: &[SourceFile]) -> Result<String> {
+    if files.len() == 1 {
+        return Ok(files[0].sha256.clone());
+    }
+    if files.len() != 2 || files[0].path >= files[1].path {
+        return Err(invalid());
+    }
+    let mut digest = Sha256::new();
+    digest.update(format!("guradb-iceberg-data-files-v1\n{uuid}\n"));
+    for file in files {
+        digest.update(file.path.as_bytes());
+        digest.update(b"\0");
+        digest.update(file.sha256.as_bytes());
+        digest.update(b"\n");
+    }
+    Ok(hex::encode(digest.finalize()))
+}
 async fn run(request: Request) -> Result<String> {
     let mut readset = Readset {
         root: path::Root::open(&request.root)?,
@@ -204,12 +228,28 @@ async fn run(request: Request) -> Result<String> {
             }
         }
     }
-    if live.len() != 1 {
+    if live.is_empty() || live.len() > 2 {
         return Err(invalid());
     }
-    let file = live.pop().ok_or_else(invalid)?;
-    let bytes = readset.read(&file.path, crate::SOURCE_LIMIT, true)?;
-    let source_sha = hash(&bytes);
+    live.sort_by(|a, b| a.path.cmp(&b.path));
+    let mut source_files = Vec::new();
+    let mut captured = Vec::new();
+    let mut source_bytes = 0usize;
+    for file in live {
+        let remaining = crate::SOURCE_LIMIT
+            .checked_sub(source_bytes)
+            .ok_or_else(invalid)?;
+        let bytes = readset.read(&file.path, remaining, true)?;
+        source_bytes = source_bytes.checked_add(bytes.len()).ok_or_else(invalid)?;
+        source_files.push(SourceFile {
+            path: file.path,
+            sha256: hash(&bytes),
+            size_bytes: bytes.len(),
+            record_count: file.rows,
+        });
+        captured.push((Bytes::from(bytes), file.size));
+    }
+    let source_sha = source_identity(&meta.uuid, &source_files)?;
     let readset_sha = readset.pin(&meta);
     if request
         .expected_readset
@@ -221,16 +261,29 @@ async fn run(request: Request) -> Result<String> {
             "Iceberg complete readset differs from requested pin",
         ));
     }
-    if bytes.len() != file.size {
-        return Err(invalid());
+    let mut budget = crate::source::DecodeBudget::default();
+    for ((bytes, size), file) in captured.iter().zip(&source_files) {
+        if bytes.len() != *size {
+            return Err(invalid());
+        }
+        budget.declare(data::validate(bytes.clone(), &meta, file.record_count)?)?;
     }
-    let bytes = Bytes::from(bytes);
-    data::validate(bytes.clone(), &meta, file.rows)?;
-    let (schema, batches) = crate::source::decode_iceberg(bytes)?;
-    let rows: usize = batches.iter().map(|b| b.num_rows()).sum();
-    if rows != file.rows {
-        return Err(invalid());
+    let mut batches = Vec::new();
+    let mut schema = None;
+    let mut rows = 0usize;
+    for ((bytes, _), file) in captured.into_iter().zip(&source_files) {
+        let (current, decoded) = crate::source::decode_iceberg(bytes, &mut budget)?;
+        if decoded.iter().map(|b| b.num_rows()).sum::<usize>() != file.record_count {
+            return Err(invalid());
+        }
+        if schema.as_ref().is_some_and(|previous| previous != &current) {
+            return Err(invalid());
+        }
+        rows = rows.checked_add(file.record_count).ok_or_else(invalid)?;
+        schema = Some(current);
+        batches.extend(decoded);
     }
+    let schema = schema.ok_or_else(invalid)?;
     let mut output: Value = if let Some(sql) = request.sql {
         let columns = meta
             .fields
@@ -254,6 +307,10 @@ async fn run(request: Request) -> Result<String> {
     } else {
         json!({"source_sha256": source_sha, "record_count": rows})
     };
+    if source_files.len() == 2 {
+        output["source_identity"] = json!("iceberg-data-files-v1");
+        output["source_files"] = json!(source_files);
+    }
     output["table_uuid"] = json!(meta.uuid);
     output["snapshot_id"] = json!(meta.snapshot);
     output["schema_id"] = json!(meta.schema_id);

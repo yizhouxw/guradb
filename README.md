@@ -63,4 +63,4 @@ docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspac
 
 [有界COUNT/MIN/MAX与单列GROUP BY](docs/user/group-aggregates.md)为共享Rust query的本机受限增量；完整SQL/M2未支持。
 
-[本地Iceberg v2固定快照](docs/user/local-iceberg.md)为单live Parquet/Null OCF的受限只读入口；不代表完整湖或MCP湖接口。
+[本地Iceberg v2固定快照](docs/user/local-iceberg.md)为1–2live Parquet/Null OCF的受限只读入口；不代表完整湖或MCP湖接口。

@@ -267,13 +267,13 @@
     ],
     "format_version": 2,
     "backend": "bounded local file only; pinned logical metadata.location root maps component-wise into explicit physical root",
-    "snapshot": "explicit ID; one fixed schema; unpartitioned; exactly one live Parquet selected from complete manifests; statuses EXISTING and ADDED live, DELETED inactive",
+    "snapshot": "explicit ID; one fixed schema; unpartitioned; one or two live Parquet files selected from complete manifests; statuses EXISTING and ADDED live regardless of original snapshot ID, DELETED inactive",
     "types": [
       "long/Int64",
       "string/physical Utf8",
       "boolean/Boolean"
     ],
-    "identity": "table UUID/snapshot/schema ID, metadata SHA, full relative-path-sorted readset SHA, source Parquet SHA; inspect observes bytes, query requires cached readset pin and rechecks every byte chain before success",
+    "identity": "single-file output and byte SHA unchanged; two files use source_identity iceberg-data-files-v1 with ordered complete source_files and domain-separated UUID/path/child-SHA source digest; readset-v1 includes every metadata and data path, explicit query pin and final recheck",
     "limits": {
       "metadata_chain_bytes": 2097152,
       "metadata_bytes": 262144,
@@ -283,12 +283,17 @@
       "entries_per_manifest": 32,
       "total_entries": 64,
       "snapshot_records": 8,
-      "files_per_capture_max": 5,
-      "reads_with_final_recheck_max": 10,
+      "files_per_capture_max": 6,
+      "reads_with_final_recheck_max": 12,
       "path_depth": 16,
       "path_component_bytes": 255,
       "path_bytes": 4096,
-      "avro_allocation_bytes": 2097152
+      "avro_allocation_bytes": 2097152,
+      "live_data_files_min": 1,
+      "live_data_files_max": 2,
+      "source_bytes_total": 33554432,
+      "declared_decode_bytes_total": 67108864,
+      "arrow_buffer_bytes_total": 67108864
     },
     "avro_codec": [
       "null"
@@ -302,7 +307,7 @@
       "URI authority, escapes, percent encoding, query/fragment or symlinks",
       "partition/evolution/nested schema or nonzero sort order",
       "position/equality delete or delete manifest",
-      "zero/multiple live files",
+      "zero or more than two live data files",
       "Avro deflate/gzip/snappy/zstandard/other codecs",
       "Parquet codecs outside whitelist",
       "MCP/search/vector/hybrid/sample/managed-write lake integration",
