@@ -4,7 +4,7 @@ use arrow::{
     record_batch::RecordBatch,
 };
 use bytes::Bytes;
-use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
+use parquet::arrow::arrow_reader::{ArrowReaderOptions, ParquetRecordBatchReaderBuilder};
 use sha2::{Digest, Sha256};
 use std::path::Path;
 use tokio::io::AsyncReadExt;
@@ -55,8 +55,22 @@ pub async fn snapshot(path: &Path, expected: &str) -> Result<Bytes> {
 }
 
 pub fn decode(bytes: Bytes) -> Result<(SchemaRef, Vec<RecordBatch>)> {
+    decode_with_options(bytes, false)
+}
+
+/// Iceberg validates physical field IDs and restores physical UTF8 independently
+/// of optional producer ARROW:schema annotations. Direct inputs are unchanged.
+pub fn decode_iceberg(bytes: Bytes) -> Result<(SchemaRef, Vec<RecordBatch>)> {
+    decode_with_options(bytes, true)
+}
+
+fn decode_with_options(bytes: Bytes, physical: bool) -> Result<(SchemaRef, Vec<RecordBatch>)> {
     let invalid = || Error::new("source_invalid", "invalid or unsupported Parquet");
-    let builder = ParquetRecordBatchReaderBuilder::try_new(bytes).map_err(|_| invalid())?;
+    let builder = ParquetRecordBatchReaderBuilder::try_new_with_options(
+        bytes,
+        ArrowReaderOptions::new().with_skip_arrow_metadata(physical),
+    )
+    .map_err(|_| invalid())?;
     let schema = builder.schema().clone();
     if schema.fields().is_empty()
         || schema.fields().len() > 64
