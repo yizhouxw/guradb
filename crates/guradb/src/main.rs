@@ -1,6 +1,7 @@
 mod compile;
 mod execution;
 mod features;
+mod mcp;
 mod media;
 mod media_path;
 mod sample;
@@ -82,6 +83,10 @@ fn fail(error: Error, status: i32) -> ! {
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
     let args: Vec<_> = std::env::args().collect();
+    if args.get(1).is_some_and(|s| s == "mcp") {
+        let status = mcp::entry(&args);
+        std::process::exit(status);
+    }
     if args.get(1).is_some_and(|s| s == "view") {
         view::entry(args).await;
         return;

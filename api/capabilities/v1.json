@@ -175,7 +175,40 @@
       "automatic runtime download",
       "remote daemon",
       "global PATH changes",
-      "release certification/MCP"
+      "release certification/full MCP"
+    ]
+  },
+  "local_mcp": {
+    "protocol": "2025-06-18",
+    "transport": "stdio UTF8 single JSON per line",
+    "tools": [
+      "guradb_query",
+      "guradb_search",
+      "guradb_media"
+    ],
+    "execution": "same Rust executable readonly view CLI worker",
+    "media": "concrete view ID mandatory; original bytes_hex and source/view identity",
+    "limits": {
+      "request_bytes": 65536,
+      "response_bytes": 2097152,
+      "session_output_bytes": 8388608,
+      "messages": 32,
+      "session_seconds": 60,
+      "input_seconds": 10,
+      "write_seconds": 5,
+      "worker_seconds": 10,
+      "cleanup_seconds": 2,
+      "inflight": 1,
+      "pending_output": 1,
+      "launcher_mcp_seconds": 75
+    },
+    "unsupported": [
+      "MCP vector/hybrid/sample",
+      "mutation",
+      "arbitrary files/commands/URLs",
+      "HTTP",
+      "global registration",
+      "full MCP compatibility"
     ]
   }
 }

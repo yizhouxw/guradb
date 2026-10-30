@@ -58,3 +58,5 @@ docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspac
 [完整特征视图与固定reader](docs/user/simple-alpha.md#完整特征视图与固定reader)已通过有限验收：完整绑定依赖并跨current消费旧view；完整M1.5仍未交付。
 
 [脱离开发树的本机预览安装](docs/user/local-preview.md)已通过本机有限验证；仅明确的Mac-arm/Docker LinuxARM形态，完整发行/MCP仍未认证。
+
+[本地stdio MCP三只读工具](docs/user/local-mcp.md)已通过本机官方SDK有限验收；只支持view query/search/media，完整MCP/M1.5仍未宣称。

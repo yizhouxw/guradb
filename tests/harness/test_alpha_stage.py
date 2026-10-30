@@ -180,6 +180,15 @@ class AlphaStageTests(unittest.TestCase):
         actual = source_inventory(self.root, *self.config[:2], ['alpha'])
         self.assertEqual(set(actual), {'crates/guradb/src/main.rs'})
 
+    def test_official_mcp_client_lock_keeps_all_core_and_other_locks_reject(self):
+        profile = bound_plan(ROOT, ['docs/user/mcp-client-requirements.lock'], *load(ROOT)[:3],
+                             stage='core', core_flow='simple-alpha')['profile']
+        self.assertEqual(list(profile['suites']), ['repository', 'policy', 'harness-tests', 'python', 'rust', 'functional'])
+        self.assertEqual(len(profile['suites']['rust']['commands']), 3)
+        with self.assertRaisesRegex(HarnessError, 'unmapped changes'):
+            bound_plan(ROOT, ['docs/user/unregistered-client.lock'], *load(ROOT)[:3],
+                       stage='core', core_flow='simple-alpha')
+
 
 if __name__ == '__main__':
     unittest.main()
