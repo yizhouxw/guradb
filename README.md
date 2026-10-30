@@ -56,3 +56,5 @@ docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspac
 [本地固定视图与完整刷新](docs/user/simple-alpha.md#本地固定视图与完整刷新)已通过首包有限验收：两本地完整版本、准备就绪发布与公开重启对账；未接通view模式明确拒绝。
 
 [完整特征视图与固定reader](docs/user/simple-alpha.md#完整特征视图与固定reader)已通过有限验收：完整绑定依赖并跨current消费旧view；完整M1.5仍未交付。
+
+[脱离开发树的本机预览安装](docs/user/local-preview.md)已通过本机有限验证；仅明确的Mac-arm/Docker LinuxARM形态，完整发行/MCP仍未认证。
