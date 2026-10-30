@@ -24,8 +24,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def main() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] == "resources":
+        from harnesslib.resource_records import cli
+        return cli(sys.argv[2:])
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    commands.add_parser("resources", help="validate resource observations; bounded nofollow snapshot/compare/account")
     commands.add_parser("lint", help="validate policies, source ownership and Cargo module edges")
     planner = commands.add_parser("plan", help="classify changes; planning is not test evidence")
     planner.add_argument("--base", default="auto")

@@ -30,3 +30,5 @@ python3 -m venv .venv
 普通PR、非作者验收和精确main证据继续，Actions/部署保持暂停。
 
 团队/调度唯一规范仍是[team-collaboration](team-collaboration.md)，本次不修改组织职责。
+
+[资源记录与metadata基线](resource-records.md)为内部工程入口，当前待实现验收；不删除资源或证明历史峰值。
