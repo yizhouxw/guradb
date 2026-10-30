@@ -34,3 +34,5 @@ python3 -m venv .venv
 [资源记录与metadata基线](resource-records.md)为内部工程入口，已完成有限工程验收；不删除资源或证明历史峰值。
 
 当前本机离线Rust执行器`scripts/cargo.py`只inspect并使用既有Linux ARM64工具链镜像`sha256:09bc0a87408c56bd4fe912df3ba3d499ea2279ea32cdeddf051a7a3dd3ddb52f`；不隐式docker build/pull或安装rustup组件。缺镜像/架构不符明确拒；运行network none/CARGO_NET_OFFLINE=true，既有locked/fmt/clippy/test命令与门禁不变。该机器前置不代表跨平台CI/首次工具链安装已支持，Dockerfile仅保留构建来源。
+
+音频包先行工程约束（待独验）：Cargo以jobs1串行链接以控制临时共存。clippy完整成功后，仅对该命令启动前不存在、结束后普通文件且无同hash .rlib配对的check-only rmeta，逐完整lstat身份核验再退出；保所有借前路径及matching build-rmeta/rlib/native。原fmt/locked clippy/test命令、结果和阈值不变，任何guard失败为非零；不把缓存退出当门禁通过。阶段原始日志/前后metadata与计费仍归TASK，最后M证据后本片newcache另完整guard退出。

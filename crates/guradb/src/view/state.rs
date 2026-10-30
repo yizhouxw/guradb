@@ -319,6 +319,7 @@ impl Store {
         full_features: bool,
     ) -> Result<()> {
         directory(root)?;
+        let mut assets = 0;
         for e in fs::read_dir(root).map_err(|_| invalid())? {
             let e = e.map_err(|_| invalid())?;
             match e.file_name().to_str() {
@@ -346,33 +347,33 @@ impl Store {
                     }
                     *data += n;
                 }
-                Some("images") => {
+                Some(kind @ ("images" | "audio")) if kind == "images" || !full_features => {
                     directory(&e.path())?;
-                    let mut count = 0;
-                    for image in fs::read_dir(e.path()).map_err(|_| invalid())? {
-                        let image = image.map_err(|_| invalid())?;
-                        let name = image.file_name();
+                    let extension = if kind == "images" { ".jpg" } else { ".wav" };
+                    for asset in fs::read_dir(e.path()).map_err(|_| invalid())? {
+                        let asset = asset.map_err(|_| invalid())?;
+                        let name = asset.file_name();
                         let name = name.to_str().ok_or_else(invalid)?;
                         if !name.is_ascii()
                             || name.len() != 16
-                            || !name.ends_with(".jpg")
+                            || !name.ends_with(extension)
                             || !name[..12].bytes().all(|b| b.is_ascii_digit())
                         {
                             return Err(invalid());
                         }
-                        regular(&image.path())?;
-                        let n = image.metadata().map_err(|_| invalid())?.len();
+                        regular(&asset.path())?;
+                        let n = asset.metadata().map_err(|_| invalid())?.len();
                         if n > crate::media::MEDIA_LIMIT as u64 {
                             return Err(Error::new("resource_limit", "owned media exceeds budget"));
                         }
                         *data += n;
-                        count += 1;
-                    }
-                    if count > 3 {
-                        return Err(Error::new(
-                            "resource_limit",
-                            "owned view exceeds three images",
-                        ));
+                        assets += 1;
+                        if assets > 3 {
+                            return Err(Error::new(
+                                "resource_limit",
+                                "owned view exceeds three assets",
+                            ));
+                        }
                     }
                 }
                 _ => return Err(invalid()),

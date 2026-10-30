@@ -14,7 +14,7 @@ pub(crate) struct Doc {
     pub(crate) text: String,
     pub(crate) dl: usize,
     pub(crate) tf: [usize; 8],
-    pub(crate) image_id: Option<i64>,
+    pub(crate) asset_id: Option<i64>,
 }
 fn invalid() -> Error {
     Error::new(
@@ -72,8 +72,12 @@ pub(crate) fn documents(
     batches: &[RecordBatch],
     terms: &[String],
 ) -> Result<(Vec<Doc>, bool)> {
+    let v2 = media::version2(schema);
     let has_media = schema.fields().iter().any(|f| {
         [
+            "asset_id",
+            "asset_path",
+            "asset_type",
             "image_id",
             "image_path",
             "media_version",
@@ -86,13 +90,23 @@ pub(crate) fn documents(
         "doc_id",
         "text",
         "text_version",
+        "asset_id",
+        "asset_path",
+        "asset_type",
         "image_id",
         "image_path",
         "media_version",
         "media_bytes",
         "media_sha256",
     ];
-    if schema.fields().len() != if has_media { 8 } else { 3 }
+    if schema.fields().len()
+        != if v2 {
+            9
+        } else if has_media {
+            8
+        } else {
+            3
+        }
         || schema
             .fields()
             .iter()
@@ -106,8 +120,12 @@ pub(crate) fn documents(
     let id = column(schema, "doc_id", DataType::Utf8)?;
     let text = column(schema, "text", DataType::Utf8)?;
     let version = column(schema, "text_version", DataType::Int64)?;
-    let image = if has_media {
-        Some(column(schema, "image_id", DataType::Int64)?)
+    let asset_column = if has_media {
+        Some(column(
+            schema,
+            if v2 { "asset_id" } else { "image_id" },
+            DataType::Int64,
+        )?)
     } else {
         None
     };
@@ -196,7 +214,7 @@ pub(crate) fn documents(
             if total_tokens > 65536 {
                 return Err(Error::new("resource_limit", "corpus exceeds 65536 tokens"));
             }
-            let image_id = match image {
+            let asset_id = match asset_column {
                 Some(i) => Some(
                     batch
                         .column(i)
@@ -212,7 +230,7 @@ pub(crate) fn documents(
                 text: value.into(),
                 dl,
                 tf,
-                image_id,
+                asset_id,
             });
         }
     }
@@ -287,10 +305,10 @@ pub async fn run(config: Config, query: String, top_k: usize) -> Result<String> 
     let mut hits = Vec::new();
     for &(index, score) in scored.iter().take(top_k) {
         let d = &docs[index];
-        let identity = match (&media, d.image_id) {
+        let identity = match (&media, d.asset_id) {
             (Some(assets), Some(id)) => {
                 let asset = assets.get(&id).ok_or_else(invalid)?;
-                json!({"asset_id":id.to_string(),"image_path":asset.path,"media_sha256":asset.sha256,"media_bytes":asset.size,"media_version":1})
+                asset.identity(id)
             }
             _ => serde_json::Value::Null,
         };

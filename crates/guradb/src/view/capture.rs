@@ -1,5 +1,5 @@
 use super::state::{self, Store};
-use crate::{media, media_path, search, source, Config, Error, Result};
+use crate::{media, search, source, Config, Error, Result};
 use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -28,12 +28,12 @@ pub async fn validate(
     if !has_media {
         return Err(Error::new(
             "unsupported_view_input",
-            "view requires generic text and media v1",
+            "view requires generic text and a supported media binding",
         ));
     }
     let assets = media::assets(&schema, &batches)?;
-    for (id, a) in &assets {
-        let p = media_path::read(root, &format!("{id:012}.jpg"), a.size)?;
+    for a in assets.values() {
+        let p = media::checked_bytes(root, a)?;
         if hex::encode(Sha256::digest(&p)) != a.sha256 {
             return Err(Error::new(
                 "media_changed",
@@ -51,12 +51,21 @@ pub async fn capture(
     feature_path: Option<&Path>,
 ) -> Result<()> {
     let (b, assets, ids) = validate(c, origin).await?;
+    if feature_path.is_some() && assets.values().any(|a| a.version == 2) {
+        return Err(Error::new(
+            "unsupported_media_contract",
+            "media v2 cannot bind feature views",
+        ));
+    }
     let dir = s.root.join(".staging");
     fs::create_dir(&dir).map_err(|_| state::invalid())?;
     fs::create_dir(dir.join("images")).map_err(|_| state::invalid())?;
+    if assets.values().any(|a| a.kind == "audio/wav") {
+        fs::create_dir(dir.join("audio")).map_err(|_| state::invalid())?;
+    }
     state::write(&dir.join("records.parquet"), &b)?;
-    for (id, a) in assets {
-        let p = media_path::read(origin, &format!("{id:012}.jpg"), a.size)?;
+    for a in assets.into_values() {
+        let p = media::checked_bytes(origin, &a)?;
         if hex::encode(Sha256::digest(&p)) != a.sha256 {
             return Err(Error::new("media_changed", "media changed during capture"));
         }
@@ -82,6 +91,9 @@ pub async fn capture(
     )?;
     source::snapshot(&c.source, &c.sha256).await?;
     state::sync_dir(&dir.join("images"))?;
+    if dir.join("audio").exists() {
+        state::sync_dir(&dir.join("audio"))?;
+    }
     state::sync_dir(&dir)?;
     fs::rename(&dir, s.object(&record.id)).map_err(|_| state::invalid())?;
     state::sync_dir(&s.root.join("objects"))?;
@@ -97,7 +109,13 @@ pub async fn owned(s: &Store, record: &state::Record) -> Result<(Config, PathBuf
     {
         return Err(state::invalid());
     }
-    let (_, _, ids) = validate(&c, &p).await?;
+    let (_, assets, ids) = validate(&c, &p).await?;
+    if record.features.is_some() && assets.values().any(|a| a.version == 2) {
+        return Err(Error::new(
+            "unsupported_media_contract",
+            "media v2 cannot bind feature views",
+        ));
+    }
     if let Some(bound) = &record.features {
         state::regular(&p.join("features.jsonl"))?;
         let loaded =

@@ -88,6 +88,7 @@ pub async fn inspect(
     digest.update(&encoded);
     let schema_id = hex::encode(digest.finalize());
     let bound = if let Some((path, pin)) = features {
+        crate::media::reject_v2(&schema)?;
         let loaded = feature_input::load(path, pin, &config.sha256, &ids).await?;
         feature_input::snapshot(path, pin).await?;
         Some(state::BoundFeatures {

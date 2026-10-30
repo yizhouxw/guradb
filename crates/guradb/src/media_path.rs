@@ -32,12 +32,26 @@ fn child(parent: &File, name: &str, directory: bool) -> Result<File> {
 }
 
 pub fn read(root: &Path, file_name: &str, expected_size: usize) -> Result<Vec<u8>> {
+    read_typed(root, "images", file_name, expected_size)
+}
+pub(crate) fn read_typed(
+    root: &Path,
+    directory: &str,
+    file_name: &str,
+    expected_size: usize,
+) -> Result<Vec<u8>> {
+    if !matches!(directory, "images" | "audio")
+        || file_name.contains('/')
+        || file_name.contains("..")
+    {
+        return Err(Error::new("media_invalid", "invalid media path"));
+    }
     let root = OpenOptions::new()
         .read(true)
         .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC)
         .open(root)
         .map_err(|_| Error::new("media_invalid", "media root is unavailable or linked"))?;
-    let directory = child(&root, "images", true)?;
+    let directory = child(&root, directory, true)?;
     let file = child(&directory, file_name, false)?;
     let metadata = file
         .metadata()

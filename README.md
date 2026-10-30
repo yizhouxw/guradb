@@ -1,6 +1,6 @@
 # GuraDB 单机 Rust alpha
 
-当前alpha支持可信单用户、每次操作一份本地固定Parquet源，通过一个Rust CLI进程执行有界只读SQL、受限ASCII英文BM25排名，并取得同一输入显式绑定的本地JPEG证据字节。本地双视图完整刷新首包已通过有限验收，完整M1.5仍未交付。
+当前alpha支持可信单用户、每次操作一份本地固定Parquet源，通过一个Rust CLI进程执行有界只读SQL、受限ASCII英文BM25排名，并取得同一输入显式绑定的本地JPEG与受限PCM16 WAV证据字节。本地双视图完整刷新首包已通过有限验收，完整M1.5仍未交付。
 支持受限的caption字面关键词过滤；没有HTTP/PG监听器、Python在线服务、模型推理、语义相关性认证、ANN、训练或分布式worker。
 详细支持/拒绝、输入SHA256和退出语义见[用户手册](docs/user/simple-alpha.md)。
 
@@ -66,3 +66,5 @@ docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspac
 [本地Iceberg v2固定快照](docs/user/local-iceberg.md)为1–2live Parquet/Null OCF的受限只读入口；不代表完整湖或MCP湖接口。
 
 [WHERE有界标量值参数](docs/user/sql-parameters.md)为现query的$1..$16 typed值绑定，CLI及现MCP guradb_query共用Rust，原源身份与SQL边界不扩；不是PG prepared协议。
+
+[真实PCM16 WAV混合媒体证据](docs/user/audio-evidence.md)：外部标题命中→同源typed ID/SHA→完整音频bytes/元数据与独立PCM帧消费，保持旧JPEGv1，不做ASR或音频模型。

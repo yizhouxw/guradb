@@ -19,6 +19,7 @@ mod sql;
 mod tests;
 mod vector;
 mod view;
+mod wav;
 
 use serde::{Deserialize, Serialize};
 use std::{path::PathBuf, sync::Arc, time::Duration};
