@@ -9,12 +9,12 @@ use serde_json::json;
 use std::collections::BTreeSet;
 const K1: f64 = 1.2;
 const B: f64 = 0.75;
-struct Doc {
-    id: String,
-    text: String,
-    dl: usize,
-    tf: [usize; 8],
-    image_id: Option<i64>,
+pub(crate) struct Doc {
+    pub(crate) id: String,
+    pub(crate) text: String,
+    pub(crate) dl: usize,
+    pub(crate) tf: [usize; 8],
+    pub(crate) image_id: Option<i64>,
 }
 fn invalid() -> Error {
     Error::new(
@@ -30,7 +30,7 @@ fn words(text: &str) -> impl Iterator<Item = &str> {
     text.split(|c: char| !c.is_ascii_alphanumeric())
         .filter(|s| !s.is_empty())
 }
-fn terms(query: &str) -> Result<Vec<String>> {
+pub(crate) fn terms(query: &str) -> Result<Vec<String>> {
     if query.len() > 256 || !printable(query) {
         return Err(Error::new(
             "invalid_search_query",
@@ -67,7 +67,7 @@ fn column(schema: &SchemaRef, name: &str, kind: DataType) -> Result<usize> {
     }
     Ok(indexes[0].0)
 }
-fn documents(
+pub(crate) fn documents(
     schema: &SchemaRef,
     batches: &[RecordBatch],
     terms: &[String],
@@ -225,16 +225,14 @@ fn contribution(idf: f64, tf: usize, dl: usize, avgdl: f64) -> f64 {
         idf * tf as f64 * (K1 + 1.0) / (tf as f64 + K1 * (1.0 - B + B * dl as f64 / avgdl))
     }
 }
-pub async fn run(config: Config, query: String, top_k: usize) -> Result<String> {
-    let terms = terms(&query)?;
-    let bytes = source::snapshot(&config.source, &config.sha256).await?;
-    let (schema, batches) = source::decode(bytes)?;
-    let (docs, has_media) = documents(&schema, &batches, &terms)?;
-    let media = if has_media {
-        Some(media::assets(&schema, &batches)?)
-    } else {
-        None
-    };
+pub(crate) struct Scores {
+    pub(crate) ranked: Vec<(usize, f64)>,
+    pub(crate) total_tokens: usize,
+    pub(crate) avgdl: f64,
+    pub(crate) df: Vec<usize>,
+    pub(crate) idf: Vec<f64>,
+}
+pub(crate) fn scores(docs: &[Doc], terms: &[String]) -> Result<Scores> {
     let n = docs.len();
     let total_tokens = docs.iter().map(|d| d.dl).sum::<usize>();
     let avgdl = total_tokens as f64 / n as f64;
@@ -258,6 +256,33 @@ pub async fn run(config: Config, query: String, top_k: usize) -> Result<String> 
         }
     }
     scored.sort_by(|(a, sa), (b, sb)| sb.total_cmp(sa).then_with(|| docs[*a].id.cmp(&docs[*b].id)));
+    Ok(Scores {
+        ranked: scored,
+        total_tokens,
+        avgdl,
+        df,
+        idf,
+    })
+}
+
+pub async fn run(config: Config, query: String, top_k: usize) -> Result<String> {
+    let terms = terms(&query)?;
+    let bytes = source::snapshot(&config.source, &config.sha256).await?;
+    let (schema, batches) = source::decode(bytes)?;
+    let (docs, has_media) = documents(&schema, &batches, &terms)?;
+    let media = if has_media {
+        Some(media::assets(&schema, &batches)?)
+    } else {
+        None
+    };
+    let n = docs.len();
+    let Scores {
+        ranked: scored,
+        total_tokens,
+        avgdl,
+        df,
+        idf,
+    } = scores(&docs, &terms)?;
     let truncated = scored.len() > top_k;
     let mut hits = Vec::new();
     for &(index, score) in scored.iter().take(top_k) {

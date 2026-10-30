@@ -1,7 +1,7 @@
 # GuraDB 单机 Rust alpha
 
 当前alpha只支持可信单用户的一份本地固定Parquet源，通过一个Rust CLI进程执行有界只读SQL、受限ASCII英文BM25排名，并取得同一输入显式绑定的本地JPEG证据字节。
-支持受限的caption字面关键词过滤；没有HTTP/PG监听器、Python在线服务、语义/向量检索、训练或分布式worker。
+支持受限的caption字面关键词过滤；没有HTTP/PG监听器、Python在线服务、模型推理、语义相关性认证、ANN、训练或分布式worker。
 详细支持/拒绝、输入SHA256和退出语义见[用户手册](docs/user/simple-alpha.md)。
 
 以下命令在仓库根目录执行，需要Docker。已有.venv且已安装锁定依赖时，可从构建命令开始。
@@ -46,3 +46,5 @@ docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspac
 [准确媒体证据](docs/user/simple-alpha.md#从命中读取准确媒体字节)：同一Parquet绑定ID/媒体摘要，经Rust核验后取有界JPEG bytes。
 
 [可换本地语料BM25排名](docs/user/simple-alpha.md#可换本地语料的bm25排名)：公开JSONL/本地素材输入，Rust固定英文分析器与可解释分数，同源原文与媒体身份。
+
+[外部固定特征精确向量与RRF数值首包](docs/user/simple-alpha.md#外部固定特征的精确向量与rrf数值首包)已通过数值组件验收；模型/语义有效性仍未认证。
