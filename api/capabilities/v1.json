@@ -31,7 +31,7 @@
     "Python server",
     "object store",
     "JOIN/aggregate/functions",
-    "ANN/BM25/graph",
+    "ANN/graph",
     "training",
     "multi-tenant authorization",
     "distributed workers"
@@ -49,5 +49,33 @@
       "output_bytes": 2097152
     },
     "failure": "source mismatch, missing/changed media, unsupported version, invalid/conflicting binding, nonregular/linked files, byte/time/output limits; complete JSON and exit0 required"
+  },
+  "ranked_text": {
+    "entrypoint": "guradb search --config <file> --query <ASCII text> [--top-k <1..20>]",
+    "input_version": 1,
+    "fields": [
+      "doc_id/Utf8",
+      "text/Utf8",
+      "text_version/Int64=1"
+    ],
+    "optional_media": "all five media-v1 fields; one asset per doc, same source SHA; text-only media=null",
+    "algorithm": "bm25-positive-idf-v1; k1=1.2 b=.75; full corpus DF/dl/avgdl; tf*(k1+1)",
+    "analyzer": "ascii-alnum-lower-v1; no stopwords/stemming; query tokens deduplicated",
+    "order": "actual f64 score descending; exactly equal then doc_id ASCII ascending",
+    "limits": {
+      "documents": 200,
+      "text_bytes": 262144,
+      "document_bytes": 8192,
+      "token_bytes": 64,
+      "document_tokens": 2048,
+      "total_tokens": 65536,
+      "query_bytes": 256,
+      "query_tokens": 8,
+      "top_k_default": 10,
+      "top_k_max": 20
+    },
+    "preparation": "prepare_text_corpus.py caller JSONL/local JPEG, no COCO/ZIP/preset dependency",
+    "response": "original text, stable doc_id, score/TF/DF/dl/avgdl explanation and same-source media evidence identity",
+    "unsupported": "unknown versions/layouts, duplicate doc IDs, NULL, nonASCII or unsupported controls (tab/CR/LF allowed), arbitrary analyzer/parameters, persistent index, relevance certification"
   }
 }

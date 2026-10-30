@@ -1,4 +1,4 @@
-# 单机 Rust SQL alpha（有界核心用例已通过非作者验收）
+# 单机 Rust alpha（有界核心用例已通过非作者验收）
 
 本次一次切换为可信操作者在单机运行的单进程CLI，不启动网络服务。
 配置只指定一份本地Parquet文件及其预先计算的SHA-256；表名固定records。
@@ -251,3 +251,61 @@ CLI只写stdout/stderr，不创建或覆盖用户文件、临时文件或后台�
 输出阻塞/关闭、超时或SIGINT可能留下部分stdout，消费者须丢弃；退出124/130或其它非0后内存/FD/线程回收、可重跑。
 shell重定向自行写文件不在CLI的文件写入合同内，保留原文件时不要使用覆盖重定向。
 完成可删本次派生目录，原ZIP/媒体保持只读；无目录管理、权限/pin/lease、网络/模型或规模能力。
+
+
+## 可换本地语料的BM25排名
+
+状态：两个不同受支持输入、独立BM25数值真值、准备/查询边界及真实取消恢复已通过非作者验收。
+Python仅离线准备，排名在Rust search运行时计算。
+输入JSONL每个非空行一个对象，精确字段doc_id/text；doc_id为1–64 ASCII字母/数字/._-且唯一。
+text是可打印ASCII英文及空格/tab/CR/LF，1..8192B且至少一个词；不宣称中文/Unicode分词。
+可选图文输入必须每行同时加image_id/image_file，不能混有图和无图行；image_file为相对JSONL目录的根内普通本地文件，
+拒绝绝对/..及symlink，要求.jpg/.jpeg扩展名及JPEG SOI签名；不解码或认证编码合法性。相同image_id必须对应同一source path/bytes，最多3图、每图512KiB，不下载或解码。
+每行是一个排名文档；同图不同caption用不同doc_id，各自计DF/长度，不隐式按图片合并。重复原文可有不同ID。
+
+公开prepare_text_corpus.py --input <JSONL> --output-dir <new artifacts dir>接受这些用户数据，
+无COCO/ZIP/preset前置。输出doc_id/text/text_version=1三列；图文追加原media-v1五列。
+源上界1MiB JSONL、1..200文档、总text256KiB、输出Parquet1MiB，已有输出/坏格式/未知字段/重复ID等拒绝且失败清新产物。
+config自动填真实Parquet SHA；source.json记录输入/媒体捕获摘要和归属责任，不作在线权威。用户须自持素材授权，
+准备不认证版权；本包已有COCO图片/原文的来源与UNKNOWN沿用前节，不新增媒体。
+
+英文分析器ascii-alnum-lower-v1：按[A-Za-z0-9]+取连续词、ASCII小写，标点/连字符/撇号分隔；保留数字和stopword，无stem。
+每词≤64B，每文档≤2048词、全语料≤65536词；query≤256B、1..8词，重复query词去重并按词排序计算。
+空白/只有标点/非ASCII/超限query拒绝；TopK默认10，显式--top-k只允许1..20，无命中空hits。
+text_version必须1、ID/text非NULL且类型精确，搜索只接受上述三列或加完整media-v1五列的布局；旧query/media保持，
+无text-v1布局或未知版本search拒绝，图文绑定错误沿用media拒绝，不把未知字段解析后忽略。
+
+N/df/dl/avgdl全部来自同一份固定Parquet的全部文档；每文档一条统计，df为包含该词的文档数，dl为分析后词数，avgdl=总词/N。
+固定k1=1.2、b=0.75：idf(t)=ln(1+(N-df(t)+0.5)/(df(t)+0.5))；
+score(d,q)=sum_t idf(t)*tf(t,d)*(k1+1)/(tf(t,d)+k1*(1-b+b*dl/avgdl))。
+query去重词无额外qtf权重。任一分析词tf>0即匹配，累加各词贡献；query不提供AND/短语/前缀等运算语法，字符OR也作为普通词。
+分数降序，仅实际f64完全相等再doc_id ASCII字节升序后取TopK，truncated表示还有匹配未返回。
+IEEE754 f64不先舍入，数值验收abs/relative各1e-12（差≤1e-12+1e-12*abs(expected)），排序用实际f64总序；
+实际f64完全相等时才按ID同分序；相同TF/dl/统计输入保证同分。数学等价的不同逐项和可能有末位差异，
+按其实际f64顺序，不用数值容差把不同实际分数强并同分。
+返回source_sha256、算法/参数/分析词、N/total_tokens/avgdl/各词df与idf，hits含原文/doc_id/score/dl/各词tf贡献。
+图文hit还含media-v1的asset ID/path/SHA/size，用同一source_sha256交原media命令取得准确bytes；text-only hit media=null。
+排名时不读取JPEG，媒体命令完整成功才证明实际bytes；缺失/替换或跨source仍拒绝。
+
+```sh
+.venv/bin/python - <<'PYTEXT'
+from pathlib import Path
+import json
+p=Path('artifacts/my-text-input'); p.mkdir(parents=True, exist_ok=False)
+rows=[{'doc_id':'a','text':'red fox'}, {'doc_id':'b','text':'fox fox fox'}, {'doc_id':'c','text':'blue whale'}]
+(p/'documents.jsonl').write_text(''.join(json.dumps(r)+'\n' for r in rows))
+PYTEXT
+.venv/bin/python scripts/prepare_text_corpus.py --input artifacts/my-text-input/documents.jsonl --output-dir artifacts/my-text-ready
+docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspace:ro" -w /workspace guradb-rust:1.90.0 /workspace/target/debug/guradb search --config /workspace/artifacts/my-text-ready/config.json --query FOX --top-k 2
+```
+
+本例hits必须b、a，原文分别fox fox fox、red fox；换blue命中c，无需改引擎或准备关键词Bool。
+用户可换JSONL内容/未硬编码query后准备到新输出目录，旧固定输入仍保持原身份；原输入目录/素材只读。
+图文行示例为{"doc_id":"caption-1","text":"A local kitchen.","image_id":397133,"image_file":"photos/kitchen.jpg"}；
+用户提供该路径的实际本地JPEG，准备复制捕获bytes到images/12位ID.jpg，自动摘要并写同Parquet，不引用另一份latest。
+此手写文本示例仅演示输入/算法，不宣称业务相关性优势；独立算法truth与小型人工query/标签观察分别留证。
+
+原32MiB源/64MiB解码/2MiB输出/配置16KiB/默认5s硬10s保持；分词流式只计≤8query词TF，
+额外工作集由200文档/256KiB原文/65536词及TopK20硬界约束，无持久索引/无spill，不把DataFusion池冒称整个进程RSS。
+source初读与发布前SHA核验一致，完整JSON+exit0；真实取消/期限/管道失败清进程，无用户文件写入或后台任务。
+完整性能/覆盖/长稳/发行与业务相关性、跨引擎逐位分数兼容未认证，Actions/部署暂停。
