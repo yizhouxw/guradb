@@ -14,6 +14,7 @@ pub struct Prepared {
     pub order: Vec<SortExpr>,
     pub sql_limit: Option<usize>,
     pub distinct: bool,
+    pub aggregate: Option<crate::aggregate::Plan>,
 }
 
 pub fn prepare(sql: &str, dataset: Arc<Dataset>) -> Result<Prepared> {
@@ -40,7 +41,6 @@ pub fn prepare(sql: &str, dataset: Arc<Dataset>) -> Result<Prepared> {
     let SetExpr::Select(select) = query.body.as_ref() else {
         return Err(unsupported());
     };
-    let empty_group = matches!(&select.group_by, GroupByExpr::Expressions(items, modifiers) if items.is_empty() && modifiers.is_empty());
     let distinct = match &select.distinct {
         None => false,
         Some(Distinct::Distinct) => true,
@@ -53,7 +53,6 @@ pub fn prepare(sql: &str, dataset: Arc<Dataset>) -> Result<Prepared> {
         || !select.from[0].joins.is_empty()
         || !select.lateral_views.is_empty()
         || select.prewhere.is_some()
-        || !empty_group
         || !select.cluster_by.is_empty()
         || !select.distribute_by.is_empty()
         || !select.sort_by.is_empty()
@@ -102,47 +101,54 @@ pub fn prepare(sql: &str, dataset: Arc<Dataset>) -> Result<Prepared> {
         return Err(unsupported());
     }
     let mut compiler = Compiler { dataset: &dataset };
+    let compiled = crate::aggregate::prepare(select, query.order_by.as_ref(), &compiler)?;
+    let is_aggregate = compiled.is_some();
     let mut projection = Vec::new();
     let mut columns = Vec::new();
     let mut names = HashSet::new();
-    for item in &select.projection {
-        match item {
-            SelectItem::Wildcard(options) if *options == WildcardAdditionalOptions::default() => {
-                for field in &dataset.manifest.schema {
-                    if !names.insert(field.name.clone()) {
+    if !is_aggregate {
+        for item in &select.projection {
+            match item {
+                SelectItem::Wildcard(options)
+                    if *options == WildcardAdditionalOptions::default() =>
+                {
+                    for field in &dataset.manifest.schema {
+                        if !names.insert(field.name.clone()) {
+                            return Err(unsupported());
+                        }
+                        projection.push(col(&field.name));
+                        columns.push(Column {
+                            name: field.name.clone(),
+                            r#type: field.r#type.clone(),
+                        });
+                    }
+                }
+                _ => {
+                    let (expression, alias) = match item {
+                        SelectItem::UnnamedExpr(expression) => (expression, None),
+                        SelectItem::ExprWithAlias { expr, alias } => (expr, Some(ident(alias)?)),
+                        _ => return Err(unsupported()),
+                    };
+                    let datafusion::sql::sqlparser::ast::Expr::Identifier(column) = expression
+                    else {
+                        return Err(unsupported());
+                    };
+                    let name = ident(column)?;
+                    let kind = compiler.column(&name)?;
+                    let output = alias.unwrap_or_else(|| name.clone());
+                    if !names.insert(output.clone()) {
                         return Err(unsupported());
                     }
-                    projection.push(col(&field.name));
+                    projection.push(col(name).alias(output.clone()));
                     columns.push(Column {
-                        name: field.name.clone(),
-                        r#type: field.r#type.clone(),
+                        name: output,
+                        r#type: kind,
                     });
                 }
             }
-            _ => {
-                let (expression, alias) = match item {
-                    SelectItem::UnnamedExpr(expression) => (expression, None),
-                    SelectItem::ExprWithAlias { expr, alias } => (expr, Some(ident(alias)?)),
-                    _ => return Err(unsupported()),
-                };
-                let datafusion::sql::sqlparser::ast::Expr::Identifier(column) = expression else {
-                    return Err(unsupported());
-                };
-                let name = ident(column)?;
-                let kind = compiler.column(&name)?;
-                let output = alias.unwrap_or_else(|| name.clone());
-                if !names.insert(output.clone()) {
-                    return Err(unsupported());
-                }
-                projection.push(col(name).alias(output.clone()));
-                columns.push(Column {
-                    name: output,
-                    r#type: kind,
-                });
-            }
         }
     }
-    if projection.is_empty() {
+    if !is_aggregate && projection.is_empty() {
         return Err(unsupported());
     }
     let filter = if let Some(expression) = &select.selection {
@@ -155,35 +161,46 @@ pub fn prepare(sql: &str, dataset: Arc<Dataset>) -> Result<Prepared> {
         None
     };
     let mut order = Vec::new();
-    if let Some(order_by) = &query.order_by {
-        if order_by.interpolate.is_some() {
-            return Err(unsupported());
-        }
-        let OrderByKind::Expressions(expressions) = &order_by.kind else {
-            return Err(unsupported());
-        };
-        if expressions.len() > 64 {
-            return Err(unsupported());
-        }
-        for expression in expressions {
-            let datafusion::sql::sqlparser::ast::Expr::Identifier(column) = &expression.expr else {
+    if !is_aggregate {
+        if let Some(order_by) = &query.order_by {
+            if order_by.interpolate.is_some() {
+                return Err(unsupported());
+            }
+            let OrderByKind::Expressions(expressions) = &order_by.kind else {
                 return Err(unsupported());
             };
-            let name = ident(column)?;
-            if distinct {
-                if !names.contains(&name) {
-                    return Err(unsupported());
-                }
-            } else {
-                compiler.column(&name)?;
-            }
-            if expression.with_fill.is_some() {
+            if expressions.len() > 64 {
                 return Err(unsupported());
             }
-            let asc = expression.options.asc.unwrap_or(true);
-            order.push(col(name).sort(asc, expression.options.nulls_first.unwrap_or(!asc)));
+            for expression in expressions {
+                let datafusion::sql::sqlparser::ast::Expr::Identifier(column) = &expression.expr
+                else {
+                    return Err(unsupported());
+                };
+                let name = ident(column)?;
+                if distinct {
+                    if !names.contains(&name) {
+                        return Err(unsupported());
+                    }
+                } else {
+                    compiler.column(&name)?;
+                }
+                if expression.with_fill.is_some() {
+                    return Err(unsupported());
+                }
+                let asc = expression.options.asc.unwrap_or(true);
+                order.push(col(name).sort(asc, expression.options.nulls_first.unwrap_or(!asc)));
+            }
         }
     }
+    let aggregate = if let Some(compiled) = compiled {
+        columns = compiled.columns;
+        projection = compiled.projection;
+        order = compiled.order;
+        Some(compiled.plan)
+    } else {
+        None
+    };
     let sql_limit = match &query.limit_clause {
         None => None,
         Some(LimitClause::LimitOffset {
@@ -205,5 +222,6 @@ pub fn prepare(sql: &str, dataset: Arc<Dataset>) -> Result<Prepared> {
         order,
         sql_limit,
         distinct,
+        aggregate,
     })
 }

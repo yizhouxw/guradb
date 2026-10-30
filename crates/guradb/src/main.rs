@@ -1,3 +1,6 @@
+mod aggregate;
+#[cfg(test)]
+mod aggregate_tests;
 mod compile;
 mod execution;
 mod features;

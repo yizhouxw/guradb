@@ -60,3 +60,5 @@ docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspac
 [脱离开发树的本机预览安装](docs/user/local-preview.md)已通过本机有限验证；仅明确的Mac-arm/Docker LinuxARM形态，完整发行/MCP仍未认证。
 
 [本地stdio MCP三只读工具](docs/user/local-mcp.md)已通过本机官方SDK有限验收；只支持view query/search/media，完整MCP/M1.5仍未宣称。
+
+[有界COUNT/MIN/MAX与单列GROUP BY](docs/user/group-aggregates.md)为共享Rust query的本机受限增量；完整SQL/M2未支持。

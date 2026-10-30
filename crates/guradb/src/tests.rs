@@ -37,7 +37,6 @@ fn unsupported_features_cannot_open_other_sources_or_execute_functions() {
     for statement in [
         "DELETE FROM records",
         "SELECT * FROM other",
-        "SELECT count(*) FROM records",
         "SELECT * FROM records JOIN other USING(record_id)",
         "SELECT * FROM records; SELECT * FROM records",
         "SELECT * FROM records LIMIT 1 OFFSET 1",

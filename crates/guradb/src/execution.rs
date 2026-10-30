@@ -37,6 +37,14 @@ pub async fn execute(
     batches: Vec<RecordBatch>,
     sha: &str,
 ) -> Result<String> {
+    if plan.aggregate.is_some()
+        && batches.iter().map(RecordBatch::num_rows).sum::<usize>() > crate::aggregate::INPUT_LIMIT
+    {
+        return Err(Error::new(
+            "resource_limit",
+            "aggregate input exceeds 200 rows",
+        ));
+    }
     let runtime = RuntimeEnvBuilder::new()
         .with_memory_pool(Arc::new(GreedyMemoryPool::new(POOL_LIMIT)))
         .with_disk_manager_builder(
@@ -55,7 +63,15 @@ pub async fn execute(
     if let Some(filter) = plan.filter {
         frame = frame.filter(filter).map_err(engine)?;
     }
-    if plan.distinct {
+    if let Some(aggregate) = plan.aggregate {
+        frame = frame
+            .aggregate(aggregate.group, aggregate.expressions)
+            .map_err(engine)?;
+        if !plan.order.is_empty() {
+            frame = frame.sort(plan.order).map_err(engine)?;
+        }
+        frame = frame.select(plan.projection).map_err(engine)?;
+    } else if plan.distinct {
         frame = frame.select(plan.projection).map_err(engine)?;
         frame = frame.distinct().map_err(engine)?;
         if !plan.order.is_empty() {
