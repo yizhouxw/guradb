@@ -1,5 +1,7 @@
 mod compile;
 mod execution;
+mod media;
+mod media_path;
 mod source;
 mod sql;
 #[cfg(test)]
@@ -68,20 +70,21 @@ fn fail(error: Error, status: i32) -> ! {
     std::process::exit(status)
 }
 
-/// Main owns only cancellation/deadline; query work lives in a separate thread.
+/// Main owns cancellation/deadline; read work lives in a separate thread.
 /// Exiting on cancellation releases every resource in this one-process CLI;
-/// there are no child processes, external writes, listeners or persistent tasks.
+/// neither command creates files, children, listeners or persistent tasks.
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
     let args: Vec<_> = std::env::args().collect();
-    if args.len() != 6 || args[1] != "query" || args[2] != "--config" || args[4] != "--sql" {
-        fail(
-            Error::new(
-                "invalid_config",
-                "usage: guradb query --config <file> --sql <SELECT>",
-            ),
-            1,
-        );
+    let is_query =
+        args.len() == 6 && args[1] == "query" && args[2] == "--config" && args[4] == "--sql";
+    let is_media = args.len() == 8
+        && args[1] == "media"
+        && args[2] == "--config"
+        && args[4] == "--asset-id"
+        && args[6] == "--source-sha256";
+    if !is_query && !is_media {
+        fail(Error::new("invalid_config", "usage: guradb query --config <file> --sql <SELECT> OR media --config <file> --asset-id <id> --source-sha256 <hit SHA>"), 1);
     }
     let path = PathBuf::from(&args[3]);
     let bytes = match source::read_bounded(&path, 16384).await {
@@ -113,6 +116,34 @@ async fn main() {
             .unwrap_or(std::path::Path::new("."))
             .join(&config.source);
     }
+    let media_id = if is_media {
+        if args[7] != config.sha256 {
+            fail(
+                Error::new(
+                    "source_mismatch",
+                    "hit source SHA differs from configured input",
+                ),
+                1,
+            );
+        }
+        match args[5].parse::<i64>() {
+            Ok(id) if (1..=999_999_999_999).contains(&id) => Some(id),
+            _ => fail(
+                Error::new(
+                    "invalid_config",
+                    "asset ID must be a positive integer of at most twelve digits",
+                ),
+                1,
+            ),
+        }
+    } else {
+        None
+    };
+    let media_root = path
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or(std::path::Path::new("."))
+        .to_path_buf();
     let duration = Duration::from_millis(config.timeout_ms);
     let statement = args[5].clone();
     let (sender, receiver) = tokio::sync::oneshot::channel();
@@ -122,7 +153,12 @@ async fn main() {
             .enable_all()
             .build();
         let result = match runtime {
-            Ok(runtime) => runtime.block_on(query(config, statement)),
+            Ok(runtime) => runtime.block_on(async move {
+                match media_id {
+                    Some(id) => media::read(config, media_root, id).await,
+                    None => query(config, statement).await,
+                }
+            }),
             Err(_) => Err(Error::new("execution_failed", "cannot start query runtime")),
         };
         let _ = sender.send(result);

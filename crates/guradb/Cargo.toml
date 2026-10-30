@@ -6,6 +6,7 @@ rust-version.workspace = true
 publish.workspace = true
 
 [dependencies]
+libc.workspace = true
 arrow.workspace = true
 bytes.workspace = true
 datafusion.workspace = true
