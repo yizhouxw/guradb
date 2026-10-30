@@ -127,6 +127,14 @@ class AlphaStageTests(unittest.TestCase):
         with self.assertRaisesRegex(HarnessError, 'unmapped changes'):
             bound_plan(ROOT, ['scripts/unknown_torch_consumer.py'], *load(ROOT)[:3], stage='core', core_flow='simple-alpha')
 
+    def test_m1_offline_composition_exact_mapping_preserves_all_core_suites(self):
+        for path in ('scripts/m1_preview.py', 'scripts/m1_reference.py', 'scripts/m1_compare.py', 'docs/user/m1-inputs.json'):
+            profile = bound_plan(ROOT, [path], *load(ROOT)[:3], stage='core', core_flow='simple-alpha')['profile']
+            self.assertEqual(list(profile['suites']), ['repository', 'policy', 'harness-tests', 'python', 'rust', 'functional'])
+            self.assertEqual(len(profile['suites']['rust']['commands']), 3)
+        with self.assertRaisesRegex(HarnessError, 'unmapped changes'):
+            bound_plan(ROOT, ['scripts/m1_unknown.py'], *load(ROOT)[:3], stage='core', core_flow='simple-alpha')
+
     def test_retired_runtime_reappearance_unknown_change_and_wrong_flow_reject(self):
         self.write('modules/index/server.py', 'pass\n')
         with self.assertRaisesRegex(HarnessError, 'retired path still present|Python online'):

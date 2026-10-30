@@ -26,9 +26,13 @@ def digest(path):
 
 
 class RustCLI:
-    def __init__(self, config, selection, view_store=None, view=None):
+    def __init__(self, config, selection, view_store=None, view=None, binary=None, runtime_image=None):
         self.selection = selection.resolve(strict=True)
-        self.binary = (ROOT/'target/debug/guradb').resolve(strict=True)
+        self.binary = (binary if binary is not None else ROOT/'target/debug/guradb').resolve(strict=True)
+        if (binary is None) != (runtime_image is None):
+            raise ValueError('explicit binary and fixed runtime-image must be provided together')
+        if runtime_image is not None and (not runtime_image.startswith('sha256:') or len(runtime_image)!=71 or any(c not in '0123456789abcdef' for c in runtime_image[7:])):
+            raise ValueError('runtime-image requires an exact existing image ID')
         self.view_store = view_store.resolve(strict=True) if view_store else None
         self.config = config.resolve(strict=True) if config else None
         if self.view_store:
@@ -42,13 +46,15 @@ class RustCLI:
         if not self.selection.is_file() or self.selection.stat().st_size > 65536 or not self.binary.is_file():
             raise ValueError('transport requires existing bounded regular selection/binary files')
         self.view_id, self.source_sha256 = None, None
-        self.image = json.loads(subprocess.check_output(['docker', 'image', 'inspect', 'guradb-rust:1.90.0'], timeout=10))[0]['Id']
+        self.image = json.loads(subprocess.check_output(['docker', 'image', 'inspect', runtime_image or 'guradb-rust:1.90.0'], timeout=10))[0]['Id']
+        if runtime_image is not None and self.image != runtime_image:
+            raise ValueError('existing runtime image differs from requested ID')
         self.calls, self.counter, self.current = [], 0, None
 
     def call(self, mode, extra):
         self.counter += 1
         name = f'guradb-sample-{os.getpid()}-{self.counter}'
-        command = ['docker', 'run', '--rm', '--name', name, '--label', f'guradb.sample.owner={os.getpid()}', '--network', 'none', '--memory', '512m', '--cpus', '4',
+        command = ['docker', 'run', '--rm', '--pull', 'never', '--name', name, '--label', f'guradb.sample.owner={os.getpid()}', '--network', 'none', '--memory', '512m', '--cpus', '4',
                    '-v', str(self.binary)+':/guradb:ro', '-v', str(self.selection.parent)+':/selection:ro']
         if self.view_store:
             command += ['-v', str(self.view_store)+':/store', self.image, '/guradb', 'view', mode,
@@ -81,13 +87,13 @@ class RustCLI:
             self.current = None
 
 
-def worker(config, selection, output, batch_size, view_store=None, view=None):
+def worker(config, selection, output, batch_size, view_store=None, view=None, binary=None, runtime_image=None):
     start = time.monotonic()
     import importlib.metadata
     versions = {name: importlib.metadata.version(name) for name in ('torch', 'Pillow')}
     if versions != {'torch': '2.15.0', 'Pillow': '13.0.0'} or sys.version_info[:2] != (3, 12) or platform.system() != 'Darwin' or platform.machine() != 'arm64':
         raise ValueError('use the existing hash-locked offline PyTorch/Pillow environment')
-    cli = RustCLI(config, selection, view_store, view)
+    cli = RustCLI(config, selection, view_store, view, binary, runtime_image)
     fixed = cli.call('sample', ['--selection', '/selection/'+cli.selection.name])
     if fixed.get('format_version') != 1 or fixed.get('model') != 'not_used' or fixed.get('algorithm') != 'asset-sha256-first-validation-v1':
         raise ValueError('unsupported Rust sample manifest')
@@ -156,7 +162,7 @@ def worker(config, selection, output, batch_size, view_store=None, view=None):
               'manifest_hash_contract': 'python-json-sort-keys-default-separators-ascii-v1',
               'versions': versions, 'runtime': {'python': sys.version, 'platform': platform.platform(), 'device': 'cpu'},
               'client_script_sha256': digest(Path(__file__)),
-              'rust_runtime': {'image_id': cli.image, 'binary_sha256': digest(ROOT/'target/debug/guradb')},
+              'rust_runtime': {'image_id': cli.image, 'binary_sha256': digest(cli.binary)},
               'transform': 'pillow13-rgb-bilinear32-uint8-chw-v1',
               'batch_size': batch_size, 'epochs': epochs, 'num_workers': 0, 'shuffle': False, 'drop_last': False,
               'observed': {'media_payload_bytes': consumed, 'seconds': time.monotonic()-start, 'rss_bytes': rss,
@@ -172,7 +178,9 @@ def worker(config, selection, output, batch_size, view_store=None, view=None):
             'epochs': 2, 'observed': report['observed'], 'batch_lengths': [[len(b['doc_ids']) for b in e['batches']] for e in epochs]}
 
 
-def run(config, selection, output_dir, batch_size, view_store=None, view=None):
+def run(config, selection, output_dir, batch_size, view_store=None, view=None, binary=None, runtime_image=None):
+    if (binary is None) != (runtime_image is None):
+        raise ValueError('explicit binary and fixed runtime-image must be provided together')
     if not 1 <= batch_size <= 8:
         raise ValueError('batch size requires 1..8')
     output = (ROOT/output_dir).resolve()
@@ -182,7 +190,8 @@ def run(config, selection, output_dir, batch_size, view_store=None, view=None):
     env = {**os.environ, 'OMP_NUM_THREADS': '4', 'MKL_NUM_THREADS': '4', 'OPENBLAS_NUM_THREADS': '4',
            'GURADB_SAMPLE_PARENT': str(os.getpid())}
     mode = ['--view-store', str(view_store.resolve()), '--view', view or 'current'] if view_store else ['--config', str(config.resolve())]
-    command = [sys.executable, str(Path(__file__).resolve()), *mode,
+    transport = ['--binary', str(binary.resolve()), '--runtime-image', runtime_image] if binary else []
+    command = [sys.executable, str(Path(__file__).resolve()), *mode, *transport,
                '--selection', str(selection.resolve()), '--output-dir', str(output), '--batch-size', str(batch_size), '--worker']
     process = None
     start, peak = time.monotonic(), 0
@@ -242,11 +251,15 @@ def main():
     mode.add_argument('--config', type=Path)
     mode.add_argument('--view-store', type=Path)
     parser.add_argument('--view')
+    parser.add_argument('--binary', type=Path, help='explicit already-installed Linux ARM64 engine')
+    parser.add_argument('--runtime-image', help='existing exact sha256 image ID; required with --binary')
     parser.add_argument('--selection', type=Path, required=True)
     parser.add_argument('--output-dir', type=Path, required=True)
     parser.add_argument('--batch-size', type=int, default=4)
     parser.add_argument('--worker', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
+    if (args.binary is None) != (args.runtime_image is None):
+        parser.error('--binary and --runtime-image must be provided together')
     if args.config and args.view is not None:
         parser.error("--view requires --view-store")
     produced = None
@@ -254,9 +267,9 @@ def main():
         if args.worker:
             if os.environ.get('GURADB_SAMPLE_PARENT') != str(os.getppid()):
                 raise ValueError('worker requires monitored parent')
-            result = worker(args.config, args.selection, args.output_dir, args.batch_size, args.view_store, args.view)
+            result = worker(args.config, args.selection, args.output_dir, args.batch_size, args.view_store, args.view, args.binary, args.runtime_image)
         else:
-            result = run(args.config, args.selection, args.output_dir, args.batch_size, args.view_store, args.view)
+            result = run(args.config, args.selection, args.output_dir, args.batch_size, args.view_store, args.view, args.binary, args.runtime_image)
             produced = (ROOT/args.output_dir).resolve()
         print(json.dumps(result))
         sys.stdout.flush()

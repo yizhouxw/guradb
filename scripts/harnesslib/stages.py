@@ -9,6 +9,7 @@ from .task_state import active_base, read_task, task_lock, write_task
 STAGES = ("auto", "core", "hardening")
 CORE_FLOW = "simple-alpha"
 ACTIVE_FILES = {
+    "scripts/m1_preview.py", "scripts/m1_reference.py", "scripts/m1_compare.py", "docs/user/m1-inputs.json",
     "scripts/build_preview.py", "scripts/preview_install.py", "scripts/preview_launcher.py",
     "scripts/sample_torch_client.py", "docs/user/mcp-client-requirements.lock",
     "scripts/prepare_clip_features.py", "requirements-clip-macos-arm64.lock", "docs/user/clip-queries.json",

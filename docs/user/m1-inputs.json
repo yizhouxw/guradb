@@ -1,0 +1,43 @@
+{
+  "format_version": 1,
+  "cohort": "existing-coco15-and-refresh4-engineering-only",
+  "versions": [
+    {
+      "name": "A",
+      "source_sha256": "8eaaa37ce8fcc6843bc977be0e7ca36e32ad8f2bac59284e39db9bb90d80d6e0",
+      "corpus": "clip-real-model-demo/corpus",
+      "features": "clip-real-model-demo/features/features.jsonl",
+      "features_sha256": "8e0ad19f7f3530755ff357f5d01622d8c9893d54ea251fdf8550d055911d15bb"
+    },
+    {
+      "name": "B",
+      "source_sha256": "d873f8762428a2d16833f8a0cf75277b500e9d2e6962d4370857491f484f0b0b",
+      "corpus": "local-view-refresh-demo/store/objects/d873f8762428a2d16833f8a0cf75277b500e9d2e6962d4370857491f484f0b0b",
+      "features": "view-vector-sample-demo/store/objects/e66da92791daaa49dbe4a892fe2f586b2a7b3ce52f73bfe4d82bed4a49cdc04d/features.jsonl",
+      "features_sha256": "216ad54594e1fe71d1e0c61a2ea020af56b41688d180f0111e8fde4e492033ef"
+    }
+  ],
+  "images": [
+    "images/000000252219.jpg",
+    "images/000000397133.jpg",
+    "images/000000403385.jpg"
+  ],
+  "queries_text": "clip-real-model-demo/queries.json",
+  "queries_dir": "clip-real-model-demo/features/queries",
+  "query_rebind": "same frozen vector/space; only target source SHA differs",
+  "model_manifest": "clip-real-model-demo/features/manifest.json",
+  "selection_seed": 0,
+  "preview_artifact_sha256": "63fd9737491fefc86617ba1f967b0b1db06a1ed2a7f8cf18745abcc20c871dee",
+  "queries_text_sha256": "e894d844a05ba5d0bd49a86c932f8f524a52846d380c960bb23dc07f9e4504af",
+  "query_files_sha256": {
+    "q01-kitchen-food": "e085951e80b0eff9b1dbff6f34f2c81645318b604d5e9e1dfbe18ed4dc379481",
+    "q02-baker-dough": "7668270b96aed1db233da3123741bbd43518c2c8e0e73a7bd98845456e7ee398",
+    "q03-city-street": "66a7594dad1c79d2a0926fc2fb3dc47a3032dc7c430462d1f794f5e6f3f7d9d4",
+    "q04-shopping-cart": "609ba8bc6a51f533d2b9ecdefcdb4e21c65ac410b6f88768882ff3691335a3c8",
+    "q05-bathroom-fixtures": "0e3d33e95180c7b19997e749aca7ecb12b79c99979c343fc7916eb09da2dfd76",
+    "q06-damaged-shower": "d101845c5c64091b150787ad25f1ba693fa404492a07db42bfbe56c9ee9d5cd5",
+    "q07-snowy-mountain": "16d08dd44bd769db98668e553ace3772ec708fb152e1a1bae536d635dff7791b",
+    "q08-subjective-place": "41221873b7499532ef3638a717ba271508f444913b8022f86dd9df4723d5b9b9"
+  },
+  "model_manifest_sha256": "5a63e3d2fdb01aaec1d9aaeddb261febe977f69a160b3799b7fb764527ad72f5"
+}

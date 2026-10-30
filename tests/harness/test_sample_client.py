@@ -102,6 +102,22 @@ class SampleClientTests(unittest.TestCase):
         self.assertFalse((self.root/'missing').exists())
         self.assertFalse((self.root/'absent').exists())
 
+    def test_explicit_installed_binary_never_requires_development_target(self):
+        store=self.root/'store';store.mkdir()
+        installed=self.root/'prefix/lib/engine';installed.parent.mkdir(parents=True);installed.write_bytes(b'never executed')
+        selection=self.root/'selection.json';selection.write_text('{}')
+        image='sha256:'+'a'*64
+        with patch.object(client,'ROOT',self.root),patch.object(client.subprocess,'check_output',return_value=json.dumps([{'Id':image}]).encode()) as inspect:
+            cli=client.RustCLI(None,selection,store,'current',installed,image)
+        self.assertEqual(cli.binary,installed)
+        self.assertEqual(cli.image,image)
+        self.assertEqual(inspect.call_args.args[0][-1],image)
+        self.assertFalse((self.root/'target').exists())
+        with patch.object(client,'ROOT',self.root):
+            with self.assertRaises(ValueError):
+                client.run(None,selection,Path('artifacts/not-created'),4,store,'current',installed,None)
+        self.assertFalse((self.root/'artifacts/not-created').exists())
+
 
 if __name__ == '__main__':
     unittest.main()
