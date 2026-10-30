@@ -40,7 +40,7 @@ pub(crate) fn read_typed(
     file_name: &str,
     expected_size: usize,
 ) -> Result<Vec<u8>> {
-    if !matches!(directory, "images" | "audio")
+    if !matches!(directory, "images" | "audio" | "videos")
         || file_name.contains('/')
         || file_name.contains("..")
     {

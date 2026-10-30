@@ -63,13 +63,30 @@
       ],
       "types": [
         "image/jpeg",
-        "audio/wav"
+        "audio/wav",
+        "video/x-msvideo"
       ],
       "wav": "RIFF WAVE fmt16 PCM1 44100Hz mono/stereo signed16, unique fmt then nonempty aligned data, no extra chunks",
       "identity": "same-source type/id/path/SHA; MCP media requires concrete view and refuses current; CLI retains current compatibility but evidence consumers use the returned concrete view ID",
-      "unsupported": "ASR, audio vectors, feature-view, vector/hybrid/sample for media-v2, compressed/float/video/slices",
+      "unsupported": "ASR, audio/video vectors, feature-view, vector/hybrid/sample for media-v2, compressed/float audio, video containers/codecs outside bounded AVI BI_RGB, time slices",
       "compatibility": "media-v1 JPEG response retained",
-      "limits_unchanged": true
+      "limits_unchanged": true,
+      "avi": {
+        "container": "AVI1.0 single RIFF/AVI, one vids stream, handler0 or DIB, no audio",
+        "encoding": "BITMAPINFOHEADER40 BI_RGB0/planes1/BGR24, signed height top_down or bottom_up, DWORD row stride, complete raw pixel frames",
+        "time_and_binding": "scale1 integer fps1..30, avih microseconds floor(1000000/fps), avih/strh/movi frames and ordered idx1 tag/offset/size/keyframe exactly agree; duration_num=frames/duration_den=fps",
+        "chunks": "at most128, bounded known INFO/JUNK only, unknown semantics refused",
+        "limits": {
+          "width_max": 320,
+          "height_abs_max": 240,
+          "frames_max": 30,
+          "fps_min": 1,
+          "fps_max": 30,
+          "chunks_max": 128
+        },
+        "response": "original complete bytes_hex plus container/encoding/width/height/row_order/row_stride/frames/rate_num/rate_den/duration_num/duration_den",
+        "unsupported": "MP4/WebM/compressed video, audio tracks, AVIX/OpenDML/rec nesting, time slices/Range, online frame extraction or video understanding"
+      }
     }
   },
   "ranked_text": {

@@ -564,3 +564,5 @@ sample返回Rust固定view_id/source/成员；reader只在第一次sample解析c
 最多2个prepared/published/pending对象，所有owned源+JPEG+features合计128MiB，描述1MiB；每源32MiB/decoded64MiB/output2MiB/features8MiB/query及物理feature行64KiB/200Doc/维1..1024/TopK20/view10秒、Docker512MiB4CPU保持。完整space写入有界descriptor，每次读取再次核source/feature pin与全集/space；原cosine/scaled f64/RRF60/full ranks/同分DocID顺序不改。pending/原子catalog/公开recover沿前合同，新布局需真实中断验证；仅已published请求重放不回退，不是异步代际fence。真实模型导出仅离线现同revision同code，当前计划V1复用旧15Doc/512D；V2四Doc改source必要1次同模型export原3图/原8query，≤600秒4GiBRSS4CPU无下载，最多2次授权不自动用满；数学fixture明确标数值，不冒模型或相关性优势。完整M1.5/安装/MCP/平台仍未交付。
 
 本片实际：原15Doc/V2四Doc，numerical2D两query与真实模型q01独立数学，48条Rust/中断动作及format2准备、提交未知、8MiB特征staging真实KILL经公开恢复通过。唯一1次必要同模型V2 export约3.051s/1.60GBRSS；724客户端在首batch后current真实刷新，30旧样本/31固定view调用/原文媒体像素全同，2epoch train10/val5/4-4-2与4-1，取消143/关闭stdout清理及最小旧config兼容均通过。无模型/泛化优势或完整平台认证；worker4GiB另Rustchild512MiB各自口径，不是aggregate OS总限。
+
+媒体v2增量见[PCM16 WAV](audio-evidence.md)与[单AVI原始像素视频](video-evidence.md)；原v1五媒体列/响应与固定view兼容不隐式升级。视频不是通用MP4/视频理解支持。

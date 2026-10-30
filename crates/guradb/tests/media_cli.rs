@@ -20,6 +20,8 @@ use std::{
     },
     time::{Duration, Instant},
 };
+#[path = "support/avi_fixture.rs"]
+mod avi_fixture;
 static NEXT: AtomicUsize = AtomicUsize::new(0);
 struct Fixture {
     root: PathBuf,
@@ -237,10 +239,10 @@ impl Fixture {
             NEXT.fetch_add(1, Ordering::Relaxed)
         ));
         fs::create_dir(&root).unwrap();
-        let (directory, extension) = if kind == "audio/wav" {
-            ("audio", "wav")
-        } else {
-            ("images", "jpg")
+        let (directory, extension) = match kind {
+            "audio/wav" => ("audio", "wav"),
+            "video/x-msvideo" => ("videos", "avi"),
+            _ => ("images", "jpg"),
         };
         fs::create_dir(root.join(directory)).unwrap();
         let path = format!("{directory}/000000397133.{extension}");
@@ -449,4 +451,95 @@ fn media_v2_is_not_an_image_feature_or_sample_corpus() {
         ]),
         "unsupported_media_contract",
     );
+}
+
+#[test]
+fn raw_avi_frames_index_time_layout_and_owned_video_are_bound() {
+    let bytes = avi_fixture::small();
+    let f = Fixture::typed(bytes.clone(), "video/x-msvideo");
+    f.success();
+    let out: Value = serde_json::from_slice(&f.output().stdout).unwrap();
+    assert_eq!(out["asset_type"], "video/x-msvideo");
+    assert_eq!(
+        out["video"],
+        json!({"container":"avi","encoding":"bgr24","width":2,"height":2,"row_order":"top_down","row_stride":8,"frames":1,"rate_num":5,"rate_den":1,"duration_num":1,"duration_den":5})
+    );
+    // Fixed synthetic offsets: form, total/stream count, fps, height, codec,
+    // frame type/length and index offset/length. Each bad file is SHA-rebound.
+    for at in [8, 48, 56, 132, 180, 188, 224, 228, 264, 268] {
+        let mut bad = bytes.clone();
+        bad[at] ^= 2;
+        let broken = Fixture::typed(bad, "video/x-msvideo");
+        rejects(broken.output(), "invalid_media_format");
+    }
+    let path = f.root.join("videos/000000397133.avi");
+    let outside = f.root.join("outside.avi");
+    fs::write(&outside, &bytes).unwrap();
+    fs::remove_file(&path).unwrap();
+    symlink(outside, &path).unwrap();
+    rejects(f.output(), "media_invalid");
+    fs::remove_file(&path).unwrap();
+    fs::write(&path, &bytes).unwrap();
+    f.success();
+    let config = f.root.join("config.json");
+    let config = config.to_str().unwrap();
+    let store = f.root.join("video-store");
+    let store = store.to_str().unwrap();
+    let prepared = f.run_args(&[
+        "view",
+        "prepare",
+        "--store",
+        store,
+        "--config",
+        config,
+        "--request-id",
+        "video",
+    ]);
+    assert!(
+        prepared.status.success(),
+        "{}",
+        String::from_utf8_lossy(&prepared.stderr)
+    );
+    let view: Value = serde_json::from_slice(&prepared.stdout).unwrap();
+    let view = view["view_id"].as_str().unwrap();
+    let published = f.run_args(&["view", "publish", "--store", store, "--request-id", "video"]);
+    assert!(
+        published.status.success(),
+        "{}",
+        String::from_utf8_lossy(&published.stderr)
+    );
+    fs::remove_file(path).unwrap();
+    let args = [
+        "view",
+        "media",
+        "--store",
+        store,
+        "--view",
+        view,
+        "--asset-id",
+        "397133",
+    ];
+    let owned = f.run_args(&args);
+    assert!(
+        owned.status.success(),
+        "{}",
+        String::from_utf8_lossy(&owned.stderr)
+    );
+    let owned: Value = serde_json::from_slice(&owned.stdout).unwrap();
+    assert_eq!(
+        hex::decode(owned["result"]["bytes_hex"].as_str().unwrap()).unwrap(),
+        bytes
+    );
+    assert_eq!(owned["result"]["video"]["frames"], 1);
+    let captured = f
+        .root
+        .join("video-store/objects")
+        .join(view)
+        .join("videos/000000397133.avi");
+    let mut replaced = bytes.clone();
+    replaced[232] ^= 1;
+    fs::write(&captured, replaced).unwrap();
+    rejects(f.run_args(&args), "media_changed");
+    fs::write(captured, bytes).unwrap();
+    assert!(f.run_args(&args).status.success());
 }
