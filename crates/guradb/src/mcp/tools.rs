@@ -1,7 +1,7 @@
 use serde_json::{json, Value};
 pub fn list() -> Value {
     json!({"tools":[
-        {"name":"guradb_query","description":"Read a fixed local view with the existing restricted Rust SQL","inputSchema":{"type":"object","properties":{"view":{"type":"string"},"sql":{"type":"string","maxLength":4096}},"required":["view","sql"],"additionalProperties":false},"annotations":{"readOnlyHint":true,"destructiveHint":false,"openWorldHint":false}},
+        {"name":"guradb_query","description":"Read a fixed local view with the existing restricted Rust SQL","inputSchema":{"type":"object","properties":{"view":{"type":"string"},"sql":{"type":"string","maxLength":4096},"params_json":{"type":"string","maxLength":16384,"description":"Optional typed value v1 JSON; raw UTF8 at most 16384 bytes"}},"required":["view","sql"],"additionalProperties":false},"annotations":{"readOnlyHint":true,"destructiveHint":false,"openWorldHint":false}},
         {"name":"guradb_search","description":"Existing Rust BM25; use returned concrete view_id for evidence","inputSchema":{"type":"object","properties":{"view":{"type":"string"},"query":{"type":"string","maxLength":256}},"required":["view","query"],"additionalProperties":false},"annotations":{"readOnlyHint":true,"destructiveHint":false,"openWorldHint":false}},
         {"name":"guradb_media","description":"Exact JPEG bytes_hex from a concrete fixed view; current is refused","inputSchema":{"type":"object","properties":{"view":{"type":"string"},"asset_id":{"type":"integer","minimum":1,"maximum":999999999999i64}},"required":["view","asset_id"],"additionalProperties":false},"annotations":{"readOnlyHint":true,"destructiveHint":false,"openWorldHint":false}}
     ]})
@@ -32,7 +32,11 @@ pub fn command(params: &Value, store: &str) -> Result<Vec<String>, &'static str>
         "guradb_media" => ("media", "asset_id", "--asset-id"),
         _ => return Err("unsupported tool; only query/search/media are available"),
     };
-    if a.len() != 2 || !a.contains_key("view") || !a.contains_key(field) {
+    if a.keys()
+        .any(|key| key != "view" && key != field && !(op == "query" && key == "params_json"))
+        || !a.contains_key("view")
+        || !a.contains_key(field)
+    {
         return Err("exact tool argument fields required");
     }
     let view = a["view"].as_str().ok_or("view string required")?;
@@ -52,8 +56,16 @@ pub fn command(params: &Value, store: &str) -> Result<Vec<String>, &'static str>
         }
         s.to_owned()
     };
-    Ok(["view", op, "--store", store, "--view", view, flag, &value]
+    let mut args: Vec<String> = ["view", op, "--store", store, "--view", view, flag, &value]
         .iter()
         .map(|s| s.to_string())
-        .collect())
+        .collect();
+    if let Some(raw) = a.get("params_json") {
+        let raw = raw
+            .as_str()
+            .filter(|s| s.len() <= 16384)
+            .ok_or("params_json must be a bounded UTF8 string")?;
+        args.extend(["--params-json".into(), raw.to_string()]);
+    }
+    Ok(args)
 }

@@ -18,6 +18,14 @@ pub struct Prepared {
 }
 
 pub fn prepare(sql: &str, dataset: Arc<Dataset>) -> Result<Prepared> {
+    prepare_bound(sql, dataset, crate::parameters::Bindings::default())
+}
+
+pub fn prepare_bound(
+    sql: &str,
+    dataset: Arc<Dataset>,
+    bindings: crate::parameters::Bindings,
+) -> Result<Prepared> {
     if sql.is_empty() || sql.len() > 16 * 1024 {
         return Err(unsupported());
     }
@@ -100,7 +108,10 @@ pub fn prepare(sql: &str, dataset: Arc<Dataset>) -> Result<Prepared> {
     if table != "records" {
         return Err(unsupported());
     }
-    let mut compiler = Compiler { dataset: &dataset };
+    let mut compiler = Compiler {
+        dataset: &dataset,
+        bindings,
+    };
     let compiled = crate::aggregate::prepare(select, query.order_by.as_ref(), &compiler)?;
     let is_aggregate = compiled.is_some();
     let mut projection = Vec::new();
@@ -215,6 +226,7 @@ pub fn prepare(sql: &str, dataset: Arc<Dataset>) -> Result<Prepared> {
         }
         _ => return Err(unsupported()),
     };
+    compiler.bindings.finish()?;
     Ok(Prepared {
         columns,
         projection,

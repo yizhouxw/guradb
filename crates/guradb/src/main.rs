@@ -8,6 +8,9 @@ mod iceberg;
 mod mcp;
 mod media;
 mod media_path;
+#[cfg(test)]
+mod parameter_tests;
+mod parameters;
 mod sample;
 mod search;
 mod source;
@@ -86,7 +89,15 @@ fn fail(error: Error, status: i32) -> ! {
 /// view commands own only their explicitly supplied local store.
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
-    let args: Vec<_> = std::env::args().collect();
+    let mut args: Vec<_> = std::env::args().collect();
+    let bindings = if args.get(1).is_some_and(|s| s == "query") {
+        match parameters::suffix(&mut args) {
+            Ok(b) => b,
+            Err(e) => fail(e, 1),
+        }
+    } else {
+        parameters::Bindings::default()
+    };
     if args.get(1).is_some_and(|s| s == "iceberg") {
         iceberg::entry(args).await;
         return;
@@ -213,7 +224,13 @@ async fn main() {
                     Some(id) => media::read(config, media_root, id).await,
                     None => match search_top_k {
                         Some(k) => search::run(config, statement, k).await,
-                        None => query(config, statement).await,
+                        None => {
+                            if bindings.is_empty() {
+                                query(config, statement).await
+                            } else {
+                                query_bound(config, statement, bindings).await
+                            }
+                        }
                     },
                 }
             }),
@@ -266,6 +283,14 @@ where
 }
 
 async fn query(config: Config, statement: String) -> Result<String> {
+    query_bound(config, statement, parameters::Bindings::default()).await
+}
+
+async fn query_bound(
+    config: Config,
+    statement: String,
+    bindings: parameters::Bindings,
+) -> Result<String> {
     let bytes = source::snapshot(&config.source, &config.sha256).await?;
     let (schema, batches) = source::decode(bytes)?;
     let columns = schema
@@ -284,7 +309,11 @@ async fn query(config: Config, statement: String) -> Result<String> {
     let dataset = Arc::new(Dataset {
         manifest: Manifest { schema: columns },
     });
-    let plan = sql::prepare(&statement, dataset)?;
+    let plan = if bindings.is_empty() {
+        sql::prepare(&statement, dataset)?
+    } else {
+        sql::prepare_bound(&statement, dataset, bindings)?
+    };
     let result = execution::execute(plan, schema, batches, &config.sha256).await?;
     // Never publish a successful result if the configured bytes changed while
     // executing. Queries consume only the first verified immutable snapshot.

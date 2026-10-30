@@ -31,6 +31,7 @@ pub(super) fn ident(value: &Ident) -> Result<String> {
 
 pub(super) struct Compiler<'a> {
     pub(super) dataset: &'a Dataset,
+    pub(super) bindings: crate::parameters::Bindings,
 }
 impl Compiler<'_> {
     pub(super) fn column(&self, name: &str) -> Result<String> {
@@ -64,6 +65,7 @@ impl Compiler<'_> {
                 Value::SingleQuotedString(s) => Ok((lit(s.clone()), "text".into())),
                 Value::Boolean(v) => Ok((lit(*v), "bool".into())),
                 Value::Null => Ok((lit(ScalarValue::Null), "null".into())),
+                Value::Placeholder(token) => self.bindings.expression(token),
                 _ => Err(unsupported()),
             },
             Ast::Nested(value) => self.expression(value, depth + 1),
@@ -110,11 +112,16 @@ impl Compiler<'_> {
                     return Err(unsupported());
                 };
                 let name = ident(id)?;
-                let Ast::Value(value) = pattern.as_ref() else {
-                    return Err(unsupported());
-                };
-                let Value::SingleQuotedString(pattern) = &value.value else {
-                    return Err(unsupported());
+                let pattern = match pattern.as_ref() {
+                    Ast::Value(value) => match &value.value {
+                        Value::SingleQuotedString(s) => s.clone(),
+                        Value::Placeholder(token) => match self.bindings.resolve(token)? {
+                            (ScalarValue::Utf8(Some(s)), _) => s,
+                            _ => return Err(unsupported()),
+                        },
+                        _ => return Err(unsupported()),
+                    },
+                    _ => return Err(unsupported()),
                 };
                 let keyword = pattern
                     .strip_prefix('%')

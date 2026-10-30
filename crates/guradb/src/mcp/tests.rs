@@ -103,3 +103,19 @@ fn empty_string_is_a_valid_bounded_unique_request_id() {
         -32600
     );
 }
+
+#[test]
+fn query_parameter_json_is_optional_bounded_and_forwarded_without_sql_rewrite() {
+    let raw = r#"{"version":1,"values":[{"type":"text","value":"a'; -- $1"}]}"#;
+    let command = super::tools::command(&json!({"name":"guradb_query","arguments":{"view":"current","sql":"SELECT t FROM records WHERE t=$1","params_json":raw}}),"/store").unwrap();
+    assert_eq!(
+        &command[command.len() - 2..],
+        &["--params-json".to_string(), raw.to_string()]
+    );
+    assert_eq!(command[7], "SELECT t FROM records WHERE t=$1");
+    for value in [json!(null), json!(1), json!("x".repeat(16385))] {
+        assert!(super::tools::command(&json!({"name":"guradb_query","arguments":{"view":"current","sql":"SELECT t FROM records","params_json":value}}),"/store").is_err());
+    }
+    assert!(super::tools::command(&json!({"name":"guradb_search","arguments":{"view":"current","query":"kitchen","params_json":raw}}),"/store").is_err());
+    assert_eq!(super::tools::list()["tools"].as_array().unwrap().len(), 3);
+}

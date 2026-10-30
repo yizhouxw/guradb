@@ -15,3 +15,5 @@
 [有界分组与基础聚合](group-aggregates.md)已通过本机受限语义验证，单group/完整输入最多200行；完整SQL/M2未支持。
 
 [本地Iceberg固定快照](local-iceberg.md)为1–2live文件/Null Avro/固定schema的本机受限入口，完整湖未支持。
+
+[WHERE值参数](sql-parameters.md)支持现有查询入口的受限三标量/typed NULL绑定，CLI/MCP同Rust语义；完整Q04/PG prepared仍未支持。

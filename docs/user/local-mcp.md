@@ -4,7 +4,7 @@
 
 公开启动：`guradb --data-root "$USER_DATA" mcp --store /data/store`（本包fresh安装物，不覆盖旧797b包）。官方Python SDK mcp==1.12.4、独立CPython3.12标准客户端验证；SDK仅工程客户端，不进入生产安装物。stdout仅UTF8一行一JSON-RPC，日志stderr，不输出用户参数/媒体日志。initialize协商server仅2025-06-18，有效但不支持的提议回报该版本；initialized通知后才tools/list/call。无prompts/resources/sampling等能力，不以忽略冒支持。
 
-工具`guradb_query {view,sql}`、`guradb_search {view,query}`可用current或显式64hex ID；`guradb_media {view,asset_id}`必须显式固定ID。响应content[0].text为原CLI完整JSON，包括实际view/source/文本/分数/媒体bytes_hex，读者先parse再用返回view取媒体；不得把current当跨调用固定ID。工具参数/unknown tool是协议错误，Rust实际拒绝是isError=true且原code保留，不截断假成功。外部公开CLI刷新current后原ID读取固定旧内容。
+工具`guradb_query {view,sql,params_json?}`、`guradb_search {view,query}`可用current或显式64hex ID；`guradb_media {view,asset_id}`必须显式固定ID。响应content[0].text为原CLI完整JSON，包括实际view/source/文本/分数/媒体bytes_hex，读者先parse再用返回view取媒体；不得把current当跨调用固定ID。工具参数/unknown tool是协议错误，Rust实际拒绝是isError=true且原code保留，不截断假成功。外部公开CLI刷新current后原ID读取固定旧内容。
 
 请求ID仅整数或≤128 UTF8 bytes字符串（含空串），会话内唯一。host仅64KiB原始字节缓冲，公开stdout逐响应帧写回限5s，不依赖Docker内部缓冲代表客户端已接收。会话最多60s/32条输入消息/8MiB总输出，单请求64KiB/单响应2MiB，单worker/单待写响应，无无界排队；忙时新调用明确拒绝。半行/空闲10s，写回5s，worker原Rust10s且额外清理2s，session终止清自己的worker；原源32/decode64MiB/feature8MiB/N200/维1..1024/TopK20与Docker512MiB4CPU不放宽。MCP专用launcher总75s+10s清理，原非MCP20s+10s不变；host SDK与Rust容器预算分列，不冒aggregate RSS硬限。
 
@@ -47,3 +47,5 @@ asyncio.run(main())
 ```
 
 自己的受支持store可由既有[固定view准备入口](simple-alpha.md#本地固定视图与完整刷新)产生；示例关键词由调用者更换，不含离线hit bool。客户端要检查isError、完整JSON与source/view/媒体SHA，不从另一asset成功推导检索证据链。
+
+`guradb_query`可选`params_json`字符串遵循[同一Rust WHERE值参数合同](sql-parameters.md)：v1 typed值JSON原UTF8≤16KiB、密集$1..$16/恰用、错误无值回显；present非字符串明确拒，原无参保持，wire行64KiB及SQL4096byte不扩，不新增工具或MCP湖接口。
