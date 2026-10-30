@@ -142,5 +142,40 @@
     "full_feature_identity": "SHA256 ASCII guradb-view-features-v2 LF sourceSHA LF featureSHA LF; complete immutable feature bytes/docset/space/model/preprocess",
     "full_feature_preparation": "--features <JSONL> --features-sha256 <pin> during prepare; complete captured readiness before publish, no late dependency attachment",
     "consumer": "sample returns exact view_id; actual Torch reader fixes it once and every media call uses it across current refresh"
+  },
+  "local_preview": {
+    "status": "local preview only",
+    "host": "macOS arm64",
+    "engine": "Linux ARM64 ELF via existing fixed local Docker image Id",
+    "engineering_dependency": "system /usr/bin/python3 >=3.9 stdlib; no project venv",
+    "entrypoints": [
+      "capabilities",
+      "doctor",
+      "--data-root DIR <unchanged Rust argv using /data>"
+    ],
+    "limits": {
+      "artifact_bytes": 1073741824,
+      "owned_bytes": 2147483648,
+      "build_seconds": 120,
+      "install_seconds": 60,
+      "launcher_total_seconds": 20,
+      "doctor_seconds": 10,
+      "cleanup_seconds": 10,
+      "container_memory_bytes": 536870912,
+      "container_cpus": 4
+    },
+    "not_bundled": [
+      "data preparation",
+      "model weights/encoder",
+      "PyTorch reader"
+    ],
+    "unsupported": [
+      "Mac native engine",
+      "other host/engine architectures",
+      "automatic runtime download",
+      "remote daemon",
+      "global PATH changes",
+      "release certification/MCP"
+    ]
   }
 }
