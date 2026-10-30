@@ -99,6 +99,16 @@ class AlphaStageTests(unittest.TestCase):
         self.assertNotIn('threshold_percent', profile['denominator'])
         self.assertIn('retirement_manifest_sha256', profile['suites']['repository'])
 
+    def test_offline_text_preparer_keeps_full_core_and_other_scripts_reject(self):
+        profile = bound_plan(ROOT, ['scripts/prepare_text_corpus.py'], *load(ROOT)[:3],
+                             stage='core', core_flow='simple-alpha')['profile']
+        self.assertEqual(list(profile['suites']), ['repository', 'policy', 'harness-tests', 'python', 'rust', 'functional'])
+        self.assertEqual(len(profile['suites']['rust']['commands']), 3)
+        self.assertIn('scripts/alpha_acceptance.py', profile['command_inputs'])
+        with self.assertRaisesRegex(HarnessError, 'unmapped changes'):
+            bound_plan(ROOT, ['scripts/unknown_prepare.py'], *load(ROOT)[:3],
+                       stage='core', core_flow='simple-alpha')
+
     def test_retired_runtime_reappearance_unknown_change_and_wrong_flow_reject(self):
         self.write('modules/index/server.py', 'pass\n')
         with self.assertRaisesRegex(HarnessError, 'retired path still present|Python online'):

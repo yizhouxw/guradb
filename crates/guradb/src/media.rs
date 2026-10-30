@@ -11,10 +11,10 @@ use std::{collections::BTreeMap, path::PathBuf};
 
 pub const MEDIA_LIMIT: usize = 512 << 10;
 #[derive(Clone, PartialEq, Eq)]
-struct Asset {
-    path: String,
-    sha256: String,
-    size: usize,
+pub(crate) struct Asset {
+    pub(crate) path: String,
+    pub(crate) sha256: String,
+    pub(crate) size: usize,
 }
 fn invalid() -> Error {
     Error::new(
@@ -37,7 +37,7 @@ fn index(schema: &SchemaRef, name: &str, data_type: DataType) -> Result<usize> {
     }
     Ok(fields[0].0)
 }
-fn assets(schema: &SchemaRef, batches: &[RecordBatch]) -> Result<BTreeMap<i64, Asset>> {
+pub(crate) fn assets(schema: &SchemaRef, batches: &[RecordBatch]) -> Result<BTreeMap<i64, Asset>> {
     let id = index(schema, "image_id", DataType::Int64)?;
     let path = index(schema, "image_path", DataType::Utf8)?;
     let version = index(schema, "media_version", DataType::Int64)?;

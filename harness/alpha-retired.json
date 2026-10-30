@@ -4,9 +4,10 @@
   "unsupported": [
     "HTTP/PG listeners",
     "Python online query/index/catalog/worker",
-    "ANN/BM25/graph/training",
+    "ANN/graph/training",
     "object-store or distributed operation",
-    "multi-tenant authorization and generic version/pin/lease/GC platform"
+    "multi-tenant authorization and generic version/pin/lease/GC platform",
+    "legacy Python BM25 implementation"
   ],
   "files": [
     {

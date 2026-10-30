@@ -2,6 +2,7 @@ mod compile;
 mod execution;
 mod media;
 mod media_path;
+mod search;
 mod source;
 mod sql;
 #[cfg(test)]
@@ -72,7 +73,7 @@ fn fail(error: Error, status: i32) -> ! {
 
 /// Main owns cancellation/deadline; read work lives in a separate thread.
 /// Exiting on cancellation releases every resource in this one-process CLI;
-/// neither command creates files, children, listeners or persistent tasks.
+/// commands create no files, children, listeners or persistent tasks.
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
     let args: Vec<_> = std::env::args().collect();
@@ -83,8 +84,12 @@ async fn main() {
         && args[2] == "--config"
         && args[4] == "--asset-id"
         && args[6] == "--source-sha256";
-    if !is_query && !is_media {
-        fail(Error::new("invalid_config", "usage: guradb query --config <file> --sql <SELECT> OR media --config <file> --asset-id <id> --source-sha256 <hit SHA>"), 1);
+    let is_search = (args.len() == 6 || (args.len() == 8 && args[6] == "--top-k"))
+        && args[1] == "search"
+        && args[2] == "--config"
+        && args[4] == "--query";
+    if !is_query && !is_media && !is_search {
+        fail(Error::new("invalid_config", "usage: guradb query --config <file> --sql <SELECT> OR media --config <file> --asset-id <id> --source-sha256 <hit SHA> OR search --config <file> --query <text> [--top-k <1..20>]"), 1);
     }
     let path = PathBuf::from(&args[3]);
     let bytes = match source::read_bounded(&path, 16384).await {
@@ -139,6 +144,19 @@ async fn main() {
     } else {
         None
     };
+    let search_top_k = if is_search {
+        let k = if args.len() == 8 {
+            args[7].parse::<usize>().unwrap_or(0)
+        } else {
+            10
+        };
+        if !(1..=20).contains(&k) {
+            fail(Error::new("invalid_config", "top-k must be 1..20"), 1);
+        }
+        Some(k)
+    } else {
+        None
+    };
     let media_root = path
         .parent()
         .filter(|p| !p.as_os_str().is_empty())
@@ -156,7 +174,10 @@ async fn main() {
             Ok(runtime) => runtime.block_on(async move {
                 match media_id {
                     Some(id) => media::read(config, media_root, id).await,
-                    None => query(config, statement).await,
+                    None => match search_top_k {
+                        Some(k) => search::run(config, statement, k).await,
+                        None => query(config, statement).await,
+                    },
                 }
             }),
             Err(_) => Err(Error::new("execution_failed", "cannot start query runtime")),
