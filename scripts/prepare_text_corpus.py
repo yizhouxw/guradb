@@ -72,7 +72,7 @@ def prepare(input_path, output_dir):
             image_id = item['asset_id' if version == 2 else 'image_id']
             locator = item['asset_file' if version == 2 else 'image_file']
             kind = item['asset_type'] if version == 2 else 'image/jpeg'
-            if type(kind) is not str or kind not in {'image/jpeg', 'audio/wav'}:
+            if type(kind) is not str or kind not in {'image/jpeg', 'audio/wav', 'video/x-msvideo'}:
                 raise ValueError('unsupported asset_type')
             if type(image_id) is not int or not 1 <= image_id <= 999999999999 or type(locator) is not str:
                 raise ValueError('invalid image ID or local locator')
@@ -90,8 +90,9 @@ def prepare(input_path, output_dir):
                 if assets[image_id]['source'] != str(image_path) or assets[image_id]['type'] != kind:
                     raise ValueError('image ID has conflicting source paths')
             else:
-                if image_path.suffix.lower() not in ({'.jpg', '.jpeg'} if kind == 'image/jpeg' else {'.wav'}):
-                    raise ValueError('only local JPEG file names are supported')
+                extensions = {'image/jpeg': {'.jpg', '.jpeg'}, 'audio/wav': {'.wav'}, 'video/x-msvideo': {'.avi'}}
+                if image_path.suffix.lower() not in extensions[kind]:
+                    raise ValueError('asset filename does not match its supported media type')
                 if len(assets) >= 3 or image_path.stat().st_size > 512 * 1024:
                     raise ValueError('at most three bounded 512 KiB media assets')
                 with image_path.open('rb') as stream:
@@ -111,10 +112,16 @@ def prepare(input_path, output_dir):
                     with wave.open(io.BytesIO(data), 'rb') as reader:
                         if len(reader.readframes(reader.getnframes())) != count:
                             raise ValueError('incomplete PCM frames')
+                if kind == 'video/x-msvideo':
+                    if (len(data) < 12 or data[:4] != b'RIFF' or data[8:12] != b'AVI '
+                            or struct.unpack_from('<I', data, 4)[0] != len(data) - 8):
+                        raise ValueError('unsupported bounded RIFF AVI bytes; Rust verifies frames and timing')
                 if len(data) > 512 * 1024:
                     raise ValueError('media byte bounds exceeded')
                 assets[image_id] = {'source': str(image_path), 'payload': data, 'sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data), 'type': kind,
-                                    'path': f'images/{image_id:012}.jpg' if kind == 'image/jpeg' else f'audio/{image_id:012}.wav'}
+                                    'path': (f'images/{image_id:012}.jpg' if kind == 'image/jpeg' else
+                                             f'audio/{image_id:012}.wav' if kind == 'audio/wav' else
+                                             f'videos/{image_id:012}.avi')}
             asset = assets[image_id]
             row.update(media_version=version, media_bytes=asset['bytes'], media_sha256=asset['sha256'])
             if version == 1:
@@ -145,7 +152,7 @@ def prepare(input_path, output_dir):
                       'parquet_bytes': parquet.stat().st_size,
                       'assets': {str(key): {k: v for k, v in value.items() if k != 'payload'} for key, value in assets.items()},
                       'attribution': 'caller supplies and retains source attribution/rights; no rights or decode certification',
-                      'scope': ('offline captured bytes; no keyword labels/ranking/download/transcoding/image-or-model decoding; PCM16 framing read and validated' if version == 2 else 'offline captured bytes; no keyword labels or ranking; no download or decoding')}
+                      'scope': ('offline captured bytes; no keyword labels/ranking/download/transcoding/image-or-model decoding; PCM16 framing read and validated; AVI signature/length only, Rust owns frame/index/timing validation' if version == 2 else 'offline captured bytes; no keyword labels or ranking; no download or decoding')}
         (output / 'source.json').write_text(json.dumps(provenance, indent=2) + '\n')
     except BaseException:
         shutil.rmtree(output)

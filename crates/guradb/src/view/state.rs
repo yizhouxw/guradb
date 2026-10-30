@@ -347,9 +347,15 @@ impl Store {
                     }
                     *data += n;
                 }
-                Some(kind @ ("images" | "audio")) if kind == "images" || !full_features => {
+                Some(kind @ ("images" | "audio" | "videos"))
+                    if kind == "images" || !full_features =>
+                {
                     directory(&e.path())?;
-                    let extension = if kind == "images" { ".jpg" } else { ".wav" };
+                    let extension = match kind {
+                        "images" => ".jpg",
+                        "audio" => ".wav",
+                        _ => ".avi",
+                    };
                     for asset in fs::read_dir(e.path()).map_err(|_| invalid())? {
                         let asset = asset.map_err(|_| invalid())?;
                         let name = asset.file_name();

@@ -1,8 +1,8 @@
 # 固定输入中的真实PCM16 WAV证据
 
-状态：受限Rust组件已通过真实非作者验收；2026-10-31。适用本片第9个audio预览包及同源用户数据；精确main安装消费证据见本片交付报告，完整M2/音频泛化与发行未认证。可信单用户/本地单Parquet/现Rust CLI及既有MCP，不提供ASR、音频模型、转码、压缩音频、视频或时间切片。文本检索只匹配外部提供的标题/描述。
+状态：受限Rust组件已通过真实非作者验收；2026-10-31。适用本片第9个audio预览包及同源用户数据；精确main安装消费证据见本片交付报告，完整M2/音频泛化与发行未认证。可信单用户/本地单Parquet/现Rust CLI及既有MCP，不提供ASR、音频模型、转码、压缩音频、时间切片；受限视频另见[独立视频页](video-evidence.md)。文本检索只匹配外部提供的标题/描述。
 
-新增media版本2以asset_id/int8、asset_path/text、asset_type/text、media_version/int8=2、media_bytes/int8和media_sha256/text共同绑定同一Parquet。text_version=1/doc_id/text沿用；新混合语料严格9列，不能混用v1字段或混版本。asset_type仅image/jpeg与audio/wav，ID为1..999999999999且跨类型唯一，同ID所有行描述必须相同；路径只能images/12位ID.jpg或audio/12位ID.wav，并与类型匹配。旧v1五媒体列和旧JPEG响应保持兼容，不隐式升级。未知版本/类型、错类型内容或关联、重复冲突、越根/链接/特殊文件、缺失或替换、错误SHA一律拒绝。
+新增media版本2以asset_id/int8、asset_path/text、asset_type/text、media_version/int8=2、media_bytes/int8和media_sha256/text共同绑定同一Parquet。text_version=1/doc_id/text沿用；新混合语料严格9列，不能混用v1字段或混版本。本页asset_type为image/jpeg与audio/wav（视频扩展另见ADR0046），ID为1..999999999999且跨类型唯一，同ID所有行描述必须相同；路径只能images/12位ID.jpg或audio/12位ID.wav，并与类型匹配。旧v1五媒体列和旧JPEG响应保持兼容，不隐式升级。未知版本/类型、错类型内容或关联、重复冲突、越根/链接/特殊文件、缺失或替换、错误SHA一律拒绝。
 
 WAV只支持完整little-endian RIFF/WAVE、唯一16字节fmt块且PCM格式1、16bit有符号、44100Hz、1或2声道、唯一非空data块；严格校验RIFF完整长度、fmt/data顺序、byte_rate/block_align/PCM帧对齐，拒绝额外/重复chunk、尾部垃圾、RF64/RIFX/float/压缩/截断/其它采样率或声道。返回完整原始WAV bytes_hex及asset_type/asset_path，audio元数据为encoding=pcm_s16le、sample_rate、channels、bits_per_sample、frames；帧数/采样率给精确时长，不把模型或作者推测当元数据。JPEG v2核FF D8 FF前缀与FF D9结尾（不支持JPEG尾部附加bytes），不作新增图像解码或音频特征推断。音频/媒体v2不接vector/hybrid/sample及feature-view，明确拒绝，不能沿用图像CLIP空间。
 

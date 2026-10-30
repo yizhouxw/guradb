@@ -1,6 +1,7 @@
 mod aggregate;
 #[cfg(test)]
 mod aggregate_tests;
+mod avi;
 mod compile;
 mod execution;
 mod features;

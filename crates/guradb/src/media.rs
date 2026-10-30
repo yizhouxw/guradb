@@ -142,6 +142,7 @@ pub(crate) fn assets(schema: &SchemaRef, batches: &[RecordBatch]) -> Result<BTre
             let (directory, extension) = match media_type {
                 "image/jpeg" => ("images", "jpg"),
                 "audio/wav" => ("audio", "wav"),
+                "video/x-msvideo" => ("videos", "avi"),
                 _ => return Err(invalid()),
             };
             let key = ids.value(row);
@@ -207,6 +208,9 @@ pub async fn read(config: Config, root: PathBuf, id: i64) -> Result<String> {
     if asset.kind == "audio/wav" {
         result["audio"] =
             serde_json::to_value(crate::wav::inspect(&bytes)?).map_err(|_| invalid())?;
+    } else if asset.kind == "video/x-msvideo" {
+        result["video"] =
+            serde_json::to_value(crate::avi::inspect(&bytes)?).map_err(|_| invalid())?;
     }
     let result = serde_json::to_string(&result)
         .map_err(|_| Error::new("output_failed", "cannot encode media evidence"))?;
@@ -255,6 +259,8 @@ pub(crate) fn checked_bytes(root: &std::path::Path, asset: &Asset) -> Result<Vec
     if asset.version == 2 {
         if asset.kind == "audio/wav" {
             crate::wav::inspect(&bytes)?;
+        } else if asset.kind == "video/x-msvideo" {
+            crate::avi::inspect(&bytes)?;
         } else if !bytes.starts_with(&[0xff, 0xd8, 0xff]) || !bytes.ends_with(&[0xff, 0xd9]) {
             return Err(Error::new("invalid_media_format", "invalid JPEG signature"));
         }

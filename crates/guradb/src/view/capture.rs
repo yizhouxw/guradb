@@ -63,6 +63,9 @@ pub async fn capture(
     if assets.values().any(|a| a.kind == "audio/wav") {
         fs::create_dir(dir.join("audio")).map_err(|_| state::invalid())?;
     }
+    if assets.values().any(|a| a.kind == "video/x-msvideo") {
+        fs::create_dir(dir.join("videos")).map_err(|_| state::invalid())?;
+    }
     state::write(&dir.join("records.parquet"), &b)?;
     for a in assets.into_values() {
         let p = media::checked_bytes(origin, &a)?;
@@ -93,6 +96,9 @@ pub async fn capture(
     state::sync_dir(&dir.join("images"))?;
     if dir.join("audio").exists() {
         state::sync_dir(&dir.join("audio"))?;
+    }
+    if dir.join("videos").exists() {
+        state::sync_dir(&dir.join("videos"))?;
     }
     state::sync_dir(&dir)?;
     fs::rename(&dir, s.object(&record.id)).map_err(|_| state::invalid())?;
