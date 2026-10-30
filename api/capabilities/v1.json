@@ -314,5 +314,28 @@
       "ownership, retention pins, GC, catalog synchronization or complete Iceberg interoperability"
     ],
     "retention": "caller preserves all snapshot source files; inspect does not certify historical untampered bytes"
+  },
+  "sql_value_parameters": {
+    "version": 1,
+    "entrypoints": "existing CLI query variants accept optional suffix --params-json <raw JSON text>; existing guradb_query accepts optional string params_json; no new MCP tool/lake entry",
+    "input": "exact {version:1,values:[{type:int8|text|bool,value:typed_value_or_null}]} UTF8 JSON text; int8 canonical decimal string incl extremes, text UTF8, bool JSON Boolean; type/value required",
+    "binding": "AST typed ScalarValue, never SQL text replacement; exact dense $1..$16 refs, every value used, repeat refs same value; strings/comments do not introduce references",
+    "where_scope": "existing scalar literal positions in WHERE, original operators/types; LIKE only original text column and nonNULL text pattern %literal% with original keyword1..128-byte constraints",
+    "limits": {
+      "parameter_record_utf8_bytes": 16384,
+      "values_max": 16,
+      "cli_sql_bytes": 16384,
+      "mcp_sql_bytes": 4096,
+      "mcp_rpc_line_bytes_unchanged": 65536
+    },
+    "compatibility": "no parameters unchanged; source/view/readset IDs and result JSON unchanged, no persistent binding/session state; all source/decode/Arrow/output/aggregate limits preserved",
+    "unsupported": [
+      "dynamic identifiers or SQL fragments",
+      "parameters in projection/order/group/limit/table/column/function names or aggregate arguments",
+      "-$1, LIKE NULL, unknown placeholders or missing/unused/holey/excess/wrong-typed bindings",
+      "float/decimal/untyped NULL/casts/new operators/PG prepared protocol"
+    ],
+    "errors": "bounded static diagnostics never echo actual binding values",
+    "qualification": "limited value input capability; not complete Q04/PG/security certification"
   }
 }

@@ -42,6 +42,7 @@ struct Request {
     snapshot: i64,
     expected_readset: Option<String>,
     sql: Option<String>,
+    bindings: crate::parameters::Bindings,
 }
 fn request(args: &[String]) -> Result<Request> {
     let query = args.get(2).is_some_and(|v| v == "query");
@@ -80,13 +81,23 @@ fn request(args: &[String]) -> Result<Request> {
         snapshot,
         expected_readset,
         sql,
+        bindings: crate::parameters::Bindings::default(),
     })
 }
-pub async fn entry(args: Vec<String>) {
-    let request = match request(&args) {
+pub async fn entry(mut args: Vec<String>) {
+    let bindings = if args.get(2).is_some_and(|op| op == "query") {
+        match crate::parameters::suffix(&mut args) {
+            Ok(b) => b,
+            Err(e) => crate::fail(e, 1),
+        }
+    } else {
+        crate::parameters::Bindings::default()
+    };
+    let mut request = match request(&args) {
         Ok(r) => r,
         Err(e) => crate::fail(e, 1),
     };
+    request.bindings = bindings;
     crate::operation(Duration::from_secs(10), move || {
         let runtime = tokio::runtime::Builder::new_multi_thread()
             .worker_threads(2)
@@ -301,7 +312,11 @@ async fn run(request: Request) -> Result<String> {
         let dataset = Arc::new(Dataset {
             manifest: Manifest { schema: columns },
         });
-        let plan = crate::sql::prepare(&sql, dataset)?;
+        let plan = if request.bindings.is_empty() {
+            crate::sql::prepare(&sql, dataset)?
+        } else {
+            crate::sql::prepare_bound(&sql, dataset, request.bindings)?
+        };
         let result = crate::execution::execute(plan, schema, batches, &source_sha).await?;
         serde_json::from_str(&result).map_err(|_| invalid())?
     } else {

@@ -4,7 +4,7 @@
 支持受限的caption字面关键词过滤；没有HTTP/PG监听器、Python在线服务、模型推理、语义相关性认证、ANN、训练或分布式worker。
 详细支持/拒绝、输入SHA256和退出语义见[用户手册](docs/user/simple-alpha.md)。
 
-以下命令在仓库根目录执行，需要Docker。已有.venv且已安装锁定依赖时，可从构建命令开始。
+以下命令在仓库根目录执行，需要Docker及已预置的[锁定离线Rust工具链镜像](harness/README.md)；执行器不会隐式构建或下载工具链。已有.venv且已安装锁定依赖时，可从构建命令开始。
 示例为4行合成数据，无需自行准备文件或填写SHA256。
 `GURADB_FIRST_RUN_DIR`必须是仓库artifacts下尚不存在的相对目录；已有目录会明确拒绝，换一个新名字即可，不会覆盖。
 
@@ -64,3 +64,5 @@ docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspac
 [有界COUNT/MIN/MAX与单列GROUP BY](docs/user/group-aggregates.md)为共享Rust query的本机受限增量；完整SQL/M2未支持。
 
 [本地Iceberg v2固定快照](docs/user/local-iceberg.md)为1–2live Parquet/Null OCF的受限只读入口；不代表完整湖或MCP湖接口。
+
+[WHERE有界标量值参数](docs/user/sql-parameters.md)为现query的$1..$16 typed值绑定，CLI及现MCP guradb_query共用Rust，原源身份与SQL边界不扩；不是PG prepared协议。

@@ -22,7 +22,12 @@ pub async fn entry(args: Vec<String>) {
     })
     .await;
 }
-async fn run(a: Vec<String>) -> Result<String> {
+async fn run(mut a: Vec<String>) -> Result<String> {
+    let bindings = if a.get(2).is_some_and(|op| op == "query") {
+        crate::parameters::suffix(&mut a)?
+    } else {
+        crate::parameters::Bindings::default()
+    };
     if a.len() < 5 || a[3] != "--store" {
         return Err(usage());
     }
@@ -210,7 +215,7 @@ async fn run(a: Vec<String>) -> Result<String> {
             let (cfg, root) = capture::owned(&s, v).await?;
             let source_sha = cfg.sha256.clone();
             let result = match op {
-                "query" => crate::query(cfg, a[8].clone()).await?,
+                "query" => crate::query_bound(cfg, a[8].clone(), bindings).await?,
                 "search" => crate::search::run(cfg, a[8].clone(), 10).await?,
                 "vector" | "hybrid" => {
                     let k = a[10].parse::<usize>().unwrap_or(0);
