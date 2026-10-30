@@ -7,7 +7,7 @@ use parquet::{
     basic::{Compression, Repetition, Type},
 };
 
-pub fn validate(bytes: Bytes, meta: &Metadata, expected_rows: usize) -> Result<()> {
+pub fn validate(bytes: Bytes, meta: &Metadata, expected_rows: usize) -> Result<usize> {
     let builder = ParquetRecordBatchReaderBuilder::try_new_with_options(
         bytes,
         ArrowReaderOptions::new().with_skip_arrow_metadata(true),
@@ -58,5 +58,5 @@ pub fn validate(bytes: Bytes, meta: &Metadata, expected_rows: usize) -> Result<(
             }
         }
     }
-    Ok(())
+    crate::source::declared_size(builder.metadata())
 }
