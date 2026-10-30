@@ -1,6 +1,6 @@
 # GuraDB 单机 Rust alpha
 
-当前alpha只支持可信单用户的一份本地固定Parquet源，通过一个Rust CLI进程执行有界只读SQL、受限ASCII英文BM25排名，并取得同一输入显式绑定的本地JPEG证据字节。
+当前alpha支持可信单用户、每次操作一份本地固定Parquet源，通过一个Rust CLI进程执行有界只读SQL、受限ASCII英文BM25排名，并取得同一输入显式绑定的本地JPEG证据字节。本地双视图完整刷新首包已通过有限验收，完整M1.5仍未交付。
 支持受限的caption字面关键词过滤；没有HTTP/PG监听器、Python在线服务、模型推理、语义相关性认证、ANN、训练或分布式worker。
 详细支持/拒绝、输入SHA256和退出语义见[用户手册](docs/user/simple-alpha.md)。
 
@@ -52,3 +52,5 @@ docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspac
 [固定真实CLIP离线证据](docs/user/simple-alpha.md#固定真实clip图文模型的离线复现)已通过本固定三图/八query证据验收；泛化/业务优势仍未认证。
 
 [固定成员与真实PyTorch消费](docs/user/simple-alpha.md#固定样本与真实pytorch消费)已通过固定成员/组划分和真实两epoch/尾批验收；训练结果复现未授予。
+
+[本地固定视图与完整刷新](docs/user/simple-alpha.md#本地固定视图与完整刷新)已通过首包有限验收：两本地完整版本、准备就绪发布与公开重启对账；未接通view模式明确拒绝。

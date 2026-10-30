@@ -95,7 +95,7 @@ class AlphaStageTests(unittest.TestCase):
         self.assertEqual(len(profile['suites']['rust']['commands']), 3)
         self.assertIn('scripts/alpha_acceptance.py', profile['command_inputs'])
         self.assertEqual(set(profile['source_closure']), {p.relative_to(ROOT).as_posix()
-                         for p in (ROOT/'crates/guradb/src').glob('*.rs')})
+                         for p in (ROOT/'crates/guradb/src').rglob('*.rs')})
         self.assertNotIn('threshold_percent', profile['denominator'])
         self.assertIn('retirement_manifest_sha256', profile['suites']['repository'])
 

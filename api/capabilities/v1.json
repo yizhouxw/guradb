@@ -107,5 +107,32 @@
     "model": "not_used",
     "validation": "source/request SHA recheck; selected asset bytes/SHA checked; no pin/lease/GC; caller retains source/media",
     "external_consumer": "actual PyTorch Dataset/DataLoader, two epochs, num_workers0/shufflefalse/drop_lastfalse; reader reproduction only, no training-result claim"
+  },
+  "local_views": {
+    "version": 1,
+    "entrypoint": "guradb view prepare|publish|status|recover|query|search|media --store <path> ...",
+    "identity": "view ID = captured Parquet SHA256; request ID bound once to one source; replay never moves current backwards",
+    "publication": "complete captured text/media v1 readiness before prepared catalog; atomic catalog publication; explicit public recover/status",
+    "read_whitelist": [
+      "query",
+      "search",
+      "media"
+    ],
+    "unsupported": [
+      "view vector",
+      "view hybrid",
+      "view sample",
+      "automatic GC/delete",
+      "unknown formats",
+      "distributed catalog",
+      "power-loss certification"
+    ],
+    "limits": {
+      "views_including_prepared_pending": 2,
+      "owned_data_bytes": 134217728,
+      "description_bytes": 1048576,
+      "operation_ms": 10000
+    },
+    "ownership": "owned captured Parquet/JPEG retained until operator removes whole store; fixed old IDs never follow current; external source lifecycle not controlled"
   }
 }
