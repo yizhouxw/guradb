@@ -1,6 +1,8 @@
 //! Real process/pipe tests. No product sleep hook or simulated cancellation.
 #[path = "support/object_range_cases.rs"]
 mod object_range_cases;
+#[path = "support/projected_parquet_cases.rs"]
+mod projected_parquet_cases;
 use arrow::{
     array::StringArray,
     datatypes::{DataType, Field, Schema},

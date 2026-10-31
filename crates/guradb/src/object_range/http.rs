@@ -22,7 +22,15 @@ fn remaining(deadline: Instant) -> Result<std::time::Duration> {
         .filter(|d| !d.is_zero())
         .ok_or_else(io_error)
 }
-pub(super) fn get(r: &Request, port: u16, deadline: Instant) -> Result<(Vec<u8>, usize)> {
+pub(crate) fn get(r: &Request, port: u16, deadline: Instant) -> Result<(Vec<u8>, usize)> {
+    get_limited(r, port, deadline, 16384)
+}
+pub(crate) fn get_limited(
+    r: &Request,
+    port: u16,
+    deadline: Instant,
+    header_allowance: usize,
+) -> Result<(Vec<u8>, usize)> {
     let address = SocketAddr::from((Ipv4Addr::LOCALHOST, port));
     let mut socket =
         TcpStream::connect_timeout(&address, remaining(deadline)?).map_err(|_| io_error())?;
@@ -43,7 +51,7 @@ pub(super) fn get(r: &Request, port: u16, deadline: Instant) -> Result<(Vec<u8>,
     // Read no body ahead: every header byte is bounded and parsed only once.
     let mut head = Vec::new();
     while !head.ends_with(b"\r\n\r\n") {
-        if head.len() == 16384 {
+        if head.len() >= header_allowance.min(16384) {
             return Err(invalid());
         }
         socket

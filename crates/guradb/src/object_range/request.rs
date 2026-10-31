@@ -4,7 +4,7 @@ use std::{fs::OpenOptions, io::Read, os::unix::fs::OpenOptionsExt, path::Path};
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct Request {
+pub(crate) struct Request {
     pub version: u32,
     pub origin: String,
     pub object_key: String,
@@ -42,7 +42,7 @@ impl Request {
         let port = r.validate()?;
         Ok((r, port))
     }
-    fn validate(&self) -> Result<u16> {
+    pub(crate) fn validate(&self) -> Result<u16> {
         let uri = self.origin.parse::<http::Uri>().map_err(|_| invalid())?;
         let port = uri.port_u16().ok_or_else(invalid)?;
         let key = &self.object_key;

@@ -6,6 +6,7 @@ rust-version.workspace = true
 publish.workspace = true
 
 [dependencies]
+thrift.workspace = true
 http.workspace = true
 httparse.workspace = true
 apache-avro.workspace = true
