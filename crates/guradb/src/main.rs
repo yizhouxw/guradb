@@ -9,6 +9,7 @@ mod iceberg;
 mod mcp;
 mod media;
 mod media_path;
+mod object_range;
 #[cfg(test)]
 mod parameter_tests;
 mod parameters;
@@ -100,6 +101,10 @@ async fn main() {
     } else {
         parameters::Bindings::default()
     };
+    if args.get(1).is_some_and(|s| s == "object-range") {
+        object_range::entry(args).await;
+        return;
+    }
     if args.get(1).is_some_and(|s| s == "iceberg") {
         iceberg::entry(args).await;
         return;

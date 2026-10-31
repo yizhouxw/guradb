@@ -1,4 +1,6 @@
 //! Real process/pipe tests. No product sleep hook or simulated cancellation.
+#[path = "support/object_range_cases.rs"]
+mod object_range_cases;
 use arrow::{
     array::StringArray,
     datatypes::{DataType, Field, Schema},
@@ -15,6 +17,10 @@ use std::{
     sync::Arc,
     time::{Duration, Instant},
 };
+
+// A 300 ms output deadline is measured without the additional HTTP process
+// matrix competing with its startup. Product limits/assertions stay fixed.
+static CLI_PROCESS_WINDOW: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 struct Scope {
     directory: PathBuf,
@@ -121,6 +127,7 @@ fn await_exit(child: &mut Child, expected: i32) {
 
 #[test]
 fn real_timeout_terminates_while_output_consumer_stops_reading() {
+    let _window = CLI_PROCESS_WINDOW.lock().unwrap_or_else(|e| e.into_inner());
     let (mut scope, config) = setup(300);
     start(&mut scope, &config);
     let child = scope.child.as_mut().unwrap();

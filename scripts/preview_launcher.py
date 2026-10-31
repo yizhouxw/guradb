@@ -114,6 +114,29 @@ def mcp_wait(child):
                 deadline = None if written[-1:] == b'\n' and not pending else time.monotonic()+5
 
 
+def local_http_network(prefix, manifest, container):
+    if len(container) != 64 or any(c not in '0123456789abcdef' for c in container):
+        raise ValueError('local HTTP fixture requires an exact container ID')
+    result = subprocess.run(prefix+['container', 'inspect', container], stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE, timeout=5, check=True)
+    if len(result.stdout) > 65536:
+        raise ValueError('local HTTP fixture metadata exceeds bound')
+    rows = json.loads(result.stdout)
+    if type(rows) is not list or len(rows) != 1:
+        raise ValueError('invalid local HTTP fixture identity')
+    row = rows[0]
+    state, host, network = row.get('State', {}), row.get('HostConfig', {}), row.get('NetworkSettings', {})
+    labels = row.get('Config', {}).get('Labels') or {}
+    if (row.get('Id') != container or row.get('Image') != manifest['runtime_image']
+            or state.get('Running') is not True or state.get('Paused') or state.get('Restarting')
+            or host.get('NetworkMode') != 'none' or host.get('PortBindings')
+            or set((network.get('Networks') or {}).keys()) != {'none'}
+            or any((network.get('Ports') or {}).values())
+            or labels.get('guradb.local-http-fixture') != 'v1'):
+        raise ValueError('local HTTP fixture must be a running isolated fixed-runtime container')
+    return 'container:'+container
+
+
 class Interrupted(BaseException):
     def __init__(self, signum):
         self.signum = signum
@@ -141,12 +164,22 @@ def run():
         data = Path(args[1]).resolve(strict=True)
         if not data.is_dir():
             raise ValueError('data-root must be an existing directory')
+        rust_args, network = args[2:], 'none'
+        if rust_args[:1] == ['--local-http-container']:
+            if len(rust_args) < 3 or rust_args[2] != 'object-range':
+                raise ValueError('local HTTP network flag is only supported for object-range')
+            network = local_http_network(prefix, m, rust_args[1])
+            rust_args = rust_args[2:]
+        elif rust_args[:1] == ['object-range']:
+            raise ValueError('object-range requires explicit --local-http-container')
+        if '--local-http-container' in rust_args:
+            raise ValueError('duplicate or misplaced local HTTP network flag')
         name = 'guradb-preview-'+str(os.getpid())+'-'+uuid.uuid4().hex[:8]
-        interactive = ['-i'] if args[2:3] == ['mcp'] else []
+        interactive = ['-i'] if rust_args[:1] == ['mcp'] else []
         command = prefix+['run', *interactive, '--rm', '--pull', 'never', '--name', name, '--label', 'guradb.preview.owner='+str(os.getpid()),
-                          '--network', 'none', '--memory', '512m', '--cpus', '4', '--pids-limit', '128',
+                          '--network', network, '--memory', '512m', '--cpus', '4', '--pids-limit', '128',
                           '-v', str(root/'lib/engine')+':/guradb:ro', '-v', str(data)+':/data', '-w', '/data',
-                          m['runtime_image'], '/guradb']+args[2:]
+                          m['runtime_image'], '/guradb']+rust_args
         child = None
         try:
             child = subprocess.Popen(command, start_new_session=True, stdout=subprocess.PIPE if interactive else None)

@@ -21,3 +21,5 @@
 [类型化PCM16 WAV证据](audio-evidence.md)：受限组件已验，外部文字命中与同源准确音频bytes、独立帧消费；原JPEG兼容。
 
 - [固定短视频原字节与帧证据](video-evidence.md)：单AVI/BGR24，外部文本命中与独立真实帧消费。
+
+- [固定本机HTTP对象Range（待实现）](local-object-range.md)：显式隔离loopback、强版本与所读范围摘要，不冒未读全对象认证。
