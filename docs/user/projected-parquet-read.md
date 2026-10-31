@@ -14,7 +14,7 @@ request JSON≤16KiB，version=1；固定identity(origin/object_key/etag/object_
 
 本机预览仅新命令显式 --local-http-container fullID，复用同localUnix Docker/固定09bc/none fixture namespace与两mount；旧入口默认none/错误开关拒。Python只离线准备、标准库工程HTTP fixture与独立真值，不执行在线投影/查询，不下载模型/媒体/软件。
 
-公开入口：`scripts/prepare_projected_parquet.py`（待实现）从既有受支持小Parquet离线规范化为uncompressed/noDict/3–4group，并写data.parquet/request.json/来源成本说明/参考fixture到不存在且父链无链接的新目录，拒覆盖/缺源/最终源链接、输出父链链接及..穿越。输入全读与规范化成本公开，未预存结果。用户安装包只需新第12包+原stdout sidecar+≤4MiB bundle和既有Docker/SystemPython，不依赖开发checkout/target/主venv；离线准备依赖已有PyArrow单列，不冒运行期依赖。具体公开命令如下；非作者候选已真实通过，H-M/fresh身份仍按独立交付链另验。
+公开入口：`scripts/prepare_projected_parquet.py`（已实现）从既有受支持小Parquet离线规范化为uncompressed/noDict/最多3个非空group，并写data.parquet/request.json/来源成本说明/参考fixture到不存在且父链无链接的新目录，拒覆盖/缺源/最终源链接、输出父链链接及..穿越。输入全读与规范化成本公开，未预存结果。用户安装包只需新第12包+原stdout sidecar+≤4MiB bundle和既有Docker/SystemPython，不依赖开发checkout/target/主venv；离线准备依赖已有PyArrow单列，不冒运行期依赖。具体公开命令如下；非作者候选已真实通过，H-M/fresh身份仍按独立交付链另验。
 
 真实输入使用已有COCO15 caption元数据，图片许可与caption归属沿原记录，未重新读取/解码媒体。工程nullable/200行等fixture独立标记，不作大规模结果。HTTP局部读不证明S3/远端湖/通用Parquet/SQL下推/完整来源当前认证或性能优势。
 
