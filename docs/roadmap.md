@@ -5,6 +5,15 @@
 [执行计划与42项需求映射](plans/2026-10-30-delivery-path.md)负责近期队列与缺口。
 旧版本路线/实验记录留在Git与原报告中，不改写历史通过或失败，也不据此恢复已退役服务。
 
+## 当前实现导航（2026-10-31，受限主线）
+
+本段更新实际资格，以下2026-10-30章节保留为当时起点与路线快照，包含的“DISTINCT在途”等状态不代表当前执行项；完整目标、阶段顺序和历史失败均保留，不用PR数量计完成比例。
+
+- 已验主线到[PR251](https://github.com/yizhouxw/guradb/pull/251)/main `82de69ad26000ecae8f8f9702660bbf6ad074061`。DISTINCT、BM25、外部特征精确向量/融合、固定真实模型小样本、固定样本框架reader与不可变view完整刷新、预览安装/MCP三工具已有各自有限证据，入口见[当前用户手册](user/README.md)；不等于完整M1或语义/业务优势。
+- M2已验切片包括[托管完整导入](user/managed-dataset.md)、[聚合](user/group-aggregates.md)、[本地Iceberg一至两live文件](user/local-iceberg.md)、[值参数](user/sql-parameters.md)、[WAV](user/audio-evidence.md)/[受限AVI](user/video-evidence.md)和[固定本机对象Range](user/local-object-range.md)。仅各页白名单，Range只证明所读bytes，不冒整对象或旧SQL下推。
+- 当前[Parquet投影/行组局部读取](user/projected-parquet-read.md)已通过受限候选真实验收：离线全读规范化/摘要成本公开，运行时有限GET返回结构化记录、分配前界/累计预算/取消终态及旧路径兼容经非作者验证；正常原B-H-M与新包唯一fresh尚按交付链绑定，不提前计完整M2或一般SQL下推。
+- 后续仍需真实按需读取与更广湖/对象后端配对、通用语法/类型与更新同步、规模/性能、ANN/Graph、权限/共享保留及分布式/发行等对应证据。局部首片不折算六旅程、42需求或完整阶段已完成，原路线依赖与未验义务不删。
+
 ## 1. 起点：哪些已经交付
 
 基点main `f63606038c94d98b996b6329c4e7d3b8b5c388be`（[PR230](https://github.com/yizhouxw/guradb/pull/230)）。

@@ -72,3 +72,5 @@ docker run --rm --network none --memory 512m --pids-limit 128 -v "$PWD:/workspac
 [固定短视频证据](docs/user/video-evidence.md)：单AVI/BGR24、外部文本命中与同源完整bytes/精确时间和独立真实帧消费；不作视频理解或通用MP4兼容。
 
 [固定本机HTTP对象Range](docs/user/local-object-range.md)：独立Rust命令以强版本条件读取有界精确bytes/范围SHA；显式隔离loopback namespace，旧入口仍offline。不代表旧SQL下推、S3或未读整对象认证。
+
+[固定HTTP Parquet投影/行组读取](docs/user/projected-parquet-read.md)：独立实验Rust入口只取所选列/行组并返回结构化记录，离线准备全读成本分账；未读内容不认证，旧SQL/媒体/湖与MCP仍沿原完整源路径。

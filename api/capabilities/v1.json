@@ -404,5 +404,59 @@
     ],
     "fixture": "temporary engineering Python standard-library reference server, networknone/127.0.0.1, captured readonly object; product Rust never listens",
     "response_headers": "HTTP1.1/206; unique exact ETag/Content-Range/Content-Length, casefold duplicates refused incl Connection/CE/CT; Connection only absent/close, CE absent/identity, CT absent/application/octet-stream, values printable ASCII; no Upgrade/TE/Trailer/obsfold/list/multipart"
+  },
+  "projected_parquet_read": {
+    "status": "experimental_limited_implementation",
+    "command": "parquet-read --request <JSON>",
+    "backend": "local-http-projected-parquet-v1",
+    "identity": "fixed local origin/key/strong ETag/declared total plus verified footer and selected fragment SHA256; offline whole SHA provenance only",
+    "GETs_max": 8,
+    "payload_cumulative_max_bytes": 524288,
+    "response_header_max_bytes": 16384,
+    "response_header_max_fields": 64,
+    "headers_cumulative_max_bytes": 65536,
+    "whole_operation_timeout_ms": 10000,
+    "source_max_bytes": 33554432,
+    "source_rows_max_before_selection": 200,
+    "Arrow_and_page_preflight_shared_max_bytes": 67108864,
+    "Rust_memory_max_bytes": 536870912,
+    "output_max_bytes": 2097152,
+    "source_columns_max": 8,
+    "source_row_groups_max": 4,
+    "selected_columns_max": 3,
+    "selected_row_groups_max": 2,
+    "source_types": [
+      "int64",
+      "Utf8",
+      "Boolean"
+    ],
+    "compression": [
+      "UNCOMPRESSED"
+    ],
+    "pages": [
+      "DATA_PAGE_V1",
+      "DATA_PAGE_V2"
+    ],
+    "value_encoding": [
+      "PLAIN"
+    ],
+    "levels_encoding": [
+      "RLE"
+    ],
+    "selection_order": "strict ascending schema/group indices; duplicate/empty/out-of-bounds reject",
+    "unread_content_verified": false,
+    "old_object_range_GETs_max_unchanged": 1,
+    "existing_paths": "all old query/media/Iceberg/managed/view full source validation and MCP3 default offline unchanged",
+    "preparation": "explicit offline full source read/Arrow/normalization/hash; never precomputed query answers",
+    "unsupported": [
+      "S3",
+      "TLS",
+      "general remote SQL pushdown",
+      "remote Iceberg",
+      "nested or repeated fields",
+      "dictionary",
+      "compressed codecs",
+      "MCP projected-read tool"
+    ]
   }
 }

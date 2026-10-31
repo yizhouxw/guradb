@@ -13,6 +13,7 @@ mod object_range;
 #[cfg(test)]
 mod parameter_tests;
 mod parameters;
+mod projected_parquet;
 mod sample;
 mod search;
 mod source;
@@ -101,6 +102,10 @@ async fn main() {
     } else {
         parameters::Bindings::default()
     };
+    if args.get(1).is_some_and(|s| s == "parquet-read") {
+        projected_parquet::entry(args).await;
+        return;
+    }
     if args.get(1).is_some_and(|s| s == "object-range") {
         object_range::entry(args).await;
         return;

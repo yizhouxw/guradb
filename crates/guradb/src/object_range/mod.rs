@@ -1,6 +1,6 @@
 //! One conditional GET of a fixed local object's bounded byte range.
-mod http;
-mod request;
+pub(crate) mod http;
+pub(crate) mod request;
 use crate::{Error, Result, RESULT_LIMIT};
 use serde_json::json;
 use sha2::{Digest, Sha256};
