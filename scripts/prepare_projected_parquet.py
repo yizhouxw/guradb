@@ -33,6 +33,9 @@ def indices(value, maximum, count):
 
 def prepare(args):
     started = time.monotonic()
+    sql_source = getattr(args, 'sql_source', False)
+    if sql_source and (args.columns is not None or args.row_groups is not None):
+        raise ValueError('SQL source describes all rows; physical selection flags are incompatible')
     source = Path(args.input)
     fd = os.open(source, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC)
     with os.fdopen(fd, 'rb') as stream:
@@ -85,8 +88,8 @@ def prepare(args):
             if chunk['offset'] + chunk['length'] > footer_offset:
                 raise ValueError('column chunk crosses footer')
             chunks.append(dict(row_group=g, column=c, **chunk))
-    columns = indices(args.columns, normalized.num_columns, 3)
-    groups = indices(args.row_groups, normalized.num_row_groups, 2)
+    columns = [] if sql_source else indices(args.columns or '0,2', normalized.num_columns, 3)
+    groups = [] if sql_source else indices(args.row_groups or '0,2', normalized.num_row_groups, 2)
     selected = [c for c in chunks if c['row_group'] in groups and c['column'] in columns]
     payload = 4 + footer_length + sum(c['length'] for c in selected)
     if 2 + len(selected) > 8 or payload > 512 << 10:
@@ -105,6 +108,8 @@ def prepare(args):
                    object_bytes=len(data), source_sha256_provenance=digest(data),
                    header=region(0, 4), footer=region(footer_offset, footer_length),
                    chunks=chunks, columns=columns, row_groups=groups)
+    if sql_source:
+        del request['columns'], request['row_groups']
     encoded = (json.dumps(request, indent=2) + '\n').encode()
     if len(encoded) > 16384:
         raise ValueError('request descriptor exceeds16KiB')
@@ -127,7 +132,8 @@ def prepare(args):
                 input_full_rows=table.num_rows, offline_declared_decode_bytes=declared,
                 offline_table_bytes=table.nbytes, normalized_bytes=len(data),
                 normalized_full_sha256_provenance=digest(data), normalized_row_groups=normalized.num_row_groups,
-                planned_consumer_GETs=2+len(selected), planned_consumer_payload_bytes=payload,
+                planned_consumer_GETs=None if sql_source else 2+len(selected),
+                planned_consumer_payload_bytes=None if sql_source else payload,
                 current_full_object_revalidation=False,
                 license='Input rights/attribution remain caller responsibility; COCO reference captions retain source attribution separately from images.',
                 authority='Trusted offline whole read and normalization; descriptor is not a signature or database result cache.',
@@ -138,7 +144,7 @@ def prepare(args):
     out.mkdir()
     try:
         (out/'data.parquet').write_bytes(data)
-        (out/'request.json').write_bytes(encoded)
+        (out/('sql-source.json' if sql_source else 'request.json')).write_bytes(encoded)
         (out/'SOURCE.json').write_text(json.dumps(cost, indent=2)+'\n')
         shutil.copyfile(Path(__file__).with_name('local_http_fixture.py'), out/'local_http_fixture.py')
     except BaseException:
@@ -156,8 +162,10 @@ def main():
     parser.add_argument('--origin', default='http://127.0.0.1:38081')
     parser.add_argument('--key', default='caption/v1/records.parquet')
     parser.add_argument('--etag', default='"caption15-fixed-v1"')
-    parser.add_argument('--columns', default='0,2')
-    parser.add_argument('--row-groups', default='0,2')
+    parser.add_argument('--columns')
+    parser.add_argument('--row-groups')
+    parser.add_argument('--sql-source', action='store_true',
+                        help='complete SQL source descriptor, incompatible with physical selections')
     args = parser.parse_args()
     try:
         print(json.dumps(prepare(args), indent=2))

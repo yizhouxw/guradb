@@ -2,6 +2,8 @@
 mod bounded;
 mod metadata;
 mod pages;
+mod query;
+mod query_request;
 mod reader;
 mod request;
 mod sparse;
@@ -30,7 +32,14 @@ fn limit() -> Error {
     )
 }
 pub async fn entry(args: Vec<String>) {
-    crate::operation(Duration::from_secs(10), move || run(args)).await;
+    crate::operation(Duration::from_secs(10), move || {
+        if args.get(1).is_some_and(|s| s == "parquet-query") {
+            query::run(args)
+        } else {
+            run(args)
+        }
+    })
+    .await;
 }
 struct Transfer {
     deadline: Instant,

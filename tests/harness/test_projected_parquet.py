@@ -59,6 +59,25 @@ class ProjectedPreparation(unittest.TestCase):
             self.assertEqual(sentinel.stat().st_mtime_ns, before.st_mtime_ns)
             self.assertFalse((root/'escaped').exists())
 
+    def test_sql_source_preserves_all_rows_without_physical_selectors(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            source, rows = self.data(root)
+            args = self.args(source, root/'sql')
+            args.sql_source, args.columns, args.row_groups = True, None, None
+            cost = prepare.prepare(args)
+            import json
+            descriptor = json.loads((root/'sql/sql-source.json').read_text())
+            self.assertEqual(pq.read_table(root/'sql/data.parquet').to_pylist(), rows)
+            self.assertEqual(set(descriptor), {'version', 'origin', 'object_key', 'etag',
+                             'object_bytes', 'source_sha256_provenance', 'header', 'footer', 'chunks'})
+            self.assertIsNone(cost['planned_consumer_GETs'])
+            self.assertFalse((root/'sql/request.json').exists())
+            args.out, args.columns = str(root/'mixed'), '0'
+            with self.assertRaises(ValueError):
+                prepare.prepare(args)
+            self.assertFalse((root/'mixed').exists())
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -56,24 +56,28 @@ fn ordered(values: &[usize], max_len: usize, upper: usize) -> bool {
         && values.iter().all(|v| *v < upper)
         && values.windows(2).all(|v| v[0] < v[1])
 }
+pub(super) fn read_raw(path: &Path) -> Result<Vec<u8>> {
+    let file = OpenOptions::new()
+        .read(true)
+        .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK | libc::O_CLOEXEC)
+        .open(path)
+        .map_err(|_| super::invalid())?;
+    let info = file.metadata().map_err(|_| super::invalid())?;
+    if !info.is_file() || info.len() > 16384 {
+        return Err(super::invalid());
+    }
+    let mut raw = Vec::new();
+    file.take(16385)
+        .read_to_end(&mut raw)
+        .map_err(|_| super::invalid())?;
+    if raw.len() > 16384 {
+        return Err(super::invalid());
+    }
+    Ok(raw)
+}
 impl Request {
     pub fn read(path: &Path) -> Result<(Self, u16)> {
-        let file = OpenOptions::new()
-            .read(true)
-            .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK | libc::O_CLOEXEC)
-            .open(path)
-            .map_err(|_| super::invalid())?;
-        let info = file.metadata().map_err(|_| super::invalid())?;
-        if !info.is_file() || info.len() > 16384 {
-            return Err(super::invalid());
-        }
-        let mut raw = Vec::new();
-        file.take(16385)
-            .read_to_end(&mut raw)
-            .map_err(|_| super::invalid())?;
-        if raw.len() > 16384 {
-            return Err(super::invalid());
-        }
+        let raw = read_raw(path)?;
         let r: Self = serde_json::from_slice(&raw).map_err(|_| super::invalid())?;
         let port = r.validate()?;
         Ok((r, port))
@@ -91,6 +95,14 @@ impl Request {
         }
     }
     pub(super) fn validate(&self) -> Result<u16> {
+        if !ordered(&self.columns, 3, 8) || !ordered(&self.row_groups, 2, 4) {
+            return Err(super::invalid());
+        }
+        let port = self.validate_descriptor()?;
+        self.validate_plan()?;
+        Ok(port)
+    }
+    pub(super) fn validate_descriptor(&self) -> Result<u16> {
         let port = self
             .range_request(&self.header)
             .validate()
@@ -101,8 +113,6 @@ impl Request {
             || self.footer.offset < 4
             || self.footer.length <= 8
             || self.footer.offset.checked_add(self.footer.length as u64) != Some(self.object_bytes)
-            || !ordered(&self.columns, 3, 8)
-            || !ordered(&self.row_groups, 2, 4)
             || self.chunks.is_empty()
             || self.chunks.len() > 32
         {
@@ -132,6 +142,9 @@ impl Request {
         if spans.windows(2).any(|v| v[0].1 > v[1].0) {
             return Err(super::invalid());
         }
+        Ok(port)
+    }
+    pub(super) fn validate_plan(&self) -> Result<()> {
         let mut payload = self
             .header
             .length
@@ -146,7 +159,7 @@ impl Request {
         if 2 + self.row_groups.len() * self.columns.len() > 8 || payload > 512 << 10 {
             return Err(super::limit());
         }
-        Ok(port)
+        Ok(())
     }
     pub fn chunk(&self, group: usize, column: usize) -> Result<&Chunk> {
         self.chunks

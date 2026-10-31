@@ -102,7 +102,10 @@ async fn main() {
     } else {
         parameters::Bindings::default()
     };
-    if args.get(1).is_some_and(|s| s == "parquet-read") {
+    if args
+        .get(1)
+        .is_some_and(|s| matches!(s.as_str(), "parquet-read" | "parquet-query"))
+    {
         projected_parquet::entry(args).await;
         return;
     }
