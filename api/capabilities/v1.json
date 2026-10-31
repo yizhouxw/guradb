@@ -375,5 +375,34 @@
     ],
     "errors": "bounded static diagnostics never echo actual binding values",
     "qualification": "limited value input capability; not complete Q04/PG/security certification"
+  },
+  "local_http_object_range": {
+    "status": "core_limited",
+    "version": 1,
+    "entrypoint": "object-range --request <bounded JSONv1>; preview --data-root DATA --local-http-container FULL64ID object-range --request /data/request.json",
+    "identity": "literal http://127.0.0.1:1024..65535 origin + safe relative object_key + expected strong quoted opaque ETag + declared object_bytes + offset/length + expected range_sha256",
+    "HTTP": "strictly one HTTP1.1 GET/Range/If-Match/identity/close, 206 exact unique ETag/Content-Range/Content-Length; no retry/HEAD/redirect/pooling",
+    "framing_scope": "read exactly CL=L then close, no EOF/tail probe; correct prefix L plus unread TCP tail may succeed as range only; unread object or TCP stream not certified",
+    "limits": {
+      "object_bytes": 33554432,
+      "request_record_bytes": 16384,
+      "header_bytes": 16384,
+      "header_count": 64,
+      "range_and_operation_payload_bytes": 524288,
+      "HTTP_requests": 1,
+      "operation_ms": 10000,
+      "output_bytes": 2097152
+    },
+    "preview_network": "explicit flag only new command, inspect exact Running fixed09bc networknone/noPublishedPorts/v1fixture label through same localUnixDocker; container:ID namespace only; no hostnetwork/bridge fallback",
+    "compatibility": "old query/media/Iceberg/managed/view complete-source validation and default networknone unchanged; MCP remains3 tools, no range interface",
+    "unsupported": [
+      "remote/DNS/TLS/auth/proxy/redirect/generalHTTP",
+      "TE/Trailer/obsfold/bareLF/ambiguous duplicate headers/encoding/multipart",
+      "empty/suffix/multipart/unbounded range",
+      "unread whole object or extra TCP data integrity certification",
+      "S3/remote lake/SQL range pushdown or full performance release certification"
+    ],
+    "fixture": "temporary engineering Python standard-library reference server, networknone/127.0.0.1, captured readonly object; product Rust never listens",
+    "response_headers": "HTTP1.1/206; unique exact ETag/Content-Range/Content-Length, casefold duplicates refused incl Connection/CE/CT; Connection only absent/close, CE absent/identity, CT absent/application/octet-stream, values printable ASCII; no Upgrade/TE/Trailer/obsfold/list/multipart"
   }
 }
