@@ -458,5 +458,39 @@
       "compressed codecs",
       "MCP projected-read tool"
     ]
+  },
+  "projected_parquet_sql_query": {
+    "status": "experimental_limited_implementation",
+    "command": "parquet-query --source <SQLsourceJSONv1> --sql <SELECT> [--params-json <originaltypedJSONv1>]",
+    "backend": "local-http-projected-sql-v1",
+    "logical_domain": "all rows of all source row groups; <=200 before WHERE/LIMIT; no physical selection keys accepted",
+    "source_descriptor": "exactly original9 object identity/header/footer/allchunks fields; no columns/row_groups; file16KiB SQL16KiB params16KiB; combined input+argv64KiB",
+    "SQL": "shared AST/typed bindings and DataFusion; base column projection/alias, WHERE, input source column ORDER, literal LIMIT; no alternate SQL interpreter",
+    "column_plan": "compiled shared Prepared projection/filter/order column-ref union; all groups of every required column",
+    "GETs_max": 8,
+    "payload_cumulative_max_bytes": 524288,
+    "headers_cumulative_max_bytes": 65536,
+    "response_header_max_bytes": 16384,
+    "response_header_max_fields": 64,
+    "whole_operation_timeout_ms": 10000,
+    "source_max_bytes": 33554432,
+    "source_rows_max_before_WHERE_LIMIT": 200,
+    "Arrow_and_page_metadata_shared_conservative_model_max_bytes": 67108864,
+    "DataFusion_pool_max_bytes": 33554432,
+    "spill": false,
+    "output_max_bytes": 2097152,
+    "unread_content_verified": false,
+    "whole_source_SHA": "trusted offline provenance only; selected ranges SHA/version verified during query",
+    "compatibility": "old parquet-read physical selections, standalone Range1GET, all old full-source validation/default offline and MCP3 unchanged",
+    "unsupported": [
+      "aggregate/GROUPBY/COUNT",
+      "DISTINCT",
+      "output alias ORDER semantics beyond existing shared input-source rule",
+      "join/subquery/dynamic identifiers/expression projection",
+      "row-group predicate pruning",
+      "arbitrary Parquet/dictionary/compression/nested/crypto",
+      "S3/TLS/general remoteSQL/remoteIceberg",
+      "MCP projected SQL tool"
+    ]
   }
 }

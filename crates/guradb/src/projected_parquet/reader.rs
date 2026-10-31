@@ -2,7 +2,8 @@ use super::{invalid, request::Request, sparse::Sparse};
 use crate::Result;
 use arrow::{
     array::{Array, BooleanArray, Int64Array, StringArray},
-    datatypes::DataType,
+    datatypes::{DataType, SchemaRef},
+    record_batch::{RecordBatch, RecordBatchReader},
 };
 use parquet::{
     arrow::{
@@ -16,12 +17,12 @@ use parquet::{
 use serde_json::{json, Value};
 use std::sync::{atomic::Ordering, Arc};
 
-pub(super) fn decode(
+pub(super) fn decode_batches(
     r: &Request,
     metadata: ArrowReaderMetadata,
     sparse: Sparse,
     budget: &mut super::bounded::Budget,
-) -> Result<(Vec<Value>, Vec<Vec<Value>>, usize)> {
+) -> Result<(SchemaRef, Vec<RecordBatch>)> {
     let md = metadata.metadata();
     let sparse = Arc::new(sparse);
     for g in &r.row_groups {
@@ -98,10 +99,6 @@ pub(super) fn decode(
     }
     // Page buffers above are dropped before Arrow starts. Conservatively charge
     // all inspected page bytes plus every retained Arrow allocation together.
-    let columns = r.columns.iter().map(|i| {
-        let f = metadata.schema().field(*i);
-        json!({"name": f.name(), "type": match f.data_type() { DataType::Int64 => "int8", DataType::Utf8 => "text", _ => "bool" }})
-    }).collect();
     let expected_rows: usize = r
         .row_groups
         .iter()
@@ -114,10 +111,33 @@ pub(super) fn decode(
         .with_batch_size(200)
         .build()
         .map_err(|_| invalid())?;
-    let mut rows = Vec::new();
+    let schema = reader.schema();
+    let mut batches = Vec::new();
+    let mut decoded_rows = 0usize;
     for batch in reader {
         let batch = batch.map_err(|_| invalid())?;
         budget.charge(batch.get_array_memory_size())?;
+        decoded_rows += batch.num_rows();
+        if decoded_rows > expected_rows {
+            return Err(invalid());
+        }
+        batches.push(batch);
+    }
+    if decoded_rows != expected_rows {
+        return Err(invalid());
+    }
+    Ok((schema, batches))
+}
+pub(super) fn decode(
+    r: &Request,
+    metadata: ArrowReaderMetadata,
+    sparse: Sparse,
+    budget: &mut super::bounded::Budget,
+) -> Result<(Vec<Value>, Vec<Vec<Value>>, usize)> {
+    let (schema, batches) = decode_batches(r, metadata, sparse, budget)?;
+    let columns=schema.fields().iter().map(|f|json!({"name":f.name(),"type":match f.data_type(){DataType::Int64=>"int8",DataType::Utf8=>"text",_=>"bool"}})).collect();
+    let mut rows = Vec::new();
+    for batch in batches {
         for row in 0..batch.num_rows() {
             let mut output = Vec::new();
             for array in batch.columns() {
@@ -147,13 +167,7 @@ pub(super) fn decode(
                 output.push(value);
             }
             rows.push(output);
-            if rows.len() > expected_rows {
-                return Err(invalid());
-            }
         }
-    }
-    if rows.len() != expected_rows {
-        return Err(invalid());
     }
     Ok((columns, rows, budget.used()))
 }

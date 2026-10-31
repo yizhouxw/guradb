@@ -22,6 +22,8 @@
 
 - [固定短视频原字节与帧证据](video-evidence.md)：单AVI/BGR24，外部文本命中与独立真实帧消费。
 
-- [固定本机HTTP对象Range（待实现）](local-object-range.md)：显式隔离loopback、强版本与所读范围摘要，不冒未读全对象认证。
+- [固定本机HTTP对象Range（受限实现）](local-object-range.md)：显式隔离loopback、强版本与所读范围摘要，不冒未读全对象认证。
 
 - [固定Parquet按列/行组读取](projected-parquet-read.md)：显式局部Range与结构化记录，离线准备成本分账（非作者候选有限验收通过）。
+
+- [完整源HTTP Parquet SQL](projected-sql-query.md)（受限实现）：所有组必要列、共有SQL/值参数和局部认证。

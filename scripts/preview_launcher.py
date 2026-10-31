@@ -166,11 +166,11 @@ def run():
             raise ValueError('data-root must be an existing directory')
         rust_args, network = args[2:], 'none'
         if rust_args[:1] == ['--local-http-container']:
-            if len(rust_args) < 3 or rust_args[2] not in ('object-range', 'parquet-read'):
-                raise ValueError('local HTTP network flag is only supported for object-range/parquet-read')
+            if len(rust_args) < 3 or rust_args[2] not in ('object-range', 'parquet-read', 'parquet-query'):
+                raise ValueError('local HTTP network flag is only supported for object-range/parquet-read/parquet-query')
             network = local_http_network(prefix, m, rust_args[1])
             rust_args = rust_args[2:]
-        elif rust_args[:1] and rust_args[0] in ('object-range', 'parquet-read'):
+        elif rust_args[:1] and rust_args[0] in ('object-range', 'parquet-read', 'parquet-query'):
             raise ValueError('local HTTP command requires explicit --local-http-container')
         if '--local-http-container' in rust_args:
             raise ValueError('duplicate or misplaced local HTTP network flag')

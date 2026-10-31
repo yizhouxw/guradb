@@ -496,3 +496,6 @@ fn a_large_unselected_column_is_never_transferred_and_selecting_it_fails_before_
         "over-budget selection must make no new GET"
     );
 }
+
+#[path = "projected_sql_cases.rs"]
+mod query_cases;
